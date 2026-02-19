@@ -1,0 +1,255 @@
+====== TEST CASE 1: NUMERIC DATE FORMAT (DD/MM/YYYY) ======
+[14.30, 5/2/2026] Akbar Rafay: REQUEST ORDER ONCALL 05/02/2026:
+
+PANDU
+2 unit TWB 40 CBM
+Lokasi : SUNTER
+Waktu loading : 08:00
+Rute/tujuan : CGK - Medan
+driver  : SUMARNO
+Nopol  : B 4532 CA
+No hp  : 081234567890
+
+Waktu loading : 10:30
+Rute/tujuan : CGK - Medan
+driver  : BUDIMAN
+Nopol  : B 5643 DB
+No hp  : 082345678901
+
+====== TEST CASE 2: MIXED DATE FORMATS IN ONE REQUEST ======
+[15.45, 6/2/2026] Akbar Rafay: REQUEST ORDER ONCALL
+
+RAFAY
+1 unit CDDL 24 CBM
+Lokasi : TANJUNGSARI
+Waktu loading : 14:00 06 FEBRUARI 2026
+Rute/tujuan : CGK - SURABAYA
+driver  : HANDOKO
+Nopol  : W 7834 KR
+No hp  : 089876543210
+
+====== TEST CASE 3: MISSING DRIVER INFO WITH MULTIPLE UNITS ======
+[16.20, 7/2/2026] Akbar Rafay: REQUEST ORDER ONCALL 07 FEBRUARI 2026:
+
+SETIA
+4 unit TWB 50 CBM
+Lokasi : CIREBON
+Waktu loading : SEGERA
+Rute/tujuan : CGK - LAMPUNG
+driver  :
+Nopol  :
+No hp  :
+
+Waktu loading : 09:00
+Rute/tujuan : CGK - LAMPUNG
+driver  : SLAMET
+Nopol  : F 2341 LL
+No hp  : 0812-987-6543
+
+Waktu loading : 12:00
+Rute/tujuan : CGK - LAMPUNG
+driver  : WIWIN
+Nopol  : F 3452 LM
+No hp  : 0813-876-5432
+
+Waktu loading : 15:30
+Rute/tujuan : CGK - LAMPUNG
+driver  :
+Nopol  : F 4563 LN
+No hp  :
+
+====== TEST CASE 4: DIFFERENT TIME FORMATS (HH, HH.MM, HH:MM) ======
+[17.00, 8/2/2026] Akbar Rafay: REQUEST ORDER UNCALL 08 FEBRUARI 2026:
+
+MITRA
+3 unit CDDL 20 CBM
+Lokasi : BEKASI
+Waktu loading : 7
+Rute/tujuan : CGK - BANDUNG
+driver  : AHMAD
+Nopol  : D 8765 AF
+No hp  : 085555555555
+
+Waktu loading : 13.30
+Rute/tujuan : CGK - BANDUNG
+driver  : BUDI
+Nopol  : D 9876 AG
+No hp  : 085666666666
+
+Waktu loading : 16:45
+Rute/tujuan : CGK - BANDUNG
+driver  : CITRA
+Nopol  : D 1011 AH
+No hp  : 085777777777
+
+====== TEST CASE 5: LATE NIGHT / EARLY MORNING LOADS ======
+[20.30, 9/2/2026] Akbar Rafay: REQUEST ORDER ONCALL 09 FEBRUARI 2026:
+
+EKSPRES
+2 unit TWB 40 CBM
+Lokasi : TANGERANG
+Waktu loading : 22:00
+Rute/tujuan : CGK - YOGYA
+driver  : YANTO
+Nopol  : L 1234 YY
+No hp  : 0856-111-2222
+
+Waktu loading : 02:30 10/02/2026
+Rute/tujuan : CGK - YOGYA
+driver  : ZAINUL
+Nopol  : L 5678 YZ
+No hp  : 0857-222-3333
+
+====== TEST CASE 6: ALL SEGERA (IMMEDIATE) LOADS ======
+[08.15, 10/2/2026] Akbar Rafay: REQUEST TAMBAHAN ORDER ONCALL 10 FEBRUARI 2026:
+
+LOGINDO
+3 unit CDDL 24 CBM
+Lokasi : MANGGARAI
+Waktu loading : SEGERA
+Rute/tujuan : CGK - BANDUNG
+driver  : ENDI
+Nopol  : D 2020 AX
+No hp  : 0858-333-4444
+
+Waktu loading : SEGERA
+Rute/tujuan : CGK - BANDUNG
+driver  : FAHRI
+Nopol  : D 3131 AY
+No hp  : 0859-444-5555
+
+Waktu loading : SEGERA
+Rute/tujuan : CGK - BANDUNG
+driver  : GUNTUR
+Nopol  : D 4242 AZ
+No hp  : 0860-555-6666
+
+====== TEST CASE 7: INCONSISTENT LOCATION INFO ======
+[11.45, 11/2/2026] Akbar Rafay: REQUEST ORDER ONCALL 11 FEBRUARI 2026:
+
+TRANS
+2 unit TWB 50 CBM
+Lokasi : JAKARTA TIMUR
+Waktu loading : 06:00
+Rute/tujuan : CGK - Semarang
+driver  : HASAN
+Nopol  : B 6789 XI
+No hp  : 0861-666-7777
+
+Waktu loading : 11:00
+Rute/tujuan : Jakarta - Semarang
+driver  : ILHAM
+Nopol  : B 7890 XJ
+No hp  : 0862-777-8888
+
+====== TEST CASE 8: PHONE NUMBER VARIATIONS ======
+[13.20, 12/2/2026] Akbar Rafay: REQUEST TAMBAHAN ORDER ONCALL
+
+CARGO
+1 unit CDDL 30 CBM
+Lokasi : SUNTER JAYA
+Waktu loading : 09:30 12 FEBRUARI 2026
+Rute/tujuan : CGK - MAKASSAR
+driver  : JOKO
+Nopol  : D 5555 BA
+No hp  : +62812345678
+
+====== TEST CASE 9: PARTIAL PLATE NUMBERS ======
+[14.10, 13/2/2026] Akbar Rafay: REQUEST ORDER ONCALL 13 FEBRUARI 2026:
+
+RAFAY
+2 unit TWB 40 CBM
+Lokasi : CIKAMPEK
+Waktu loading : 12:00
+Rute/tujuan : CGK - LAMPUNG
+driver  : KARSO
+Nopol  : B 123
+No hp  : 0863-888-9999
+
+Waktu loading : 14:45
+Rute/tujuan : CGK - LAMPUNG
+driver  : LANDRA
+Nopol  :
+No hp  : 0864-999-0000
+
+====== TEST CASE 10: COMPLEX DESTINATION FORMAT ======
+[15.55, 14/2/2026] Akbar Rafay: REQUEST ORDER ONCALL 14 FEBRUARI 2026:
+
+NEXUS
+3 unit CDDL 20 CBM
+Lokasi : KELAPA GADING
+Waktu loading : SEGERA
+Rute/tujuan : CGK-JKT-SUB-JAWA
+driver  : MARIO
+Nopol  : K 1111 XV
+No hp  : 0865-000-1111
+
+Waktu loading : 10:00
+Rute/tujuan : CGK - SURABAYA - Sidoarjo
+driver  : NURI
+Nopol  : K 2222 XW
+No hp  : 0866-111-2222
+
+Waktu loading : 16:00
+Rute/tujuan : CGK to Semarang to Pekalongan
+driver  : OMAN
+Nopol  : K 3333 XX
+No hp  : 0867-222-3333
+
+====== TEST CASE 11: HEADER WITHOUT DATE (SHOULD INHERIT) ======
+[09.30, 15/2/2026] Akbar Rafay: REQUEST ORDER ONCALL 15 FEBRUARI 2026:
+
+PRIMA
+1 unit TWB 30 CBM
+Lokasi : CONDET
+Waktu loading : 08:00
+Rute/tujuan : CGK - BANJARMASIN
+driver  : PARNO
+Nopol  : K 4444 XY
+No hp  : 0868-333-4444
+
+[09.45, 15/2/2026] Akbar Rafay: REQUEST ORDER ULANG
+
+2 unit CDDL 24 CBM
+Lokasi : RAWA BELONG
+Waktu loading : 13:00
+Rute/tujuan : CGK - BANJARMASIN
+driver  : KUSUMO
+Nopol  : D 6666 BA
+No hp  : 0869-444-5555
+
+Waktu loading : 18:00
+Rute/tujuan : CGK - BANJARMASIN
+driver  : LUKMAN
+Nopol  : D 7777 BB
+No hp  : 0870-555-6666
+
+====== TEST CASE 12: MIXED SEGERA AND TIME-BASED ======
+[10.15, 16/2/2026] Akbar Rafay: REQUEST TAMBAHAN ORDER ONCALL 16 FEBRUARI 2026:
+
+GARUDA
+4 unit TWB 50 CBM
+Lokasi : BSD SERPONG
+Waktu loading : SEGERA
+Rute/tujuan : CGK - PALEMBANG
+driver  : MANTO
+Nopol  : L 8888 YZ
+No hp  : 0871-666-7777
+
+Waktu loading : 11:00
+Rute/tujuan : CGK - PALEMBANG
+driver  : NOTIA
+Nopol  : L 9999 YZ
+No hp  : 0872-777-8888
+
+Waktu loading : SEGERA
+Rute/tujuan : CGK - PALEMBANG
+driver  :
+Nopol  : L 1010 ZA
+No hp  :
+
+Waktu loading : 20:00
+Rute/tujuan : CGK - PALEMBANG
+driver  : PANDU
+Nopol  : L 1111 ZB
+No hp  : 0873-888-9999

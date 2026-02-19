@@ -1,0 +1,465 @@
+====== NOISE TEST 1: PERCAKAPAN GRUP YANG KACAU DENGAN ORDER ======
+Halo guys gmn kabarnya
+Pagi semua 🙏
+siapa yang belum bayar nih?
+@Akbar @Budi
+
+[14.30, 5/2/2026] Akbar Rafay: REQUEST ORDER ONCALL 05/02/2026:
+
+bro ada orderan nih
+PANDU
+2 unit TWB 40 CBM
+Lokasi : SUNTER
+Waktu loading : 08:00
+Rute/tujuan : CGK - Medan
+
+tunggu aku apply dulu
+ada biaya tambahan ga?
+tunggu sticker
+🎉 🚀 💼 📦
+
+driver  : SUMARNO
+Nopol  : B 4532 CA
+No hp  : 081234567890
+
+temen aku juga mau ikut
+Waktu loading : 10:30
+Rute/tujuan : CGK - Medan
+driver  : BUDIMAN
+Nopol  : B 5643 DB
+No hp  : 082345678901
+
+siapa payroll sama budiman tanya budiman bayarnya brp?
+cek grup payroll ya
+@Admin halo halo
+
+====== NOISE TEST 2: ORDER DENGAN DISKUSI PANJANG ======
+Hiii everyone 👋
+Pagi pak rafay semoga sehat selalu
+
+[15.45, 6/2/2026] Akbar Rafay: REQUEST ORDER ONCALL
+
+btw kemarin ada yang dateng ke kantor
+gak jadi deh orderannya
+
+eh tunggu ada orderan masuk
+
+RAFAY
+1 unit CDDL 24 CBM
+Lokasi : TANJUNGSARI
+Waktu loading : 14:00 06 FEBRUARI 2026
+Rute/tujuan : CGK - SURABAYA
+
+jadi yang mana nih?
+
+ayah yang ngatur sendiri
+driver  : HANDOKO
+Nopol  : W 7834 KR
+No hp  : 089876543210
+
+ok mantap, semoga selamat sampai tujuan
+
+====== NOISE TEST 3: MULTIPLE ORDERS DENGAN CHAT RANDOM ======
+Hari ini libur gak?
+liburan kemarin sudah cerita soal ini
+gue juga mau liburan 😴
+
+[16.20, 7/2/2026] Akbar Rafay: REQUEST ORDER ONCALL 07 FEBRUARI 2026:
+
+yang penting order terpenuhi
+
+SETIA
+4 unit TWB 50 CBM
+Lokasi : CIREBON
+Waktu loading : SEGERA
+Rute/tujuan : CGK - LAMPUNG
+driver  :
+Nopol  :
+No hp  :
+
+tunggu gambarnya dulu
+*image sent*
+*image sent*
+
+eh kok blank?
+
+Waktu loading : 09:00
+Rute/tujuan : CGK - LAMPUNG
+driver  : SLAMET
+Nopol  : F 2341 LL
+No hp  : 0812-987-6543
+
+yaudah lanjut aja
+
+Waktu loading : 12:00
+Rute/tujuan : CGK - LAMPUNG
+driver  : WIWIN
+Nopol  : F 3452 LM
+No hp  : 0813-876-5432
+
+cerita ah yg perjalanan kemarin
+seru ga?
+
+Waktu loading : 15:30
+Rute/tujuan : CGK - LAMPUNG
+driver  :
+Nopol  : F 4563 LN
+No hp  :
+
+gak ada driver buat yang terakhir?
+
+====== NOISE TEST 4: ORDER TERCAMPUR DENGAN TIPOGRAFI BERANTAKAN ======
+Hello world
+Senin ini cuaca mendung
+
+[17.00, 8/2/2026] Akbar Rafay: REQUEST ORDER UNCALL 08 FEBRUARI 2026:
+
+nanti gue kasih orderan baru
+ada ga yg bisa berangkat jam 7 pagi
+
+MITRA
+3 unit CDDL 20 CBM
+Lokasi : BEKASI
+Waktu loading : 7
+Rute/tujuan : CGK - BANDUNG
+
+kalo ada harus bayar brp?
+biaya mulai dari 500rb
+
+driver  : AHMAD
+hmm mahal juga
+Nopol  : D 8765 AF
+No hp  : 085555555555
+
+eh jadi yang mana yang jadi?
+mau lah
+
+Waktu loading : 13.30
+Rute/tujuan : CGK - BANDUNG
+driver  : BUDI
+Nopol  : D 9876 AG
+No hp  : 085666666666
+
+oke next?
+
+Waktu loading : 16:45
+Route: CGK - BANDUNG >>>>> BANDUNG
+sekedar typo
+driver  : CITRA
+Nopol  : D 1011 AH
+No hp  : 085777777777
+
+ok semua udahan?
+yep selesai
+
+====== NOISE TEST 5: LATE NIGHT ORDER DENGAN PERCAKAPAN SANTAI ======
+Ini malam malam masih kerja
+kasihan
+buru sambil semangat 😅
+
+[20.30, 9/2/2026] Akbar Rafay: REQUEST ORDER ONCALL 09 FEBRUARI 2026:
+
+nah ini ada order dadakan
+
+EKSPRES
+2 unit TWB 40 CBM
+Lokasi : TANGERANG
+Waktu loading : 22:00
+Rute/tujuan : CGK - YOGYA
+
+jam 10 malam siapa yang ready?
+driver  : YANTO
+Nopol  : L 1234 YY
+No hp  : 0856-111-2222
+
+sudah siap pak
+
+bagus mari lanjut
+
+Waktu loading : 02:30 10/02/2026
+Rute/tujuan : CGK - YOGYA
+driver  : ZAINUL
+Nopol  : L 5678 YZ
+No hp  : 0857-222-3333
+
+pagi nya siapa yang siap?
+saya akan menyiapkan
+
+====== NOISE TEST 6: SEGERA ORDER DENGAN URGENCY CHAT ======
+GUYS GUYS GUYS
+ADA ORDERAN URGENT!!!
+URGENT URGENT URGENT 🚨🚨🚨
+
+[08.15, 10/2/2026] Akbar Rafay: REQUEST TAMBAHAN ORDER ONCALL 10 FEBRUARI 2026:
+
+CEPET CEPET CEPET
+
+LOGINDO
+3 unit CDDL 24 CBM
+Lokasi : MANGGARAI
+Waktu loading : SEGERA
+Rute/tujuan : CGK - BANDUNG
+
+siapa yg ready SEKARANG?
+driver  : ENDI
+Nopol  : D 2020 AX
+No hp  : 0858-333-4444
+
+SIAP PAK TAN!!
+
+Waktu loading : SEGERA
+Rute/tujuan : CGK - BANDUNG
+SIAP SIAP SIAP
+driver  : FAHRI
+Nopol  : D 3131 AY
+No hp  : 0859-444-5555
+
+JANGAN TELAT ATAU DIPECAT 😂😂😂
+
+Waktu loading : SEGERA
+Rute/tujuan : CGK - BANDUNG
+driver  : GUNTUR
+Nopol  : D 4242 AZ
+No hp  : 0860-555-6666
+
+iyaaa siaaap
+
+====== NOISE TEST 7: FORWARD DAN DUPLIKASI PESAN ======
+**Forwarded from: Logistik Manager**
+>>>>>>>>>>>>>>>>>>>>>>
+PENTING INI
+>>>>>>>>>>>>>
+
+[11.45, 11/2/2026] Akbar Rafay: REQUEST ORDER ONCALL 11 FEBRUARI 2026:
+
+eh tunggu ini order dari siapa?
+dari pt transport nusantara
+
+TRANS
+2 unit TWB 50 CBM
+Lokasi : JAKARTA TIMUR
+Waktu loading : 06:00
+Rute/tujuan : CGK - Semarang
+driver  : HASAN
+Nopol  : B 6789 XI
+No hp  : 0861-666-7777
+
+ok ok ok ok ok ok
+
+Waktu loading : 11:00
+Rute/tujuan : Jakarta - Semarang
+driver  : ILHAM
+Nopol  : B 7890 XJ
+No hp  : 0862-777-8888
+
+sudah dicek lokasi?
+sudah pasti ok lah
+yg penting sampai tepat waktu
+iya tepat waktu
+
+====== NOISE TEST 8: INCOMPLETE DATA DENGAN PERTANYAAN ======
+siapa tuh handoko?
+driver baru apa?
+kurang tau sih
+
+[13.20, 12/2/2026] Akbar Rafay: REQUEST TAMBAHAN ORDER ONCALL
+
+CARGO
+1 unit CDDL 30 CBM
+Lokasi : SUNTER JAYA
+Waktu loading : 09:30 12 FEBRUARI 2026
+Rute/tujuan : CGK - MAKASSAR
+driver  : JOKO
+Nopol  : D 5555 BA
+No hp  : +62812345678
+
+mana hpnya joko?
+05xx yg gitu
+
+ok deh next?
+ada lagi ga?
+gak ada lagi
+
+====== NOISE TEST 9: TYPO DAN SALAH PENGETIKAN ======
+barusan typo
+eh ada orderan lagi
+salah ketik sorry sorry
+
+[14.10, 13/2/2026] Akbar Rafay: REQUEST ORDER ONCALL 13 FEBRUARI 2026:
+
+RAFAY
+2 unit TWB 40 CBM
+Lokasi : CIKAMPEK
+Waktu loading : 12:00
+Rute/tujuan : CGK - LAMPUNG
+driver  : KARSO
+Nopol  : B 123 >>>>>>>>> (kurang lengkap ya)
+No hp  : 0863-888-9999
+
+iya yang penting dicatat aj
+next?
+
+Waktu loading : 14:45
+Rute/tujuan : CGK - LAMPUNG
+eh next driver siapa?
+eh lupah ngisi driver
+driver  : LANDRA
+Nopol  :
+No hp  : 0864-999-0000
+
+ya udah itu aja yg pindah
+
+====== NOISE TEST 10: MIXED LANGUAGE DAN SLANG ======
+Pagi semua
+morning guys
+sabah sa lahat
+subuh maning
+
+[15.55, 14/2/2026] Akbar Rafay: REQUEST ORDER ONCALL 14 FEBRUARI 2026:
+
+ok so ada orderan nih yaamp
+ini urgent ya atau regs aja?
+regs aj bro
+
+NEXUS
+3 unit CDDL 20 CBM
+Lokasi : KELAPA GADING
+Waktu loading : SEGERA
+Rute/tujuan : CGK-JKT-SUB-JAWA
+driver  : MARIO
+Nopol  : K 1111 XV
+No hp  : 0865-000-1111
+
+mario siap?
+siap bro
+yeay
+
+Waktu loading : 10:00
+Rute/tujuan : CGK - SURABAYA - Sidoarjo
+driver  : NURI
+nuri ready?
+Nopol  : K 2222 XW
+No hp  : 0866-111-2222
+
+siap nuri
+
+Waktu loading : 16:00
+Rute/tujuan : CGK to Semarang to Pekalongan
+driver  : OMAN
+Nopol  : K 3333 XX
+No hp  : 0867-222-3333
+
+oman yg paling senior
+iyess
+
+====== NOISE TEST 11: HEADER MENYAMAR + CHAT BERANTAKAN ======
+Guys gmn kabar semua hari ini
+ada yg sakit?
+pada fit semua alhamdulillah
+jangan lupa makan
+
+[09.30, 15/2/2026] Akbar Rafay: REQUEST ORDER ONCALL 15 FEBRUARI 2026:
+
+eh ada orderan baru
+dari mana ama?
+dari prima logistics
+
+PRIMA
+1 unit TWB 30 CBM
+Lokasi : CONDET
+Waktu loading : 08:00
+Rute/tujuan : CGK - BANJARMASIN
+driver  : PARNO
+Nopol  : K 4444 XY
+No hp  : 0868-333-4444
+
+parno siap?
+siap ama.
+bagus deh
+
+eh tebat ditambah lagi
+
+[09.45, 15/2/2026] Akbar Rafay: REQUEST ORDER ULANG
+
+2 unit CDDL 24 CBM
+Lokasi : RAWA BELONG
+Waktu loading : 13:00
+Rute/tujuan : CGK - BANJARMASIN
+driver  : KUSUMO
+Nopol  : D 6666 BA
+No hp  : 0869-444-5555
+
+kusumo siap atau belum?
+tunggu...
+
+Waktu loading : 18:00
+Rute/tujuan : CGK - BANJARMASIN
+driver  : LUKMAN
+eh lukman kemana?
+sudah standby
+Nopol  : D 7777 BB
+No hp  : 0870-555-6666
+
+ok fix deh
+terima kasih
+
+====== NOISE TEST 12: KOMPLEKS DENGAN BANYAK NOISE ======
+HALOOOOO
+HALO HAI HU HE HO
+APA KABAR
+
+[10.15, 16/2/2026] Akbar Rafay: REQUEST TAMBAHAN ORDER ONCALL 16 FEBRUARI 2026:
+
+BRO ADA ORDERAN LAGI
+dari pd indah jaya
+
+GARUDA
+4 unit TWB 50 CBM
+Lokasi : BSD SERPONG
+Waktu loading : SEGERA
+Rute/tujuan : CGK - PALEMBANG
+
+siapa yg bisa?
+driver  : MANTO
+MANTO SIAP GAKKK
+Nopol  : L 8888 YZ
+No hp  : 0871-666-7777
+
+SIAP BOSS
+
+Waktu loading : 11:00
+Rute/tujuan : CGK - PALEMBANG
+driver  : NOTIA
+NOTIA SIAP GK
+Nopol  : L 9999 YZ
+eh tunggu driver siapa
+di atas tuh notia
+No hp  : 0872-777-8888
+
+OK SIAP
+
+btw jangan lupa istirahat ya
+jangan kekurangan tidur driving is dangerous 😴
+
+Waktu loading : SEGERA
+Rute/tujuan : CGK - PALEMBANG
+driver  :
+ada yg kosong ini
+Nopol  : L 1010 ZA
+No hp  :
+
+ok di skip aja
+
+Waktu loading : 20:00
+Rute/tujuan : CGK - PALEMBANG
+driver  : PANDU
+eh pandu yg pembayaran tu apa?
+nanti diurus
+Nopol  : L 1111 ZB
+No hp  : 0873-888-9999
+
+ok done?
+DONE BOSSSS
+next ada gak?
+gak ada deh
+ok thank u semuanya 🙏🙏🙏
