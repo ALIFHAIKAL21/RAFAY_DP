@@ -19,12 +19,25 @@ def auto_format_chat_input(text):
     lines = valid_text.split('\n')
     formatted_lines = []
     pattern = r"(?i)(Waktu loading\s*:\s*)(.*?)(\s+\d{1,2}[/-]\d{1,2}[/-]\d{4}|\s+\d{1,2}\s+[a-zA-Z]+\s+\d{4})"
+    
+    # FIX: State-based tracking untuk [HH.MM, DD/MM/YYYY] header timestamp
+    current_header_date = None
+    
     for line in lines:
+        # Deteksi header timestamp [HH.MM, DD/MM/YYYY] dan simpan sebagai state
+        header_timestamp_pattern = r'\[(\d{2}[.,:]\d{2})\s*,\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\]'
+        timestamp_match = re.search(header_timestamp_pattern, line)
+        if timestamp_match:
+            current_header_date = timestamp_match.group(2)
+            formatted_lines.append(line)
+            continue
+        
         match = re.search(pattern, line)
         if match:
             prefix = match.group(1); jam = match.group(2).strip(); tgl = match.group(3).strip() 
             formatted_lines.append(f"\nREQUEST ORDER KHUSUS {tgl}")
             formatted_lines.append(f"{prefix}{jam}")
+            current_header_date = tgl  # Update state dengan tanggal dari pattern match
         else:
             formatted_lines.append(line)
     return "\n".join(formatted_lines)
@@ -33,6 +46,54 @@ def extract_plate_aggressive(text):
     if pd.isna(text): return ""
     match = re.search(r"\b([A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3})\b", str(text).upper())
     return match.group(1) if match else ""
+
+def normalize_phone_number(phone):
+    """Normalisasi nomor HP: hapus non-digit, handle prefix 62, tanpa spasi."""
+    if pd.isna(phone) or not str(phone).strip():
+        return ""
+    # Hapus semua karakter selain digit
+    phone_digits = re.sub(r'\D', '', str(phone))
+    if not phone_digits:
+        return ""
+    # Jika diawali "62", ubah menjadi "0" + sisa angka
+    if phone_digits.startswith('62'):
+        phone_digits = '0' + phone_digits[2:]
+    return phone_digits
+
+def normalize_route(text):
+    """Normalisasi format rute: uppercase, pisahkan dengan koma+spasi."""
+    if pd.isna(text) or not str(text).strip():
+        return ""
+    text_str = str(text).strip()
+    if text_str.lower() in ['none', 'nan', 'nat']:
+        return ""
+    
+    # Step 1: Uppercase seluruh string
+    route = text_str.upper()
+    
+    # Step 2: Ganti semua "–" dan "/" menjadi "-"
+    route = route.replace('–', '-').replace('/', '-')
+    
+    # Step 3: Hapus spasi berlebih
+    route = re.sub(r'\s+', ' ', route)
+    
+    # Step 4: Split berdasarkan "-" atau "," jika ada
+    if '-' in route or ',' in route:
+        # Normalize: split by both dash and comma
+        # Replace comma dengan dash untuk normalisasi
+        route = route.replace(',', '-')
+        parts = [p.strip() for p in route.split('-') if p.strip()]
+        if len(parts) >= 2:
+            return ', '.join(parts)
+    
+    # Step 5: Jika tidak ada dash/comma, check untuk space separator
+    if ' ' in route:
+        parts = [p.strip() for p in route.split() if p.strip()]
+        if len(parts) > 1:
+            return ', '.join(parts)
+    
+    # Jika tidak ada separator, return as is
+    return route.strip()
 
 def clean_driver_name(name):
     if not name or pd.isna(name) or str(name).lower() == 'none': return ""
@@ -63,6 +124,23 @@ def sanitize_row_data(row):
     if t and t != "SEGERA":
         t = t.replace(".", ":").replace("*", "")
         if re.match(r'^\d{1,2}$', t): t = f"{t.zfill(2)}:00"
+    
+    # FIX 1: Normalisasi nomor HP
+    if 'PHONE' in row:
+        raw_phone = str(row.get('PHONE', '')).strip()
+        if raw_phone and raw_phone.lower() not in ['none', 'nan', 'nat', '']:
+            row['PHONE'] = normalize_phone_number(raw_phone)
+        else:
+            row['PHONE'] = ""
+    
+    # FIX 2: Normalisasi format ORIGIN dan DESTINATION
+    for route_field in ['ORIGIN', 'DESTINATION']:
+        if route_field in row:
+            raw_route = str(row.get(route_field, '')).strip()
+            if raw_route and raw_route.lower() not in ['none', 'nan', 'nat', '']:
+                row[route_field] = normalize_route(raw_route)
+            else:
+                row[route_field] = ""
 
     row['DATE'] = d; row['TIME'] = t
     return row
@@ -142,6 +220,124 @@ def enforce_block_quota(df):
                 final_rows.append(clean_slot)
     return pd.DataFrame(final_rows).reset_index(drop=True)
 
+def apply_revision_logic(df_final):
+    """
+    Tangani revisi order. Deteksi row dengan kata kunci 'rev', 'revisi', 'update'
+    dan terapkan field updates ke row yang TIME-nya sama. Hapus revision row dari output.
+    Format TIME bisa 08:00 atau 08.00, semua akan dinormalisasi untuk matching.
+    """
+    if df_final is None or df_final.empty:
+        return df_final
+
+    rows_to_update = []
+    rows_to_remove = []
+
+    # Helper: normalisasi format waktu (08:00 dan 08.00 menjadi sama)
+    def normalize_time(time_str):
+        if not time_str:
+            return None
+        time_str = str(time_str).strip()
+        # Replace . dengan : untuk normalisasi
+        time_str = time_str.replace('.', ':')
+        return time_str
+
+    # Helper: ekstrak field dari Original_Text jika belum ada di DataFrame
+    def extract_field_from_text(original_text, field_name):
+        """Ekstrak field dari Original_Text dengan pattern matching."""
+        if not original_text:
+            return None
+
+        if field_name == 'PLATE':
+            # Cari pattern: "nopol : ...", "plat : ...", "no plat : ..."
+            patterns = [
+                r'nopol\s*:\s*([A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3})',
+                r'no\.?\s*plat\s*:\s*([A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3})',
+                r'plat\s*:\s*([A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3})',
+            ]
+            for pattern in patterns:
+                match = re.search(pattern, original_text, re.IGNORECASE)
+                if match:
+                    return match.group(1).strip()
+
+        elif field_name == 'DRIVER':
+            # Cari pattern: "driver : ...", "pengemudi : ..."
+            patterns = [
+                r'driver\s*:\s*([^\n:]+)',
+                r'pengemudi\s*:\s*([^\n:]+)',
+            ]
+            for pattern in patterns:
+                match = re.search(pattern, original_text, re.IGNORECASE)
+                if match:
+                    return match.group(1).strip()
+
+        elif field_name == 'PHONE':
+            # Cari pattern: "no hp : ...", "no. hp : ...", "kontak : ..."
+            patterns = [
+                r'no\.?\s*hp\s*:\s*(\d+)',
+                r'no\.?\s*telp\s*:\s*(\d+)',
+                r'kontak\s*:\s*(\d+)',
+            ]
+            for pattern in patterns:
+                match = re.search(pattern, original_text, re.IGNORECASE)
+                if match:
+                    return match.group(1).strip()
+
+        return None
+
+    for idx, row in df_final.iterrows():
+        original_text = str(row.get('Original_Text', '')).lower()
+
+        # Deteksi kata kunci revisi (case insensitive)
+        if not any(keyword in original_text for keyword in ['rev', 'revisi', 'update']):
+            continue
+
+        # Ekstrak target time dalam format HH:MM atau HH.MM
+        time_match = re.search(r'jam\s+(\d{1,2})[:.](\d{2})', original_text)
+        if not time_match:
+            # Fallback: cari hanya HH:MM atau HH.MM tanpa "jam"
+            time_match = re.search(r'(\d{1,2})[:.](\d{2})', original_text)
+
+        if not time_match:
+            continue
+
+        # Format target time dengan colon
+        target_time = f"{time_match.group(1)}:{time_match.group(2)}"
+        target_time_normalized = normalize_time(target_time)
+
+        # Kumpulkan updates untuk target_time ini
+        updates = {}
+        original_text_full = str(row.get('Original_Text', ''))  # Keep original case untuk ekstraksi
+
+        for field in ['PLATE', 'DRIVER', 'PHONE']:
+            val = row.get(field)
+            # Try dari field di DataFrame dulu
+            if pd.notna(val) and str(val).strip():
+                updates[field] = val
+            else:
+                # Fallback: ekstrak dari Original_Text
+                extracted = extract_field_from_text(original_text_full, field)
+                if extracted:
+                    updates[field] = extracted
+
+        if updates:
+            rows_to_update.append((target_time_normalized, updates))
+
+        # Tandai revision row untuk dihapus
+        rows_to_remove.append(idx)
+
+    # Terapkan updates ke row yang TIME-nya matching
+    for target_time_normalized, updates in rows_to_update:
+        for row_idx in df_final.index:
+            if row_idx not in rows_to_remove:  # Skip revision rows
+                df_time = normalize_time(df_final.loc[row_idx, 'TIME'])
+                if df_time == target_time_normalized:
+                    for field, value in updates.items():
+                        df_final.loc[row_idx, field] = value
+
+    # Hapus revision rows
+    df_final = df_final.drop(rows_to_remove)
+    return df_final.reset_index(drop=True)
+
 def format_date_custom(date_input):
     try:
         if pd.isna(date_input) or str(date_input).strip() == "": return ""
@@ -170,8 +366,19 @@ def generate_office_report(df_raw):
     """Fungsi utama untuk mengubah raw DataFrame dari AI menjadi DataFrame siap pakai ke Office."""
     df_proc = repair_headers(df_raw)
     df_proc = mark_order_block(df_proc)
-    for col in ['UNIT_TYPE', 'ORIGIN', 'DESTINATION', 'DATE']: df_proc[col] = df_proc.groupby('BLOCK_ID')[col].ffill()
+    
+    # Proteksi: pastikan semua kolom yang diperlukan ada sebelum groupby + ffill
+    required_cols = ['UNIT_TYPE', 'ORIGIN', 'DESTINATION', 'DATE']
+    for col in required_cols:
+        if col not in df_proc.columns:
+            df_proc[col] = None
+    
+    # Forward-fill context per blok
+    for col in required_cols:
+        df_proc[col] = df_proc.groupby('BLOCK_ID')[col].ffill()
+    
     df_final = enforce_block_quota(df_proc)
+    df_final = apply_revision_logic(df_final)
     
     df_office = pd.DataFrame()
     df_office['No.'] = range(1, len(df_final) + 1)
