@@ -70,33 +70,43 @@ class ChatBatchProcessor:
         except FileNotFoundError:
             print(f"[ERROR] File tidak ditemukan: {file_path}")
             return None
-            
+
         print(f"Membaca data mentah... ({len(raw_data)} karakter)")
-        
+
         # 1. SPLIT (Pecah jadi potongan kecil)
         chunks = self.smart_split(raw_data)
         print(f"Dipecah menjadi {len(chunks)} potongan chat.")
-        
+
         valid_orders = []
-        
+        current_timestamp = None  # State-based timestamp tracking
+
         # 2. FILTER & PREDICT
         print("Memulai Ekstraksi AI...")
         for i, text in enumerate(chunks):
             # Bersihkan spasi ganda & baris kosong
             text = text.strip()
             if not text: continue
-            
+
+            # Extract timestamp jika ada pattern [HH.MM, DD/MM/YYYY]
+            timestamp_match = re.search(r'\[(\d{2}[.,:]\d{2}\s*,\s*\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\]', text)
+            if timestamp_match:
+                current_timestamp = f"[{timestamp_match.group(1)}]"
+
             # Cek Sampah
             if self.is_junk(text):
                 print(f"Skip Sampah: {text[:30]}...")
                 continue
-            
+
+            # Jika chunk tidak punya timestamp tapi ada REQUEST, attach current_timestamp
+            if "request" in text.lower() and not timestamp_match and current_timestamp:
+                text = f"{current_timestamp} {text}"
+
             # Pre-processing No HP (Fix bug +62 jadi 0)
             text_clean = text.replace("+62", "0").replace("-", "")
-            
+
             # Ekstraksi IndoBERT
             result = self.pipeline.predict(text_clean)
-            
+
             if result:
                 # Tambahkan teks asli buat validasi manual admin
                 result['Original_Text'] = text
