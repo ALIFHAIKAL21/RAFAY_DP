@@ -186,8 +186,8 @@ def enforce_block_quota(df):
             try:
                 if int(''.join(filter(str.isdigit, str(row.get('UNIT_QTY', ''))))) > 1: header_row = row; continue
             except: pass
-            if header_row is None and 'UNIT_QTY' in row and str(row['UNIT_QTY']).strip() == '1' and pd.notna(row.get('UNIT_TYPE')):
-                header_row = row; continue
+            # Note: Removed the condition that was skipping rows with UNIT_QTY='1' and UNIT_TYPE
+            # because these are actual order rows, not header rows for expansion
 
             row = sanitize_row_data(row)
             d_name = clean_driver_name(row.get('DRIVER', ''))
@@ -365,6 +365,7 @@ def clean_destination_format(text):
 def generate_office_report(df_raw):
     """Fungsi utama untuk mengubah raw DataFrame dari AI menjadi DataFrame siap pakai ke Office."""
     df_proc = repair_headers(df_raw)
+    df_proc = apply_revision_logic(df_proc)  # Apply revision logic BEFORE marking blocks
     df_proc = mark_order_block(df_proc)
     
     # Proteksi: pastikan semua kolom yang diperlukan ada sebelum groupby + ffill
@@ -378,7 +379,6 @@ def generate_office_report(df_raw):
         df_proc[col] = df_proc.groupby('BLOCK_ID')[col].ffill()
     
     df_final = enforce_block_quota(df_proc)
-    df_final = apply_revision_logic(df_final)
     
     df_office = pd.DataFrame()
     df_office['No.'] = range(1, len(df_final) + 1)

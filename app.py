@@ -355,11 +355,12 @@ def mark_order_block(df):
 
 def preprocess_context(df):
     """
-    Pipeline preprocessing utama: repair headers → mark blocks → forward-fill context per blok.
+    Pipeline preprocessing utama: repair headers → apply revision → mark blocks → forward-fill context per blok.
     Transformasi raw extraction menjadi structured data siap untuk business logic.
     """
     if df is None or df.empty: return df
     df = repair_headers(df)
+    df = apply_revision_logic(df)  # Apply revision logic BEFORE marking blocks
     df = mark_order_block(df)
     
     # Proteksi: pastikan semua kolom yang diperlukan ada sebelum groupby + ffill
@@ -1124,7 +1125,6 @@ def main():
                     
                     df_proc = preprocess_context(df_raw)
                     df_final = enforce_block_quota(df_proc)
-                    df_final = apply_revision_logic(df_final)
 
                     accuracy = calculate_extraction_accuracy(df_raw, df_final)
                     time.sleep(0.15)
