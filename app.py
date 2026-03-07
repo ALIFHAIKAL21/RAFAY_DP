@@ -4,6 +4,7 @@ from io import BytesIO
 import os
 import sys
 import re
+import sqlite3
 from pathlib import Path
 from datetime import datetime
 import time
@@ -130,16 +131,46 @@ def normalize_route(text):
     text_str = str(text).strip()
     if text_str.lower() in ['none', 'nan', 'nat']: return ""
     route = text_str.upper()
-    route = route.replace('–', '-').replace('/', '-')
-    route = re.sub(r'\s+', ' ', route)
+    route = re.sub(r'[–—−]', '-', route).replace('/', '-')
+    route = re.sub(r'\s*-\s*', '-', route)
+    route = re.sub(r'\s*,\s*', ',', route)
+    route = re.sub(r'\s+', ' ', route).strip(" ,-")
+
+    parts = []
     if '-' in route or ',' in route:
-        route = route.replace(',', '-')
-        parts = [p.strip() for p in route.split('-') if p.strip()]
-        if len(parts) >= 2: return ', '.join(parts)
-    if ' ' in route:
-        parts = [p.strip() for p in route.split() if p.strip()]
-        if len(parts) > 1: return ', '.join(parts)
+        normalized_sep = re.sub(r'\s*[,-]\s*', ',', route)
+        parts = [p.strip() for p in normalized_sep.split(',') if p.strip()]
+    else:
+        tokens = [p.strip() for p in route.split() if p.strip()]
+        if len(tokens) == 2:
+            parts = tokens
+
+    if len(parts) >= 2:
+        origin = parts[0]
+        destination = " ".join(parts[1:])
+        return f"{origin}, {destination}"
+    if len(parts) == 1:
+        return parts[0]
     return route.strip()
+
+def extract_route_from_text(text):
+    if pd.isna(text) or not str(text).strip(): return ""
+    m = re.search(r'(?im)^\s*Rute(?:\s*/\s*|\s+)tujuan\s*:\s*([^\n\r]+)', str(text))
+    return m.group(1).strip() if m else ""
+
+def normalize_unit_type(unit_type):
+    if pd.isna(unit_type) or not str(unit_type).strip(): return ""
+    unit = str(unit_type).upper().strip()
+    if unit.lower() in ['none', 'nan', 'nat']: return ""
+    unit = re.sub(r'[^A-Z0-9\s]', ' ', unit)
+    unit = re.sub(r'\s+', ' ', unit).strip()
+    for token in unit.split():
+        token_clean = re.sub(r'\d+', '', token)
+        if token in ['CBM', 'M3', 'M^3'] or token_clean in ['CBM', 'M']:
+            continue
+        if token_clean:
+            return token_clean
+    return ""
 
 def clean_driver_name(name):
     if not name or pd.isna(name) or str(name).lower() == 'none': return ""
@@ -227,8 +258,45 @@ def sanitize_row_data(row):
             else:
                 row[route_field] = ""
 
+    route_from_text = extract_route_from_text(orig_text)
+    if route_from_text:
+        row['DESTINATION'] = normalize_route(route_from_text)
+
+    if 'UNIT_TYPE' in row:
+        raw_unit = str(row.get('UNIT_TYPE', '')).strip()
+        if raw_unit and raw_unit.lower() not in ['none', 'nan', 'nat', '']:
+            row['UNIT_TYPE'] = normalize_unit_type(raw_unit)
+        else:
+            row['UNIT_TYPE'] = ""
+
     row['DATE'] = d
     row['TIME'] = t
+    return row
+
+def normalize_header_context_fields(row):
+    if row is None:
+        return row
+    row = row.copy()
+
+    for route_field in ['ORIGIN', 'DESTINATION']:
+        if route_field in row:
+            raw_route = str(row.get(route_field, '')).strip()
+            if raw_route and raw_route.lower() not in ['none', 'nan', 'nat', '']:
+                row[route_field] = normalize_route(raw_route)
+            else:
+                row[route_field] = ""
+
+    route_from_text = extract_route_from_text(str(row.get('Original_Text', '')).strip())
+    if route_from_text:
+        row['DESTINATION'] = normalize_route(route_from_text)
+
+    if 'UNIT_TYPE' in row:
+        raw_unit = str(row.get('UNIT_TYPE', '')).strip()
+        if raw_unit and raw_unit.lower() not in ['none', 'nan', 'nat', '']:
+            row['UNIT_TYPE'] = normalize_unit_type(raw_unit)
+        else:
+            row['UNIT_TYPE'] = ""
+
     return row
 
 def repair_headers(df):
@@ -292,6 +360,10 @@ def enforce_block_quota(df):
             except: pass
             if is_master_header:
                 header_row = row; continue 
+            # Baris revisi (Rev/Revisi/Update) hanya untuk update field, bukan order baru.
+            orig_text_lower = str(row.get('Original_Text', '')).lower()
+            if re.search(r'\b(?:rev|revisi|update)\b', orig_text_lower):
+                continue
             row = sanitize_row_data(row)
             d_name = clean_driver_name(row.get('DRIVER', ''))
             t_val = str(row.get('TIME', '')).lower()
@@ -304,6 +376,7 @@ def enforce_block_quota(df):
             if d_name or has_time or has_plate:
                 row['DRIVER'] = d_name; valid_candidates.append(row)
         if header_row is None and len(block_data) > 0: header_row = block_data.iloc[0]
+        header_row = normalize_header_context_fields(header_row)
         for i in range(target_qty):
             if i < len(valid_candidates):
                 candidate = valid_candidates[i]
@@ -326,84 +399,173 @@ def enforce_block_quota(df):
 # --- [FITUR BARU] REVISI PINTAR BERBASIS MEMORI ---
 def apply_revisions_from_chat(chat_text, df_final):
     """
-    Menangkap pesan revisi langsung dari teks asli chat WhatsApp dan 
-    menerapkannya berdasarkan kecocokan Jam atau Memory Timestamp chat.
+    Menangkap pesan revisi langsung dari teks asli chat WhatsApp dan
+    menerapkannya ke order eksisting tanpa membuat baris baru.
     """
     if df_final is None or df_final.empty or not chat_text:
         return df_final
-        
+
     df = df_final.copy()
     wa_pattern = r"(?=\[\d{2}[.,:]\d{2}[, ]+\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\]\s*[^:]+:)"
-    messages = re.split(wa_pattern, chat_text)
-    
+    messages = [m for m in re.split(wa_pattern, str(chat_text)) if str(m).strip()]
+
     def normalize_time(time_str):
-        if not time_str: return None
+        if not time_str:
+            return None
         s = str(time_str).strip().replace('.', ':')
-        m = re.search(r'(\d{1,2}):(\d{2})', s)
-        if m: return f"{int(m.group(1)):02d}:{m.group(2)}"
+        if not s:
+            return None
+        if "SEGERA" in s.upper():
+            return "SEGERA"
+        m = re.search(r'(\d{1,2})(?::(\d{2}))?', s)
+        if m:
+            hour = int(m.group(1))
+            minute = m.group(2) if m.group(2) else "00"
+            return f"{hour:02d}:{minute}"
         return None
-        
-    # 1. Peta Memori: Ingat setiap plat dikirim jam berapa di header WA
-    plate_to_msg_time = {}
-    
+
+    def has_revision_keyword(text):
+        return bool(re.search(r'(?i)\b(?:rev|revisi|update)\b', str(text)))
+
+    def normalize_token(text):
+        if text is None:
+            return ""
+        return re.sub(r'\s+', ' ', str(text).upper()).strip()
+
+    def extract_revision_payload(msg_text):
+        payload = {
+            'target_time': None,
+            'target_origin': "",
+            'target_route': "",
+            'target_unit': "",
+            'updates': {}
+        }
+
+        # Context target: waktu loading / jam
+        time_match = re.search(r'(?i)(?:jam|pukul|waktu(?:\s+loading)?)\s*:?\s*(\d{1,2}(?:[:.]\d{2})?)', msg_text)
+        if time_match:
+            payload['target_time'] = normalize_time(time_match.group(1))
+
+        # Context target: lokasi
+        lokasi_match = re.search(r'(?im)^\s*Lokasi\s*:\s*([^\n\r]+)', msg_text)
+        if lokasi_match:
+            payload['target_origin'] = normalize_token(lokasi_match.group(1))
+
+        # Context target: rute
+        route_match = re.search(r'(?im)^\s*Rute(?:\s*/\s*|\s+)tujuan\s*:\s*([^\n\r]+)', msg_text)
+        if route_match:
+            payload['target_route'] = normalize_route(route_match.group(1))
+
+        # Context target: unit type (optional)
+        unit_match = re.search(r'(?im)^\s*(?:jenis\s+unit|type\s+truck)\s*:\s*([^\n\r]+)', msg_text)
+        if unit_match:
+            payload['target_unit'] = normalize_unit_type(unit_match.group(1))
+        else:
+            unit_inline = re.search(r'(?i)\bunit\s+([a-zA-Z][a-zA-Z0-9\s]{1,20})', msg_text)
+            if unit_inline:
+                unit_candidate = unit_inline.group(1).strip()
+                if not re.match(r'(?i)^(?:jam|pukul|waktu)\b', unit_candidate):
+                    payload['target_unit'] = normalize_unit_type(unit_candidate)
+
+        # Revised fields: driver / nopol / phone
+        for line in str(msg_text).split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+
+            plate_match = re.search(r'(?:nopol|no\.?\s*pol(?:isi)?|no\.?\s*plat|plat)\s*:?\s*([A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3})', line, re.IGNORECASE)
+            if plate_match:
+                payload['updates']['PLATE'] = plate_match.group(1).strip().upper()
+
+            driver_match = re.search(r'(?:driver|pengemudi)\s*:?\s*([a-zA-Z\s]+)', line, re.IGNORECASE)
+            if driver_match and not has_revision_keyword(driver_match.group(1)):
+                d_name = clean_driver_name(driver_match.group(1).strip())
+                if d_name:
+                    payload['updates']['DRIVER'] = d_name
+
+            phone_match = re.search(r'(?:no\.?\s*hp|hp|no\.?\s*telp|kontak)\s*:?\s*([0-9+\-\s]+)', line, re.IGNORECASE)
+            if phone_match:
+                payload['updates']['PHONE'] = normalize_phone_number(phone_match.group(1).strip())
+
+        return payload
+
+    revision_mask = pd.Series(False, index=df.index)
+    if 'Original_Text' in df.columns:
+        revision_mask = df['Original_Text'].apply(has_revision_keyword)
+
+    def row_time(idx):
+        return normalize_time(df.at[idx, 'TIME']) if 'TIME' in df.columns else None
+
+    def row_origin(idx):
+        return normalize_token(df.at[idx, 'ORIGIN']) if 'ORIGIN' in df.columns else ""
+
+    def row_route(idx):
+        if 'DESTINATION' not in df.columns:
+            return ""
+        return normalize_route(df.at[idx, 'DESTINATION'])
+
+    def row_unit(idx):
+        if 'UNIT_TYPE' not in df.columns:
+            return ""
+        return normalize_unit_type(df.at[idx, 'UNIT_TYPE'])
+
+    def pick_best(candidates, payload):
+        if not candidates:
+            return None
+        scored = []
+        for idx in candidates:
+            score = 0
+            if payload['target_origin'] and row_origin(idx) == payload['target_origin']:
+                score += 1
+            if payload['target_route'] and row_route(idx) == payload['target_route']:
+                score += 1
+            if payload['target_unit'] and row_unit(idx) == payload['target_unit']:
+                score += 1
+            scored.append((score, idx))
+        max_score = max(s for s, _ in scored)
+        best = [idx for s, idx in scored if s == max_score]
+        return max(best)  # paling recent
+
+    def find_best_match(payload):
+        candidate_indices = [idx for idx in df.index if not bool(revision_mask.loc[idx])]
+        if not candidate_indices:
+            return None
+
+        # Priority a) waktu_loading
+        if payload['target_time']:
+            by_time = [idx for idx in candidate_indices if row_time(idx) == payload['target_time']]
+            if by_time:
+                return pick_best(by_time, payload)
+
+        # Priority b) lokasi
+        if payload['target_origin']:
+            by_origin = [idx for idx in candidate_indices if row_origin(idx) == payload['target_origin']]
+            if by_origin:
+                return pick_best(by_origin, payload)
+
+        # Priority c) rute
+        if payload['target_route']:
+            by_route = [idx for idx in candidate_indices if row_route(idx) == payload['target_route']]
+            if by_route:
+                return pick_best(by_route, payload)
+
+        # Priority d) order paling recent sebelum revisi
+        return max(candidate_indices)
+
     for msg in messages:
-        header_match = re.search(r'\[(\d{2}[.,:]\d{2})\s*,', msg)
-        if header_match:
-            msg_time = normalize_time(header_match.group(1))
-            plates = re.findall(r'(?:nopol|no\.?\s*pol(?:isi)?|no\.?\s*plat|plat)\s*:?\s*([A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3})', msg, re.IGNORECASE)
-            for p in plates:
-                plate_clean = p.strip().upper()
-                # Hanya ingat pesan yang BUKAN pesan revisi
-                if not any(kw in msg.lower() for kw in ['rev', 'revisi', 'update', 'ganti']):
-                    plate_to_msg_time[plate_clean] = msg_time
-                    
-    # 2. Cari instruksi revisi
-    for msg in messages:
-        msg_lower = msg.lower()
-        if any(kw in msg_lower for kw in ['rev', 'revisi', 'update', 'ganti']):
-            target_time_match = re.search(r'(?:jam|pukul|waktu)\s+(\d{1,2}[:.]\d{2})', msg_lower)
-            target_time = normalize_time(target_time_match.group(1)) if target_time_match else None
-            
-            updates = {}
-            lines = msg.split('\n')
-            for line in lines:
-                line_lower = line.lower()
-                if ':' in line or 'adalah' in line_lower or line_lower.startswith('nopol') or line_lower.startswith('plat'):
-                    plate_match = re.search(r'(?:nopol|no\.?\s*pol(?:isi)?|no\.?\s*plat|plat)\s*:?\s*([A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3})', line, re.IGNORECASE)
-                    if plate_match:
-                        updates['PLATE'] = plate_match.group(1).strip().upper()
-                        
-                    driver_match = re.search(r'(?:driver|pengemudi)\s*:?\s*([a-zA-Z\s]+)', line, re.IGNORECASE)
-                    if driver_match and not any(kw in driver_match.group(1).lower() for kw in ['rev', 'revisi']):
-                        d_name = clean_driver_name(driver_match.group(1).strip())
-                        if d_name: updates['DRIVER'] = d_name
-                        
-                    phone_match = re.search(r'(?:no\.?\s*hp|hp|no\.?\s*telp|kontak)\s*:?\s*([0-9+\-\s]+)', line, re.IGNORECASE)
-                    if phone_match:
-                        updates['PHONE'] = normalize_phone_number(phone_match.group(1).strip())
-            
-            # 3. Terapkan update ke dataframe
-            if target_time and updates:
-                for idx, row in df.iterrows():
-                    # Coba cari jam yang terekstrak eksplisit
-                    row_time = normalize_time(row.get('TIME', ''))
-                    
-                    # Jika TIME kosong, gunakan Memory Map (Tanya memori: Plat ini dulu dikirim jam berapa?)
-                    if not row_time:
-                        row_plate = str(row.get('PLATE', '')).strip().upper()
-                        row_time = plate_to_msg_time.get(row_plate)
-                        
-                    if row_time == target_time:
-                        if 'PLATE' in updates: df.at[idx, 'PLATE'] = updates['PLATE']
-                        if 'DRIVER' in updates: df.at[idx, 'DRIVER'] = updates['DRIVER']
-                        if 'PHONE' in updates: df.at[idx, 'PHONE'] = updates['PHONE']
-                        
-            elif updates and len(df) == 1:
-                # Jika target jam ga ketemu tapi data cuma 1, langsung timpa saja
-                if 'PLATE' in updates: df.at[0, 'PLATE'] = updates['PLATE']
-                if 'DRIVER' in updates: df.at[0, 'DRIVER'] = updates['DRIVER']
-                if 'PHONE' in updates: df.at[0, 'PHONE'] = updates['PHONE']
-                
+        if not has_revision_keyword(msg):
+            continue
+        payload = extract_revision_payload(msg)
+        if not payload['updates']:
+            continue
+        target_idx = find_best_match(payload)
+        if target_idx is None:
+            continue
+
+        for field, value in payload['updates'].items():
+            if field in df.columns:
+                df.at[target_idx, field] = value
+
     return df
 
 def format_date_custom(date_input):
@@ -600,6 +762,31 @@ st.markdown("""
 @st.cache_resource
 def get_processor(): return ChatBatchProcessor()
 
+def init_db():
+    conn = sqlite3.connect("rafay_database.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_number TEXT UNIQUE,
+            tgl_ro TEXT,
+            tgl_muat TEXT,
+            vendor TEXT,
+            pickup TEXT,
+            tujuan TEXT,
+            nopol TEXT,
+            type_truck TEXT,
+            driver TEXT,
+            kontak_driver TEXT,
+            jam_loading TEXT,
+            confidence REAL,
+            status TEXT DEFAULT 'Valid',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.commit()
+    conn.close()
+
 def render_top_ui(proses_waktu="--", baris="--", akurasi="--"):
     st.markdown(f"""
         <div class="top-navbar">
@@ -625,6 +812,7 @@ def render_top_ui(proses_waktu="--", baris="--", akurasi="--"):
 
 
 def main():
+    init_db()
     if 'waktu' not in st.session_state: st.session_state.waktu = "--"
     if 'baris' not in st.session_state: st.session_state.baris = "--"
     if 'akurasi' not in st.session_state: st.session_state.akurasi = "--"
@@ -803,3 +991,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

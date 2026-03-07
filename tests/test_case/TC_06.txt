@@ -5,3 +5,15 @@ Waktu loading : 15:00
 driver : RUDI
 Nopol : B 9999 XX
 No hp : 08123456789
+
+[20.06, 4/2/2026] Admin Rafay:
+
+REQUEST ORDER ONCALL
+
+3 UNIT CDDL 24 CBM
+Lokasi : MEGAHUB
+Waktu loading : SEGERA
+Rute/tujuan : CGK - JATENG
+driver  : KARYADI
+Nopol  : AD 8517 BA
+No hp  :085865762797
