@@ -1,4 +1,7 @@
 
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 06 febuary 2026
+
+
 2 unit twb 50 CBM
 Lokasi : JNE SUB
 Waktu loading : SEGERA 
@@ -6,6 +9,8 @@ Rute/tujuan : SUB-CGK
 driver  : WAHYUDI
 Nopol  : N 9549 UA
 No hp  :085784422398
+
+
 [05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 06 febuary 2026
 
 
@@ -16,6 +21,8 @@ Rute/tujuan : SUB-CGK
 driver  : SOFYAN
 Nopol  : B 9679 WT
 No hp  : 082231837381
+
+
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ULANG ONCALL
 06 FEB 2026
 
@@ -26,6 +33,7 @@ Rute/tujuan : CGK - SUB
 driver  : Chandra
 Nopol  : L 8601 UH
 No hp  : +62 852-3168-1470
+
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ULANG ONCALL
 06 FEB 2026
 
@@ -46,6 +54,7 @@ Waktu loading : SEGERA
 DRIVER 1 : SENTOT
 NOPOL    : B 9231 CEU
 NOHP      :+62 812-8714-7789
+
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCAL
 06 FEBUARI 2026
 
@@ -57,6 +66,7 @@ RAFAY
 DRIVER 1 : PURWANTO
 NOPOL    : B 9891 BEU
 NOHP      :083142142113
+
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCAL
 06 FEBUARI 2026
 
@@ -67,6 +77,7 @@ Waktu loading : SEGERA
 DRIVER : DIDIK
 NOPOL    : B 9687 JM
 NOHP      :085385220743
+
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCAL
 06 FEBUARI 2026
 Lokasi : ARGOPANTES
@@ -75,6 +86,7 @@ Waktu loading : segera
 DRIVER 1 : Haryono
 NOPOL    : B 8745 AMR
 NO HP      : 083166684195
+
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCAL
 06 FEBUARI 2026
 
@@ -85,6 +97,7 @@ Waktu loading : SEGERA
 DRIVER : HERMANTO
 NOPOL : S 8635 NJ
 NOHP :085194592825
+
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCAL
 07 FEBUARI 2026
 RAFAY
@@ -96,6 +109,7 @@ DRIVER 1 :Agung
 DRIVER 2 :Wijaya
 NOPOL    :H 9948 RA
 NOHP      :0882016641381
+
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 08 FEBRUARI 2025:
 
 3 UNIT TWB 50 CBM
@@ -105,6 +119,8 @@ Rute/tujuan : CGK - MES
 driver  : DARMAWAN
 Nopol  : BA 8829 BU
 No hp  :082363564665
+
+
 [05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 09 Feb
 
 1 UNIT CDDL 24 CBM
@@ -114,6 +130,7 @@ Rute/tujuan : SRG-CGK
 Driver : Arif R
 Nopol :B 9787 XX
 No hp :089690885555
+
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER  ONCALL 9 FEBRUARI 2026:
 
 2 unit TWB 50 Cbm
@@ -127,6 +144,7 @@ Waktu loading : 03:00 10/02/2026
 NAMA : YUDA
 NOPOL: W 8973 UQ
 NO HP :089507296985
+
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER  ONCALL 9 FEBRUARI 2026:
 
 
@@ -141,6 +159,8 @@ Waktu loading : 03:00 10/02/2026
 NAMA :
 NOPOL:
 NO HP :
+
+
 [05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 09 Feb
 
 1 UNIT CDDL 24 CBM
@@ -150,6 +170,7 @@ Rute/tujuan : SRG-CGK
 Driver : Supriadi
 Nopol : B 9586 TXV
 No hp :081350529712
+
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER  ONCALL 9 FEBRUARI 2026:
 
 
@@ -161,6 +182,7 @@ Waktu loading : 03:00 10/02/2026
 NAMA : SYAFRIZAL
 NOPOL: BM 8479 AU
 NO HP :082170733190
+
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER  ONCALL 9 FEBRUARI 2026:
 
 RAFAY
@@ -171,6 +193,7 @@ Waktu loading :Segera
 NAMA : SYAFRIZAL
 NOPOL: BM 8479 AU
 NO HP :082170733190
+
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 11 FEBRUARI 2026:
 
 1 unit Cddl 24 Cbm
@@ -180,6 +203,7 @@ Rute/tujuan : CGK - DPS
 driver  :Nizar
 Nopol  :B 9172 SCP
 No hp  :081313444015
+
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 11 FEBRUARI 2026:
 
 3 unit tronton 50 Cbm
@@ -194,6 +218,7 @@ Waktu loading : 12:00
 Driver : JONI
 Nopol : B 9169 UEX
 Hp :+62 822-7638-5077
+
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER TAMBAHAN ONCALL  12 FEBRUARI 2026:
 
 1 unit TRONTON 50 Cbm
@@ -203,6 +228,7 @@ Rute/tujuan : CGK - PKU
 Nama 	: NASIP K
 Nopol		: BH 8165 QI
 No Tlp		:‪+6281272463920
+
 [05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 12 Feb 26
 
 1 Unit  TWB 50 Cbm
@@ -212,6 +238,7 @@ Rute/tujuan : CKR-SUB-SUX
 Driver   : AGENG
 Nopol  : B9654YU
 No Hp  : +62 857-0738-0584
+
 [05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 12 Feb 26
 
 1 Unit  Cddl / 24 Cbm
@@ -223,6 +250,7 @@ Driver. 1 :  Jatmiyanta
 No hp :  : 082118558105
 Driver 2  : Ilham Wahyudi
 No hp.    : 089519041791
+
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 12 FEBRUARI 2026:
 RAFAY
 3 unit tronton 50 Cbm
@@ -232,63 +260,3 @@ Rute/tujuan : CGK - MES
 driver  : SRI MARDONO
 Nopol  : BK 8678 VE
 No hp  :085218843366
-[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 12 FEBRUARI 2026:
-
-2 unit tronton 50 Cbm
-Lokasi : cikokol
-Waktu loading : segera
-Rute/tujuan : CGK - SUB
-driver  : AGENG
-Nopol  : B 9654 YU
-No hp  : +62 857-0738-0584
-[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 12 FEBRUARI 2026:
-
-3 UNIT TWB 50 Cbm
-Lokasi : ARGOPANTES
-Waktu loading : SEGERA
-Rute/tujuan : CGK - SUB
-driver  : Rosyit
-Nopol  : B 9563 TEU
-No hp  : 082313572678
-Waktu loading : SEGERA
-Rute/tujuan : CGK - SUB
-driver  : M.ibnu
-Nopol  : L 9511 AL
-No hp  : 082191633212
-Waktu loading : 03:00
-Rute/tujuan : CGK - SUB
-driver  : Akiyat
-Nopol  : L 9722 UE
-No hp  :081281122738
-[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 12 FEBRUARI 2026:
-
-3 UNIT TWB 50 Cbm
-Lokasi : ARGOPANTES
-Waktu loading : SEGERA
-Rute/tujuan : CGK - SUB
-driver  : Rosyit
-Nopol  : B 9563 TEU
-No hp  : 082313572678
-Waktu loading : SEGERA
-Rute/tujuan : CGK - SUB
-driver  : M.ibnu
-Nopol  : L 9511 AL
-No hp  : 082191633212
-Waktu loading : 03:00
-Rute/tujuan : CGK - SUB
-Revisi
-driver  : Ahmad Wahyudi
-Nopol  : W 8323 NV
-No hp  : 085792725002
-Posisi sudah dilokasi muat
-
-REQUEST  ORDER  ONCALL  3 MARET 2026
-
-5 UNIT WB/50 CBM
-Lokasi : ARGOPANTES 
-Waktu loading : 23:00
-Rute/tujuan : CGK - MES 
-ddriver  : Sri Mardono
-Nopol  : BK 8678 VE
-No hp  : 085218843366
-

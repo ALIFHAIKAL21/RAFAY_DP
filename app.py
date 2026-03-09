@@ -56,17 +56,18 @@ def auto_format_chat_input(text):
 
     current_global_date = ""
     current_block_date = ""
-    current_header_timestamp = None 
 
     for line in lines:
         header_timestamp_pattern = r'\[(\d{2}[.,:]\d{2})\s*,\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\]'
         timestamp_match = re.search(header_timestamp_pattern, line)
         if timestamp_match:
-            current_header_timestamp = timestamp_match.group(2)
-            current_global_date = current_header_timestamp
-            current_block_date = current_header_timestamp
-            formatted_lines.append(line)
-            continue
+            # Timestamp WhatsApp hanya metadata waktu chat, tidak boleh menjadi Tgl Muat.
+            # Reset konteks tanggal per pesan baru agar tidak carry-over ke pesan berikutnya.
+            current_global_date = ""
+            current_block_date = ""
+            # Netralisasi tanggal timestamp agar model tidak mengekstraknya sebagai DATE.
+            # Tetap pertahankan bracket token supaya pemecahan chunk tetap stabil.
+            line = re.sub(header_timestamp_pattern, "[WA_TS]", line)
 
         is_request_header = re.search(r"(?i)(?:REQUEST|ONCALL|TAMBAHAN)", line)
         if is_request_header:
@@ -74,6 +75,10 @@ def auto_format_chat_input(text):
             if header_match:
                 current_global_date = header_match.group(1)
                 current_block_date = current_global_date
+            else:
+                # Header tanpa tanggal: pastikan Tgl Muat tidak terisi dari konteks sebelumnya.
+                current_global_date = ""
+                current_block_date = ""
             formatted_lines.append(line)
             continue
 
