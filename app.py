@@ -131,36 +131,47 @@ def normalize_phone_number(phone):
     if phone_digits.startswith('62'): phone_digits = '0' + phone_digits[2:]
     return phone_digits
 
+def normalize_origin(text):
+    if pd.isna(text) or not str(text).strip(): return ""
+    origin = str(text).upper().strip()
+    if origin.lower() in ['none', 'nan', 'nat']: return ""
+    origin = re.sub(r'[â€“â€”âˆ’]', '-', origin)
+    origin = origin.replace('/', ' ')
+    origin = re.sub(r'\s*-\s*', ' ', origin)
+    origin = origin.replace(',', ' ')
+    origin = re.sub(r'\s+', ' ', origin).strip(" -")
+    return origin
+
 def normalize_route(text):
     if pd.isna(text) or not str(text).strip(): return ""
     text_str = str(text).strip()
     if text_str.lower() in ['none', 'nan', 'nat']: return ""
     route = text_str.upper()
-    route = re.sub(r'[–—−]', '-', route).replace('/', '-')
-    route = re.sub(r'\s*-\s*', '-', route)
-    route = re.sub(r'\s*,\s*', ',', route)
+    route = re.sub(r'[â€“â€”âˆ’]', '-', route)
     route = re.sub(r'\s+', ' ', route).strip(" ,-")
 
-    parts = []
+    # Route jadi format "A, B" hanya jika input memang punya separator route.
     if '-' in route or ',' in route:
-        normalized_sep = re.sub(r'\s*[,-]\s*', ',', route)
+        normalized_sep = re.sub(r'\s*[/,-]\s*', ',', route)
         parts = [p.strip() for p in normalized_sep.split(',') if p.strip()]
-    else:
-        tokens = [p.strip() for p in route.split() if p.strip()]
-        if len(tokens) == 2:
-            parts = tokens
+        if len(parts) >= 2:
+            return ", ".join(parts)
+        if len(parts) == 1:
+            return parts[0]
+        return ""
 
-    if len(parts) >= 2:
-        origin = parts[0]
-        destination = " ".join(parts[1:])
-        return f"{origin}, {destination}"
-    if len(parts) == 1:
-        return parts[0]
-    return route.strip()
+    # Tujuan tunggal tanpa separator tetap apa adanya (tanpa koma).
+    return route
 
 def extract_route_from_text(text):
     if pd.isna(text) or not str(text).strip(): return ""
     m = re.search(r'(?im)^\s*Rute(?:\s*/\s*|\s+)tujuan\s*:\s*([^\n\r]+)', str(text))
+    return m.group(1).strip() if m else ""
+
+def extract_origin_from_text(text):
+    if pd.isna(text) or not str(text).strip():
+        return ""
+    m = re.search(r'(?im)^\s*Lokasi\s*:\s*([^\n\r]+)', str(text))
     return m.group(1).strip() if m else ""
 
 def normalize_unit_type(unit_type):
@@ -255,17 +266,27 @@ def sanitize_row_data(row):
         else:
             row['PHONE'] = ""
     
-    for route_field in ['ORIGIN', 'DESTINATION']:
-        if route_field in row:
-            raw_route = str(row.get(route_field, '')).strip()
-            if raw_route and raw_route.lower() not in ['none', 'nan', 'nat', '']:
-                row[route_field] = normalize_route(raw_route)
-            else:
-                row[route_field] = ""
+    if 'ORIGIN' in row:
+        raw_origin = str(row.get('ORIGIN', '')).strip()
+        if raw_origin and raw_origin.lower() not in ['none', 'nan', 'nat', '']:
+            row['ORIGIN'] = normalize_origin(raw_origin)
+        else:
+            row['ORIGIN'] = ""
+
+    if 'DESTINATION' in row:
+        raw_destination = str(row.get('DESTINATION', '')).strip()
+        if raw_destination and raw_destination.lower() not in ['none', 'nan', 'nat', '']:
+            row['DESTINATION'] = normalize_route(raw_destination)
+        else:
+            row['DESTINATION'] = ""
 
     route_from_text = extract_route_from_text(orig_text)
     if route_from_text:
         row['DESTINATION'] = normalize_route(route_from_text)
+
+    origin_from_text = extract_origin_from_text(orig_text)
+    if origin_from_text:
+        row['ORIGIN'] = normalize_origin(origin_from_text)
 
     if 'UNIT_TYPE' in row:
         raw_unit = str(row.get('UNIT_TYPE', '')).strip()
@@ -283,17 +304,27 @@ def normalize_header_context_fields(row):
         return row
     row = row.copy()
 
-    for route_field in ['ORIGIN', 'DESTINATION']:
-        if route_field in row:
-            raw_route = str(row.get(route_field, '')).strip()
-            if raw_route and raw_route.lower() not in ['none', 'nan', 'nat', '']:
-                row[route_field] = normalize_route(raw_route)
-            else:
-                row[route_field] = ""
+    if 'ORIGIN' in row:
+        raw_origin = str(row.get('ORIGIN', '')).strip()
+        if raw_origin and raw_origin.lower() not in ['none', 'nan', 'nat', '']:
+            row['ORIGIN'] = normalize_origin(raw_origin)
+        else:
+            row['ORIGIN'] = ""
+
+    if 'DESTINATION' in row:
+        raw_destination = str(row.get('DESTINATION', '')).strip()
+        if raw_destination and raw_destination.lower() not in ['none', 'nan', 'nat', '']:
+            row['DESTINATION'] = normalize_route(raw_destination)
+        else:
+            row['DESTINATION'] = ""
 
     route_from_text = extract_route_from_text(str(row.get('Original_Text', '')).strip())
     if route_from_text:
         row['DESTINATION'] = normalize_route(route_from_text)
+
+    origin_from_text = extract_origin_from_text(str(row.get('Original_Text', '')).strip())
+    if origin_from_text:
+        row['ORIGIN'] = normalize_origin(origin_from_text)
 
     if 'UNIT_TYPE' in row:
         raw_unit = str(row.get('UNIT_TYPE', '')).strip()
@@ -306,9 +337,43 @@ def normalize_header_context_fields(row):
 
 def repair_headers(df):
     if df is None or df.empty: return df
+    df = df.copy()
+
+    # Hardening schema agar tidak pernah KeyError saat model tidak mengeluarkan kolom tertentu.
+    for col in ['DESTINATION', 'ORIGIN', 'UNIT_TYPE', 'UNIT_QTY']:
+        if col not in df.columns:
+            df[col] = pd.NA
+    if 'Original_Text' not in df.columns:
+        df['Original_Text'] = ""
+
     for col in ['DESTINATION', 'ORIGIN', 'UNIT_TYPE']:
         df[col] = df[col].replace(['', 'None', 'NONE', 'nan', 'nan '], pd.NA)
+
     for i in range(len(df)):
+        orig_text = str(df.at[i, 'Original_Text']) if 'Original_Text' in df.columns else ""
+        origin_from_text = extract_origin_from_text(orig_text)
+        route_from_text = extract_route_from_text(orig_text)
+
+        if pd.notna(df.at[i, 'ORIGIN']):
+            df.at[i, 'ORIGIN'] = normalize_origin(df.at[i, 'ORIGIN'])
+        if pd.notna(df.at[i, 'DESTINATION']):
+            df.at[i, 'DESTINATION'] = normalize_route(df.at[i, 'DESTINATION'])
+
+        if origin_from_text:
+            origin_norm = normalize_origin(origin_from_text)
+            # Lokasi dari teks asli jadi sumber utama Pickup.
+            df.at[i, 'ORIGIN'] = origin_norm
+            # Jika model salah label lokasi ke DESTINATION pada baris tanpa route,
+            # kosongkan agar bisa diwarisi dari baris rute berikutnya.
+            if not route_from_text:
+                dest_val = str(df.at[i, 'DESTINATION']).strip() if pd.notna(df.at[i, 'DESTINATION']) else ""
+                if dest_val and normalize_origin(dest_val) == origin_norm:
+                    df.at[i, 'DESTINATION'] = pd.NA
+        if route_from_text:
+            route_norm = normalize_route(route_from_text)
+            # Rute dari teks asli jadi sumber utama Tujuan.
+            df.at[i, 'DESTINATION'] = route_norm
+
         qty_val = str(df.at[i, 'UNIT_QTY'])
         if any(char.isdigit() for char in qty_val):
             for lookahead in range(1, 4):
@@ -334,12 +399,13 @@ def mark_order_block(df):
 
 def preprocess_context(df):
     if df is None or df.empty: return df
-    df = repair_headers(df)
-    df = mark_order_block(df)
     required_cols = ['UNIT_TYPE', 'ORIGIN', 'DESTINATION', 'DATE']
     for col in required_cols:
         if col not in df.columns:
             df[col] = None
+
+    df = repair_headers(df)
+    df = mark_order_block(df)
     for col in required_cols:
         df[col] = df.groupby('BLOCK_ID')[col].ffill()
     return df
@@ -347,6 +413,10 @@ def preprocess_context(df):
 def enforce_block_quota(df):
     if df is None or df.empty: return df
     final_rows = []
+
+    def _compact(text):
+        return re.sub(r'[^A-Z0-9]', '', str(text).upper())
+
     for block_id in df['BLOCK_ID'].unique():
         if block_id == 0: continue
         block_data = df[df['BLOCK_ID'] == block_id].copy()
@@ -382,10 +452,53 @@ def enforce_block_quota(df):
                 row['DRIVER'] = d_name; valid_candidates.append(row)
         if header_row is None and len(block_data) > 0: header_row = block_data.iloc[0]
         header_row = normalize_header_context_fields(header_row)
+
+        origin_pool = []
+        destination_pool = []
+        for src_row in [header_row] + valid_candidates:
+            o = normalize_origin(src_row.get('ORIGIN', ''))
+            d = normalize_route(src_row.get('DESTINATION', ''))
+            if o:
+                origin_pool.append(o)
+            if d:
+                destination_pool.append(d)
+
+        if origin_pool:
+            block_origin = max(origin_pool, key=lambda x: (len(x.split()), len(x)))
+            header_row['ORIGIN'] = block_origin
+        else:
+            block_origin = normalize_origin(header_row.get('ORIGIN', ''))
+
+        if destination_pool:
+            with_separator = [d for d in destination_pool if ',' in d]
+            block_destination = with_separator[0] if with_separator else destination_pool[0]
+            header_row['DESTINATION'] = block_destination
+        else:
+            block_destination = normalize_route(header_row.get('DESTINATION', ''))
+
         for i in range(target_qty):
             if i < len(valid_candidates):
                 candidate = valid_candidates[i]
-                for col in ['ORIGIN', 'DESTINATION', 'UNIT_TYPE', 'DATE']:
+
+                cand_origin = normalize_origin(candidate.get('ORIGIN', ''))
+                if not cand_origin:
+                    cand_origin = block_origin
+                elif block_origin and cand_origin != block_origin:
+                    cand_tokens = set(cand_origin.split())
+                    block_tokens = set(block_origin.split())
+                    if cand_tokens and cand_tokens.issubset(block_tokens):
+                        cand_origin = block_origin
+                candidate['ORIGIN'] = cand_origin
+
+                cand_destination = normalize_route(candidate.get('DESTINATION', ''))
+                if not cand_destination:
+                    cand_destination = block_destination
+                elif block_destination and cand_destination != block_destination:
+                    if ',' in block_destination and _compact(cand_destination) == _compact(block_destination):
+                        cand_destination = block_destination
+                candidate['DESTINATION'] = cand_destination
+
+                for col in ['UNIT_TYPE', 'DATE']:
                     val = candidate.get(col)
                     if pd.isna(val) or str(val).strip() == "":
                         header_val = header_row.get(col)
@@ -575,49 +688,95 @@ def apply_revisions_from_chat(chat_text, df_final):
 
 def format_date_custom(date_input):
     try:
-        if pd.isna(date_input) or str(date_input).strip() == "": return ""
+        if pd.isna(date_input) or str(date_input).strip() == "":
+            return ""
+
         date_str = str(date_input).strip()
-        date_str = re.sub(r'[^\w\s/\-]', '', date_str)
-        indo_months = {1: 'JANUARI', 2: 'FEBRUARI', 3: 'MARET', 4: 'APRIL', 5: 'MEI', 6: 'JUNI', 7: 'JULI', 8: 'AGUSTUS', 9: 'SEPTEMBER', 10: 'OKTOBER', 11: 'NOVEMBER', 12: 'DESEMBER'}
+        date_str = re.sub(r'[^\w\s/\-]', ' ', date_str)
+        date_str = re.sub(r'\s+', ' ', date_str).strip()
+        if not date_str:
+            return ""
+
+        # Antisipasi jika TIME masih ikut di kolom DATE (contoh: "22:00 09 feb")
+        time_prefix = re.search(r'^\d{1,2}[:.]\d{2}\s+(.+)$', date_str)
+        if time_prefix:
+            date_str = time_prefix.group(1).strip()
+
+        current_year = datetime.now().year
+        indo_months = {
+            1: 'JANUARI', 2: 'FEBRUARI', 3: 'MARET', 4: 'APRIL',
+            5: 'MEI', 6: 'JUNI', 7: 'JULI', 8: 'AGUSTUS',
+            9: 'SEPTEMBER', 10: 'OKTOBER', 11: 'NOVEMBER', 12: 'DESEMBER'
+        }
+        month_map = {
+            'januari': 1, 'january': 1, 'jan': 1,
+            'februari': 2, 'february': 2, 'febuary': 2, 'febuari': 2, 'pebruari': 2, 'feb': 2, 'peb': 2,
+            'maret': 3, 'march': 3, 'mar': 3,
+            'april': 4, 'apr': 4,
+            'mei': 5, 'may': 5,
+            'juni': 6, 'june': 6, 'jun': 6,
+            'juli': 7, 'july': 7, 'jul': 7,
+            'agustus': 8, 'august': 8, 'agu': 8, 'aug': 8,
+            'september': 9, 'sept': 9, 'sep': 9,
+            'oktober': 10, 'october': 10, 'okt': 10, 'oct': 10,
+            'november': 11, 'nov': 11,
+            'desember': 12, 'december': 12, 'des': 12, 'dec': 12
+        }
+
+        def normalize_year(year_token):
+            if year_token is None or str(year_token).strip() == "":
+                return current_year
+            token = str(year_token).strip()
+            y = int(token)
+            if len(token) == 2:
+                base_century = (current_year // 100) * 100
+                y = base_century + y
+                if y > current_year + 50:
+                    y -= 100
+                elif y < current_year - 50:
+                    y += 100
+            return y
+
         day, month, year = None, None, None
-        match_digit = re.search(r'(\d{1,2})[/\-\s]+(\d{1,2})[/\-\s]+(\d{4})', date_str)
+
+        # Format numerik: DD/MM[/YY|YYYY] atau DD-MM[/YY|YYYY]
+        match_digit = re.search(r'\b(\d{1,2})\s*[/\-]\s*(\d{1,2})(?:\s*[/\-]\s*(\d{2,4}))?\b', date_str)
         if match_digit:
-            day, month, year = int(match_digit.group(1)), int(match_digit.group(2)), int(match_digit.group(3))
+            day = int(match_digit.group(1))
+            month = int(match_digit.group(2))
+            year = normalize_year(match_digit.group(3))
         else:
-            month_map = {'jan': 1, 'feb': 2, 'peb': 2, 'mar': 3, 'apr': 4, 'mei': 5, 'may': 5, 'jun': 6, 'jul': 7, 'agu': 8, 'aug': 8, 'sep': 9, 'okt': 10, 'oct': 10, 'nov': 11, 'des': 12, 'dec': 12}
             clean_str = date_str.lower()
-            for k, v in month_map.items():
-                if k in clean_str: month = v; break
-            if month:
-                match_year = re.search(r'\d{4}', clean_str)
-                if match_year: year = int(match_year.group(0))
-                month_text = None
-                for k, v in month_map.items():
-                    if k in clean_str:
-                        month_text = k
-                        break
-                if month_text:
-                    all_numbers = [(m.start(), int(m.group(0))) for m in re.finditer(r'\b\d{1,2}\b', clean_str)]
-                    month_pos = clean_str.find(month_text)
-                    if all_numbers and month_pos >= 0:
-                        candidates = [num for pos, num in all_numbers if pos < month_pos]
-                        if candidates:
-                            day = candidates[-1]
-                        elif all_numbers:
-                            day = all_numbers[0][1]
+            month_match = None
+            for k in sorted(month_map.keys(), key=len, reverse=True):
+                m = re.search(rf'\b{re.escape(k)}\b', clean_str)
+                if m:
+                    month_match = m
+                    month = month_map[k]
+                    break
+
+            if month_match:
+                month_pos = month_match.start()
+                all_numbers = [(m.start(), m.group(1)) for m in re.finditer(r'\b(\d{1,4})\b', clean_str)]
+
+                day_candidates = [n for pos, n in all_numbers if pos < month_pos and len(n) <= 2]
+                if day_candidates:
+                    day = int(day_candidates[-1])
+
+                year_candidates = [n for pos, n in all_numbers if pos > month_pos and len(n) in (2, 4)]
+                if year_candidates:
+                    year = normalize_year(year_candidates[0])
                 else:
-                    match_day = re.search(r'\b\d{1,2}\b', clean_str)
-                    if match_day: day = int(match_day.group(0))
-        if day and month and year:
-            day_str = str(day).zfill(2)
-            month_str = indo_months.get(month, "")
-            if month_str: return f"{day_str} {month_str} {year}"
+                    year = current_year
+
+        if day and month and year and 1 <= day <= 31 and 1 <= month <= 12:
+            return f"{day:02d} {indo_months[month]} {year}"
         return date_str
     except: return str(date_input)
 
 def clean_destination_format(text):
     if pd.isna(text): return ""
-    return str(text).upper().strip()
+    return normalize_route(text)
 
 def calculate_extraction_accuracy(df_raw, df_final):
     if df_final is None or df_final.empty:
@@ -926,7 +1085,7 @@ def main():
                     df_office['Tgl RO'] = "" 
                     df_office['Tgl Muat'] = df_final['DATE'].apply(format_date_custom)
                     df_office['Vendor'] = ""
-                    df_office['Pickup'] = df_final['ORIGIN'].str.upper()
+                    df_office['Pickup'] = df_final['ORIGIN'].apply(normalize_origin)
                     df_office['Tujuan'] = df_final['DESTINATION'].apply(clean_destination_format)
                     df_office['No. Plat'] = df_final['PLATE'].str.upper()
                     df_office['Type Truck'] = df_final['UNIT_TYPE'].str.upper()
@@ -996,4 +1155,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 

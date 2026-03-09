@@ -340,22 +340,86 @@ def apply_revision_logic(df_final):
 
 def format_date_custom(date_input):
     try:
-        if pd.isna(date_input) or str(date_input).strip() == "": return ""
-        date_str = re.sub(r'[^\w\s/\-]', '', str(date_input).strip())
-        indo_months = {1:'JANUARI',2:'FEBRUARI',3:'MARET',4:'APRIL',5:'MEI',6:'JUNI',7:'JULI',8:'AGUSTUS',9:'SEPTEMBER',10:'OKTOBER',11:'NOVEMBER',12:'DESEMBER'}
+        if pd.isna(date_input) or str(date_input).strip() == "":
+            return ""
+
+        date_str = str(date_input).strip()
+        date_str = re.sub(r'[^\w\s/\-]', ' ', date_str)
+        date_str = re.sub(r'\s+', ' ', date_str).strip()
+        if not date_str:
+            return ""
+
+        time_prefix = re.search(r'^\d{1,2}[:.]\d{2}\s+(.+)$', date_str)
+        if time_prefix:
+            date_str = time_prefix.group(1).strip()
+
+        current_year = datetime.now().year
+        indo_months = {
+            1: 'JANUARI', 2: 'FEBRUARI', 3: 'MARET', 4: 'APRIL',
+            5: 'MEI', 6: 'JUNI', 7: 'JULI', 8: 'AGUSTUS',
+            9: 'SEPTEMBER', 10: 'OKTOBER', 11: 'NOVEMBER', 12: 'DESEMBER'
+        }
+        month_map = {
+            'januari': 1, 'january': 1, 'jan': 1,
+            'februari': 2, 'february': 2, 'febuary': 2, 'febuari': 2, 'pebruari': 2, 'feb': 2, 'peb': 2,
+            'maret': 3, 'march': 3, 'mar': 3,
+            'april': 4, 'apr': 4,
+            'mei': 5, 'may': 5,
+            'juni': 6, 'june': 6, 'jun': 6,
+            'juli': 7, 'july': 7, 'jul': 7,
+            'agustus': 8, 'august': 8, 'agu': 8, 'aug': 8,
+            'september': 9, 'sept': 9, 'sep': 9,
+            'oktober': 10, 'october': 10, 'okt': 10, 'oct': 10,
+            'november': 11, 'nov': 11,
+            'desember': 12, 'december': 12, 'des': 12, 'dec': 12
+        }
+
+        def normalize_year(year_token):
+            if year_token is None or str(year_token).strip() == "":
+                return current_year
+            token = str(year_token).strip()
+            y = int(token)
+            if len(token) == 2:
+                base_century = (current_year // 100) * 100
+                y = base_century + y
+                if y > current_year + 50:
+                    y -= 100
+                elif y < current_year - 50:
+                    y += 100
+            return y
+
         day, month, year = None, None, None
-        match_digit = re.search(r'(\d{1,2})[/\-\s]+(\d{1,2})[/\-\s]+(\d{4})', date_str)
+        match_digit = re.search(r'\b(\d{1,2})\s*[/\-]\s*(\d{1,2})(?:\s*[/\-]\s*(\d{2,4}))?\b', date_str)
         if match_digit:
-            day, month, year = int(match_digit.group(1)), int(match_digit.group(2)), int(match_digit.group(3))
+            day = int(match_digit.group(1))
+            month = int(match_digit.group(2))
+            year = normalize_year(match_digit.group(3))
         else:
-            month_map = {'jan':1,'feb':2,'peb':2,'mar':3,'apr':4,'mei':5,'may':5,'jun':6,'jul':7,'agu':8,'aug':8,'sep':9,'okt':10,'oct':10,'nov':11,'des':12,'dec':12}
             clean_str = date_str.lower()
-            for k, v in month_map.items():
-                if k in clean_str: month = v; break
-            if month:
-                match_year = re.search(r'\d{4}', clean_str); year = int(match_year.group(0)) if match_year else None
-                match_day = re.search(r'\b\d{1,2}\b', clean_str); day = int(match_day.group(0)) if match_day else None
-        if day and month and year: return f"{str(day).zfill(2)} {indo_months.get(month, '')} {year}"
+            month_match = None
+            for k in sorted(month_map.keys(), key=len, reverse=True):
+                m = re.search(rf'\b{re.escape(k)}\b', clean_str)
+                if m:
+                    month_match = m
+                    month = month_map[k]
+                    break
+
+            if month_match:
+                month_pos = month_match.start()
+                all_numbers = [(m.start(), m.group(1)) for m in re.finditer(r'\b(\d{1,4})\b', clean_str)]
+
+                day_candidates = [n for pos, n in all_numbers if pos < month_pos and len(n) <= 2]
+                if day_candidates:
+                    day = int(day_candidates[-1])
+
+                year_candidates = [n for pos, n in all_numbers if pos > month_pos and len(n) in (2, 4)]
+                if year_candidates:
+                    year = normalize_year(year_candidates[0])
+                else:
+                    year = current_year
+
+        if day and month and year and 1 <= day <= 31 and 1 <= month <= 12:
+            return f"{day:02d} {indo_months[month]} {year}"
         return date_str
     except: return str(date_input)
 
