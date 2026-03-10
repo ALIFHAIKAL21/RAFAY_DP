@@ -1,4 +1,4 @@
-import streamlit as st
+﻿import streamlit as st
 import pandas as pd
 from io import BytesIO
 import os
@@ -148,10 +148,12 @@ def normalize_route(text):
     if text_str.lower() in ['none', 'nan', 'nat']: return ""
     route = text_str.upper()
     route = re.sub(r'[â€“â€”âˆ’]', '-', route)
+    route = route.replace('*', ' ')
+    route = re.sub(r'[^\w\s,/-]', ' ', route)
     route = re.sub(r'\s+', ' ', route).strip(" ,-")
 
     # Route jadi format "A, B" hanya jika input memang punya separator route.
-    if '-' in route or ',' in route:
+    if '-' in route or ',' in route or '/' in route:
         normalized_sep = re.sub(r'\s*[/,-]\s*', ',', route)
         parts = [p.strip() for p in normalized_sep.split(',') if p.strip()]
         if len(parts) >= 2:
@@ -161,11 +163,16 @@ def normalize_route(text):
         return ""
 
     # Tujuan tunggal tanpa separator tetap apa adanya (tanpa koma).
+    if re.fullmatch(r'[A-Z]{6}', route):
+        return f"{route[:3]}, {route[3:]}"
+    if re.fullmatch(r'[A-Z]{3}\s+[A-Z]{3}', route):
+        parts = route.split()
+        return f"{parts[0]}, {parts[1]}"
     return route
 
 def extract_route_from_text(text):
     if pd.isna(text) or not str(text).strip(): return ""
-    m = re.search(r'(?im)^\s*Rute(?:\s*/\s*|\s+)tujuan\s*:\s*([^\n\r]+)', str(text))
+    m = re.search(r'(?im)^\s*Rute\s*(?:/|\s+)\s*(?:tujuan|tuj(?:u(?:an)?)?)\s*:\s*([^\n\r]+)', str(text))
     return m.group(1).strip() if m else ""
 
 def extract_origin_from_text(text):
@@ -173,6 +180,103 @@ def extract_origin_from_text(text):
         return ""
     m = re.search(r'(?im)^\s*Lokasi\s*:\s*([^\n\r]+)', str(text))
     return m.group(1).strip() if m else ""
+
+def extract_ro_date_from_text(text):
+    if pd.isna(text) or not str(text).strip():
+        return ""
+    text_str = str(text)
+    header_pattern = r'(?im)^\s*.*(?:REQUEST|ONCALL|TAMBAHAN|ORDER|UNIT\s+ON\s+CALL|ON\s+CALL|TGL)\b.*$'
+    date_pattern = r'(\d{1,2}\s+[a-zA-Z]{3,}(?:\s+\d{2,4})?|\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?)'
+
+    lines = text_str.splitlines()
+    for idx, line in enumerate(lines):
+        if not re.search(header_pattern, line):
+            continue
+        # Cek tanggal pada baris header
+        m_inline = re.search(date_pattern, line)
+        if m_inline:
+            return m_inline.group(1).strip()
+        # Jika tanggal ada di baris berikutnya (header multi-line)
+        for look_ahead in range(1, 3):
+            if idx + look_ahead < len(lines):
+                m_next = re.search(date_pattern, lines[idx + look_ahead])
+                if m_next:
+                    return m_next.group(1).strip()
+        break
+    return ""
+
+def extract_unit_qty(text, unit_qty_raw=""):
+    text_str = str(text) if text is not None else ""
+    raw = str(unit_qty_raw) if unit_qty_raw is not None else ""
+    # Prioritaskan pola eksplisit "X unit" dari teks asli
+    m = re.search(r'(?i)\b(\d{1,3})\s*unit\b', text_str)
+    if m:
+        try:
+            return int(m.group(1))
+        except:
+            pass
+    if not raw or raw.lower() in ['none', 'nan', 'nat']:
+        return None
+    # Jika raw mengandung CBM/kapasitas, abaikan angka kapasitas sebagai qty
+    if re.search(r'(?i)\bcbm\b', raw):
+        m_raw = re.search(r'(?i)\b(\d{1,3})\s*unit\b', raw)
+        if m_raw:
+            try:
+                return int(m_raw.group(1))
+            except:
+                return None
+        return None
+    m_num = re.search(r'^\s*(\d{1,3})\s*$', raw)
+    if m_num:
+        try:
+            return int(m_num.group(1))
+        except:
+            return None
+    m_unit = re.search(r'(?i)\b(\d{1,3})\s*unit\b', raw)
+    if m_unit:
+        try:
+            return int(m_unit.group(1))
+        except:
+            return None
+    return None
+
+def extract_loading_candidates(text):
+    if pd.isna(text) or not str(text).strip():
+        return []
+    candidates = []
+    date_pattern = r'\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}\s+[a-zA-Z]{3,}\s+\d{2,4})\b'
+    for match in re.finditer(r'(?im)^\s*Waktu\s*loading\s*:\s*([^\n\r]+)', str(text)):
+        val = str(match.group(1)).strip()
+        if not val:
+            continue
+        pos = match.start()
+        val_upper = val.upper()
+        has_segera = "SEGERA" in val_upper
+        date_part = ""
+        for m in re.finditer(date_pattern, val):
+            cand = m.group(1).strip()
+            if re.search(r'[/-]', cand):
+                parts = re.split(r'[/-]', cand)
+                if len(parts) >= 3:
+                    try:
+                        day = int(parts[0]); month = int(parts[1])
+                        if 1 <= day <= 31 and 1 <= month <= 12:
+                            date_part = cand
+                            break
+                    except:
+                        pass
+            else:
+                # Month name format dianggap valid
+                date_part = cand
+                break
+        if has_segera:
+            time_part = "SEGERA"
+        else:
+            time_part, _ = extract_time_format(val_upper)
+            if time_part == val_upper:
+                time_part = ""
+        candidates.append({"time": time_part, "date": date_part, "segera": has_segera, "raw": val, "pos": pos})
+    return candidates
 
 def normalize_unit_type(unit_type):
     if pd.isna(unit_type) or not str(unit_type).strip(): return ""
@@ -200,9 +304,11 @@ def sanitize_row_data(row):
     t = str(row.get('TIME', '')).strip()
     orig_text = str(row.get('Original_Text', '')).strip()
     drv = str(row.get('DRIVER', '')).strip()
+    ro_date = str(row.get('RO_DATE', '')).strip() if 'RO_DATE' in row else ""
 
     if d.lower() in ['none', 'nan', 'nat']: d = ""
     if t.lower() in ['none', 'nan', 'nat']: t = ""
+    if ro_date.lower() in ['none', 'nan', 'nat']: ro_date = ""
 
     has_segera = False
     if "segera" in t.lower(): has_segera = True
@@ -295,7 +401,62 @@ def sanitize_row_data(row):
         else:
             row['UNIT_TYPE'] = ""
 
-    row['DATE'] = d
+    ro_from_text = extract_ro_date_from_text(orig_text)
+    if ro_from_text:
+        ro_date = ro_from_text
+    row['RO_DATE'] = ro_date
+
+    # Aturan Tgl Muat:
+    # - Jika Waktu loading SEGERA atau tidak ada, kosongkan Tgl Muat.
+    # - Jika Waktu loading punya tanggal spesifik, itu jadi Tgl Muat.
+    # - Jika Waktu loading hanya jam, Tgl Muat mengikuti Tgl RO.
+    loading_candidates = extract_loading_candidates(orig_text)
+    muat_date = ""
+    if loading_candidates:
+        chosen = None
+        if t:
+            matching = [cand for cand in loading_candidates if cand.get("time") and cand.get("time").upper() == t.upper()]
+            if len(matching) == 1:
+                chosen = matching[0]
+            elif len(matching) > 1:
+                anchor_pos = -1
+                search_targets = []
+                if drv:
+                    search_targets.append(drv)
+                plate_val = str(row.get('PLATE', '')).strip()
+                if plate_val:
+                    search_targets.append(plate_val)
+                for target in search_targets:
+                    try:
+                        m_anchor = re.search(re.escape(target), orig_text, re.IGNORECASE)
+                    except re.error:
+                        m_anchor = None
+                    if m_anchor:
+                        anchor_pos = m_anchor.start()
+                        break
+                if anchor_pos >= 0:
+                    chosen = min(matching, key=lambda c: abs(c.get("pos", 0) - anchor_pos))
+                else:
+                    chosen = matching[0]
+        if chosen is None:
+            chosen = loading_candidates[0]
+
+        if chosen.get("segera"):
+            # Waktu loading SEGERA -> Tgl Muat = Tgl RO, Jam kosong
+            muat_date = ro_date
+            t = ""
+        elif chosen.get("date"):
+            muat_date = chosen.get("date")
+            t = chosen.get("time") or ""
+        else:
+            muat_date = ro_date if ro_date else ""
+            t = chosen.get("time") or ""
+    else:
+        # Tidak ada Waktu loading sama sekali -> Tgl Muat kosong, Jam kosong
+        muat_date = ""
+        t = ""
+
+    row['DATE'] = muat_date
     row['TIME'] = t
     return row
 
@@ -340,7 +501,7 @@ def repair_headers(df):
     df = df.copy()
 
     # Hardening schema agar tidak pernah KeyError saat model tidak mengeluarkan kolom tertentu.
-    for col in ['DESTINATION', 'ORIGIN', 'UNIT_TYPE', 'UNIT_QTY']:
+    for col in ['DESTINATION', 'ORIGIN', 'UNIT_TYPE', 'UNIT_QTY', 'RO_DATE']:
         if col not in df.columns:
             df[col] = pd.NA
     if 'Original_Text' not in df.columns:
@@ -374,8 +535,13 @@ def repair_headers(df):
             # Rute dari teks asli jadi sumber utama Tujuan.
             df.at[i, 'DESTINATION'] = route_norm
 
+        ro_from_text = extract_ro_date_from_text(orig_text)
+        if ro_from_text:
+            df.at[i, 'RO_DATE'] = ro_from_text
+
         qty_val = str(df.at[i, 'UNIT_QTY'])
-        if any(char.isdigit() for char in qty_val):
+        qty_num = extract_unit_qty(orig_text, qty_val)
+        if qty_num:
             for lookahead in range(1, 4):
                 if i + lookahead < len(df):
                     if pd.isna(df.at[i, 'DESTINATION']): df.at[i, 'DESTINATION'] = df.at[i + lookahead, 'DESTINATION']
@@ -385,21 +551,37 @@ def repair_headers(df):
 
 def mark_order_block(df):
     df = df.copy(); df['BLOCK_ID'] = 0; current_block = 0
+    last_header_text = ""
+    header_pattern = r'(?im)^\s*.*(?:REQUEST|ONCALL|TAMBAHAN|ORDER|UNIT\s+ON\s+CALL|ON\s+CALL|TGL)\b.*$'
     for i in range(len(df)):
         qty_raw = str(df.at[i, 'UNIT_QTY'])
         is_header = False
         try:
-            q_num = int(''.join(filter(str.isdigit, qty_raw))) if any(char.isdigit() for char in qty_raw) else 0
+            orig_text = str(df.at[i, 'Original_Text']) if 'Original_Text' in df.columns else ""
+            q_num = extract_unit_qty(orig_text, qty_raw) or 0
             if q_num > 1: is_header = True
             elif q_num == 1 and pd.notna(df.at[i, 'UNIT_TYPE']): is_header = True
         except: pass
-        if is_header: current_block += 1
+        orig_text = str(df.at[i, 'Original_Text']) if 'Original_Text' in df.columns else ""
+        header_like = bool(re.search(header_pattern, orig_text)) if orig_text else False
+        new_block = False
+        if is_header:
+            new_block = True
+        elif header_like:
+            text_key = orig_text.strip()
+            if text_key and text_key != last_header_text:
+                if re.search(r'(?i)\b(Lokasi|Rute|Waktu\s*loading)\b', orig_text):
+                    new_block = True
+        if new_block:
+            current_block += 1
+            if orig_text.strip():
+                last_header_text = orig_text.strip()
         df.at[i, 'BLOCK_ID'] = current_block
     return df
 
 def preprocess_context(df):
     if df is None or df.empty: return df
-    required_cols = ['UNIT_TYPE', 'ORIGIN', 'DESTINATION', 'DATE']
+    required_cols = ['UNIT_TYPE', 'ORIGIN', 'DESTINATION', 'DATE', 'RO_DATE']
     for col in required_cols:
         if col not in df.columns:
             df[col] = None
@@ -421,24 +603,45 @@ def enforce_block_quota(df):
         if block_id == 0: continue
         block_data = df[df['BLOCK_ID'] == block_id].copy()
         target_qty = 1
-        for q in block_data['UNIT_QTY']:
+        explicit_qty_found = False
+        extra_unit_count = 0
+        seen_no_qty_headers = set()
+        for _, r in block_data.iterrows():
             try:
-                q_str = ''.join(filter(str.isdigit, str(q)))
-                if q_str: target_qty = max(target_qty, int(q_str))
+                qty_num = extract_unit_qty(r.get('Original_Text', ''), r.get('UNIT_QTY', ''))
+                if qty_num:
+                    target_qty = max(target_qty, int(qty_num))
+                    explicit_qty_found = True
             except: pass
-        valid_candidates = []; header_row = None
+        valid_candidates = []
+        order_like_candidates = []
+        header_row = None
         for _, row in block_data.iterrows():
             q_val = str(row.get('UNIT_QTY', ''))
             is_master_header = False
             try:
-                if int(''.join(filter(str.isdigit, q_val))) > 1: is_master_header = True
+                q_num = extract_unit_qty(row.get('Original_Text', ''), q_val) or 0
+                if q_num > 1: is_master_header = True
             except: pass
             if is_master_header:
-                header_row = row; continue 
+                header_row = row
             # Baris revisi (Rev/Revisi/Update) hanya untuk update field, bukan order baru.
             orig_text_lower = str(row.get('Original_Text', '')).lower()
             if re.search(r'\b(?:rev|revisi|update)\b', orig_text_lower):
                 continue
+
+            # Jika tidak ada qty di header tapi ada order valid, hitung sebagai +1 unit.
+            orig_text = str(row.get('Original_Text', '')).strip()
+            if orig_text and orig_text not in seen_no_qty_headers:
+                has_qty = bool(extract_unit_qty(row.get('Original_Text', ''), row.get('UNIT_QTY', '')))
+                header_like = re.search(r'(?i)\brequest\b|\boncall\b', orig_text)
+                order_like = re.search(r'(?i)\bLokasi\b|\bRute\b|\bWaktu\s*loading\b', orig_text)
+                if not has_qty and header_like and order_like:
+                    # Hitung jumlah order dari jumlah "Lokasi :" pada satu pesan tanpa qty.
+                    lokasi_count = len(re.findall(r'(?im)^\s*Lokasi\s*:', orig_text))
+                    extra_unit_count += max(1, lokasi_count)
+                    seen_no_qty_headers.add(orig_text)
+
             row = sanitize_row_data(row)
             d_name = clean_driver_name(row.get('DRIVER', ''))
             t_val = str(row.get('TIME', '')).lower()
@@ -448,10 +651,37 @@ def enforce_block_quota(df):
                 found_plate = extract_plate_aggressive(search_text)
                 if found_plate: row['PLATE'] = found_plate
             has_plate = pd.notna(row.get('PLATE')) and len(str(row.get('PLATE'))) > 3
+            added_as_candidate = False
             if d_name or has_time or has_plate:
                 row['DRIVER'] = d_name; valid_candidates.append(row)
+                added_as_candidate = True
+
+            if not explicit_qty_found and not added_as_candidate:
+                orig_text = str(row.get('Original_Text', '')).strip()
+                order_like = False
+                if normalize_origin(row.get('ORIGIN', '')) or normalize_route(row.get('DESTINATION', '')):
+                    order_like = True
+                elif re.search(r'(?i)\b(Lokasi|Rute|Waktu\s*loading)\b', orig_text):
+                    order_like = True
+                if order_like:
+                    order_like_candidates.append(row)
         if header_row is None and len(block_data) > 0: header_row = block_data.iloc[0]
         header_row = normalize_header_context_fields(header_row)
+
+        if not explicit_qty_found and order_like_candidates:
+            valid_candidates.extend(order_like_candidates)
+            target_qty = max(1, len(valid_candidates))
+        elif explicit_qty_found and extra_unit_count:
+            target_qty += extra_unit_count
+
+        block_text = ""
+        try:
+            text_series = block_data['Original_Text'] if 'Original_Text' in block_data.columns else []
+            if len(text_series) > 0:
+                block_text = max([str(x) for x in text_series if str(x).strip()], key=len, default="")
+        except:
+            block_text = ""
+        block_route_from_text = normalize_route(extract_route_from_text(block_text)) if block_text else ""
 
         origin_pool = []
         destination_pool = []
@@ -469,12 +699,40 @@ def enforce_block_quota(df):
         else:
             block_origin = normalize_origin(header_row.get('ORIGIN', ''))
 
-        if destination_pool:
+        if block_route_from_text:
+            block_destination = block_route_from_text
+            header_row['DESTINATION'] = block_destination
+        elif destination_pool:
             with_separator = [d for d in destination_pool if ',' in d]
             block_destination = with_separator[0] if with_separator else destination_pool[0]
             header_row['DESTINATION'] = block_destination
         else:
             block_destination = normalize_route(header_row.get('DESTINATION', ''))
+
+        block_ro_date = str(header_row.get('RO_DATE', '')).strip()
+        if not block_ro_date:
+            for src_row in [header_row] + valid_candidates:
+                candidate_ro = str(src_row.get('RO_DATE', '')).strip()
+                if candidate_ro:
+                    block_ro_date = candidate_ro
+                    break
+        if block_ro_date:
+            header_row['RO_DATE'] = block_ro_date
+
+        block_muat_date = ""
+        for src_row in valid_candidates:
+            candidate_date = str(src_row.get('DATE', '')).strip()
+            if candidate_date:
+                block_muat_date = candidate_date
+                break
+        # Ambil urutan Waktu loading dalam block untuk pemetaan berurutan
+        loading_queue = {}
+        if block_text:
+            for lc in extract_loading_candidates(block_text):
+                t_key = str(lc.get('time', '')).strip().upper()
+                if not t_key:
+                    continue
+                loading_queue.setdefault(t_key, []).append(lc)
 
         for i in range(target_qty):
             if i < len(valid_candidates):
@@ -498,19 +756,53 @@ def enforce_block_quota(df):
                         cand_destination = block_destination
                 candidate['DESTINATION'] = cand_destination
 
-                for col in ['UNIT_TYPE', 'DATE']:
+                # RO_DATE harus konsisten per block.
+                if block_ro_date:
+                    candidate['RO_DATE'] = block_ro_date
+
+                # Selaraskan Tgl Muat berdasarkan urutan Waktu loading jika ada.
+                cand_time_key = str(candidate.get('TIME', '')).strip().upper()
+                if cand_time_key and cand_time_key in loading_queue and loading_queue[cand_time_key]:
+                    lc = loading_queue[cand_time_key].pop(0)
+                    if lc.get("segera"):
+                        candidate['DATE'] = block_ro_date if block_ro_date else candidate.get('RO_DATE', '')
+                        candidate['TIME'] = ""
+                    elif lc.get("date"):
+                        candidate['DATE'] = lc.get("date")
+                        if lc.get("time"):
+                            candidate['TIME'] = lc.get("time")
+                    else:
+                        candidate['DATE'] = block_ro_date if block_ro_date else candidate.get('RO_DATE', '')
+
+                # Jika Tgl Muat kosong:
+                # - Jika ada JAM, Tgl Muat mengikuti Tgl RO.
+                # - Jika tidak ada JAM, baru boleh ikut Tgl Muat block (jika ada).
+                if not str(candidate.get('DATE', '')).strip():
+                    cand_time = str(candidate.get('TIME', '')).strip()
+                    if cand_time:
+                        if block_ro_date:
+                            candidate['DATE'] = block_ro_date
+                    elif block_muat_date:
+                        candidate['DATE'] = block_muat_date
+
+                for col in ['UNIT_TYPE', 'DATE', 'RO_DATE']:
                     val = candidate.get(col)
                     if pd.isna(val) or str(val).strip() == "":
                         header_val = header_row.get(col)
                         if col == 'DATE':
                             if header_val and (re.search(r'\d', str(header_val))): candidate[col] = header_val
-                        else: candidate[col] = header_val
+                        else:
+                            candidate[col] = header_val
                 final_rows.append(candidate)
             else:
                 clean_slot = header_row.copy()
                 clean_slot['DRIVER'] = ""; clean_slot['PLATE'] = ""; clean_slot['PHONE'] = ""; clean_slot['TIME'] = ""; clean_slot['UNIT_QTY'] = 1
                 if header_row.get('DATE') and re.search(r'\d', str(header_row.get('DATE'))): clean_slot['DATE'] = header_row['DATE']
                 else: clean_slot['DATE'] = ""
+                if block_ro_date:
+                    clean_slot['RO_DATE'] = block_ro_date
+                if block_muat_date:
+                    clean_slot['DATE'] = block_muat_date
                 final_rows.append(clean_slot)
     return pd.DataFrame(final_rows).reset_index(drop=True)
 
@@ -773,6 +1065,29 @@ def format_date_custom(date_input):
             return f"{day:02d} {indo_months[month]} {year}"
         return date_str
     except: return str(date_input)
+
+def parse_date_custom(date_input):
+    try:
+        formatted = format_date_custom(date_input)
+        if not formatted:
+            return pd.NaT
+        parts = str(formatted).strip().split()
+        if len(parts) < 3:
+            return pd.NaT
+        day = int(parts[0])
+        month_name = parts[1].lower()
+        year = int(parts[2])
+        month_map = {
+            'januari': 1, 'februari': 2, 'maret': 3, 'april': 4,
+            'mei': 5, 'juni': 6, 'juli': 7, 'agustus': 8,
+            'september': 9, 'oktober': 10, 'november': 11, 'desember': 12
+        }
+        month = month_map.get(month_name)
+        if not month:
+            return pd.NaT
+        return pd.Timestamp(datetime(year, month, day))
+    except:
+        return pd.NaT
 
 def clean_destination_format(text):
     if pd.isna(text): return ""
@@ -1082,7 +1397,7 @@ def main():
                     job_year = st.session_state.get('job_year', 2026)
 
                     df_office['Job Number'] = [f"{job_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_final))]
-                    df_office['Tgl RO'] = "" 
+                    df_office['Tgl RO'] = df_final['RO_DATE'].apply(format_date_custom) if 'RO_DATE' in df_final.columns else ""
                     df_office['Tgl Muat'] = df_final['DATE'].apply(format_date_custom)
                     df_office['Vendor'] = ""
                     df_office['Pickup'] = df_final['ORIGIN'].apply(normalize_origin)
@@ -1091,7 +1406,18 @@ def main():
                     df_office['Type Truck'] = df_final['UNIT_TYPE'].str.upper()
                     df_office['Driver'] = df_final['DRIVER'].fillna("").astype(str).str.title()
                     df_office['Kontak Driver'] = df_final['PHONE']
-                    df_office['Jam Loading'] = df_final['TIME']
+
+                    # Sorting output berdasarkan Tgl Muat lalu Tgl RO
+                    df_office['_sort_muat'] = df_office['Tgl Muat'].apply(parse_date_custom)
+                    df_office['_sort_ro'] = df_office['Tgl RO'].apply(parse_date_custom)
+                    df_office = df_office.sort_values(
+                        by=['_sort_muat', '_sort_ro', 'No.'],
+                        na_position='last'
+                    ).reset_index(drop=True)
+                    df_office = df_office.drop(columns=['_sort_muat', '_sort_ro'])
+                    # Renumber setelah sorting
+                    df_office['No.'] = range(1, len(df_office) + 1)
+                    df_office['Job Number'] = [f"{job_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_office))]
 
                     confidence_scores = calculate_confidence_score(df_office)
                     avg_confidence = round((sum(confidence_scores) / len(confidence_scores)) * 100, 1) if confidence_scores else 0.0
@@ -1155,5 +1481,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
