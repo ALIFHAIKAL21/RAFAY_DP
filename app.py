@@ -50,8 +50,8 @@ def auto_format_chat_input(text):
     lines = valid_text.split('\n')
     formatted_lines = []
 
-    pattern_with_date = r"(?i)(Waktu loading\s*:\s*)(.*?)(\s+\d{1,2}[/-]\d{1,2}[/-]\d{4}|\s+\d{1,2}\s+[a-zA-Z]+\s+\d{4})"
-    date_header_pattern = r"(?:REQUEST|ONCALL|TAMBAHAN).*?(\d{1,2}\s+[a-zA-Z]{3,}\s+\d{4}|\d{1,2}[/-]\d{1,2}[/-]\d{4})"
+    pattern_with_date = r"(?i)(Waktu loading\s*:\s*)(.*?)(\s+\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\s+\d{1,2}\s+[a-zA-Z]{3,}\s+\d{2,4})"
+    date_header_pattern = r"(?:REQUEST|ONCALL|TAMBAHAN).*?(\d{1,2}\s+[a-zA-Z]{3,}\s+\d{2,4}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4})"
     waktu_loading_standalone = r"(?i)Waktu\s+loading\s*:\s*(.+?)(?=\n|$)"
 
     current_global_date = ""
@@ -97,9 +97,12 @@ def auto_format_chat_input(text):
         standalone_match = re.search(waktu_loading_standalone, line, re.IGNORECASE)
         if standalone_match:
             jam_raw = standalone_match.group(1).strip()
-            date_in_value = re.search(r'(\d{1,2}[./:-]\d{1,2}[./:-]\d{4})', jam_raw)
+            date_in_value = re.search(r'(\d{1,2}[./:-]\d{1,2}[./:-]\d{2,4})', jam_raw)
+            if not date_in_value:
+                date_in_value = re.search(r'(\d{1,2}\s+[a-zA-Z]{3,}\s+\d{2,4})', jam_raw)
             if date_in_value:
                 jam_part = jam_raw[:date_in_value.start()].strip()
+                jam_part = re.sub(r'[\\/\\-]+\\s*$', '', jam_part).strip()
                 tgl_part = date_in_value.group(1)
                 jam_clean, _ = extract_time_format(jam_part)
                 formatted_lines.append(f"Waktu loading : {jam_clean} {tgl_part}")
@@ -595,6 +598,7 @@ def preprocess_context(df):
 def enforce_block_quota(df):
     if df is None or df.empty: return df
     final_rows = []
+    last_ro_date = ""
 
     def _compact(text):
         return re.sub(r'[^A-Z0-9]', '', str(text).upper())
@@ -646,6 +650,9 @@ def enforce_block_quota(df):
             d_name = clean_driver_name(row.get('DRIVER', ''))
             t_val = str(row.get('TIME', '')).lower()
             has_time = pd.notna(row.get('TIME')) and (any(c.isdigit() for c in t_val) or "segera" in t_val)
+            if not has_time:
+                if re.search(r'(?i)\bWaktu\s*loading\b', orig_text) or re.search(r'(?i)\bsegera\b', orig_text):
+                    has_time = True
             if not str(row.get('PLATE', '')) or str(row.get('PLATE', '')).lower() == 'nan':
                 search_text = str(row.get('Original_Text', '')) + " " + str(row.get('DRIVER', ''))
                 found_plate = extract_plate_aggressive(search_text)
@@ -720,8 +727,11 @@ def enforce_block_quota(df):
             ro_from_block = extract_ro_date_from_text(block_text)
             if ro_from_block:
                 block_ro_date = ro_from_block
+        if not block_ro_date and last_ro_date:
+            block_ro_date = last_ro_date
         if block_ro_date:
             header_row['RO_DATE'] = block_ro_date
+            last_ro_date = block_ro_date
 
         block_muat_date = ""
         for src_row in valid_candidates:
@@ -734,19 +744,29 @@ def enforce_block_quota(df):
         block_has_segera = False
         block_dates = []
         loading_candidates_list = []
-        if block_text:
-            loading_candidates_list = extract_loading_candidates(block_text)
-            for lc in loading_candidates_list:
-                if lc.get('segera'):
-                    block_has_segera = True
-                if lc.get('date'):
-                    block_dates.append(lc.get('date'))
-                t_key = str(lc.get('time', '')).strip().upper()
-                if not t_key:
+        if 'Original_Text' in block_data.columns:
+            seen_texts = set()
+            for txt in block_data['Original_Text']:
+                s = str(txt).strip()
+                if not s or s in seen_texts:
                     continue
-                loading_queue.setdefault(t_key, []).append(lc)
+                seen_texts.add(s)
+                loading_candidates_list.extend(extract_loading_candidates(s))
+        elif block_text:
+            loading_candidates_list = extract_loading_candidates(block_text)
+        for lc in loading_candidates_list:
+            if lc.get('segera'):
+                block_has_segera = True
+            if lc.get('date'):
+                block_dates.append(lc.get('date'))
+            t_key = str(lc.get('time', '')).strip().upper()
+            if not t_key:
+                continue
+            loading_queue.setdefault(t_key, []).append(lc)
         if not block_muat_date and block_dates:
             block_muat_date = block_dates[0]
+        if not block_muat_date and block_has_segera and block_ro_date:
+            block_muat_date = block_ro_date
 
         for i in range(target_qty):
             if i < len(valid_candidates):
@@ -820,6 +840,8 @@ def enforce_block_quota(df):
                     clean_slot['RO_DATE'] = block_ro_date
                 if block_muat_date:
                     clean_slot['DATE'] = block_muat_date
+                elif block_has_segera and block_ro_date:
+                    clean_slot['DATE'] = block_ro_date
                 final_rows.append(clean_slot)
     return pd.DataFrame(final_rows).reset_index(drop=True)
 
