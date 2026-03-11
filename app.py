@@ -82,7 +82,11 @@ def auto_format_chat_input(text):
             formatted_lines.append(line)
             continue
 
-        match = re.search(pattern_with_date, line)
+        time_date_slash_line = re.search(
+            r'(?i)Waktu\s*loading\s*:\s*\d{1,2}[:.]\d{2}\s*[\\/]\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}\s+[a-zA-Z]{3,}\s+\d{2,4})',
+            line
+        )
+        match = None if time_date_slash_line else re.search(pattern_with_date, line)
         if match:
             prefix = match.group(1)
             jam = match.group(2).strip()
@@ -201,7 +205,12 @@ def extract_ro_date_from_text(text):
         return ""
     text_str = str(text)
     header_pattern = r'(?im)^\s*.*(?:REQUEST|ONCALL|TAMBAHAN|ORDER|UNIT\s+ON\s+CALL|ON\s+CALL|TGL)\b.*$'
-    date_pattern = r'(\d{1,2}\s+[a-zA-Z]{3,}(?:\s+\d{2,4})?|\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?)'
+    month_pattern = (
+        r'(?:JANUARI|JAN|FEBRUARI|FEBUARI|FEBRUARY|FEBUARY|FEB|MARET|MAR|APRIL|APR|MEI|'
+        r'JUNI|JUN|JULI|JUL|AGUSTUS|AGUS|AGUST|AUGUST|AUG|SEPTEMBER|SEPT|SEP|'
+        r'OKTOBER|OKT|OCTOBER|OCT|NOVEMBER|NOV|DESEMBER|DES|DECEMBER|DEC)'
+    )
+    date_pattern = rf'(?i)(\d{{1,2}}\s+{month_pattern}(?:\s+\d{{2,4}})?|\d{{1,2}}[/-]\d{{1,2}}(?:[/-]\d{{2,4}})?)'
 
     lines = text_str.splitlines()
     for idx, line in enumerate(lines):
@@ -259,7 +268,9 @@ def extract_loading_candidates(text):
     if pd.isna(text) or not str(text).strip():
         return []
     candidates = []
-    date_pattern = r'\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}\s+[a-zA-Z]{3,}\s+\d{2,4})\b'
+    date_token = r'\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}\s+[a-zA-Z]{3,}\s+\d{2,4}'
+    date_pattern = rf'\b({date_token})\b'
+    khusus_pattern = rf'(?i)REQUEST\s+ORDER\s+KHUSUS\s+({date_token})'
     for match in re.finditer(r'(?im)^\s*Waktu\s*loading\s*:\s*([^\n\r]+)', str(text)):
         val = str(match.group(1)).strip()
         if not val:
@@ -284,11 +295,16 @@ def extract_loading_candidates(text):
                 # Month name format dianggap valid
                 date_part = cand
                 break
+        if not date_part:
+            prefix_text = str(text)[:pos]
+            khusus_matches = list(re.finditer(khusus_pattern, prefix_text))
+            if khusus_matches:
+                date_part = khusus_matches[-1].group(1).strip()
         if has_segera:
             time_part = "SEGERA"
         else:
             time_part, _ = extract_time_format(val_upper)
-            if time_part == val_upper:
+            if time_part == val_upper and not re.search(r'\d', val_upper):
                 time_part = ""
         candidates.append({"time": time_part, "date": date_part, "segera": has_segera, "raw": val, "pos": pos})
     return candidates
@@ -813,6 +829,11 @@ def enforce_block_quota(df):
             block_muat_date = block_dates[0]
         if not block_muat_date and block_has_segera and block_ro_date:
             block_muat_date = block_ro_date
+        # Jika tidak ada Waktu loading sama sekali di block yang punya qty eksplisit,
+        # anggap SEGERA -> Tgl Muat mengikuti Tgl RO.
+        if not block_muat_date and not loading_candidates_list and explicit_qty_found and block_ro_date:
+            block_muat_date = block_ro_date
+            block_has_segera = True
 
         for i in range(target_qty):
             if i < len(valid_candidates):
@@ -854,9 +875,11 @@ def enforce_block_quota(df):
                             candidate['DATE'] = block_ro_date if block_ro_date else candidate.get('RO_DATE', '')
                     if not str(candidate.get('TIME', '')).strip() and lc.get("time"):
                         candidate['TIME'] = lc.get("time")
-                elif cand_time_key and not cand_date_existing:
+                elif cand_time_key:
                     if cand_time_key in time_date_map:
-                        candidate['DATE'] = time_date_map[cand_time_key]
+                        mapped_date = time_date_map[cand_time_key]
+                        if (not cand_date_existing) or (block_ro_date and cand_date_existing == block_ro_date and mapped_date != block_ro_date):
+                            candidate['DATE'] = mapped_date
 
                 # Jika Tgl Muat kosong:
                 # - Jika ada JAM, Tgl Muat mengikuti Tgl RO.
@@ -866,10 +889,20 @@ def enforce_block_quota(df):
                     if cand_time:
                         if block_ro_date:
                             candidate['DATE'] = block_ro_date
+                        elif block_muat_date:
+                            candidate['DATE'] = block_muat_date
                     elif block_has_segera and block_ro_date:
                         candidate['DATE'] = block_ro_date
                     elif block_muat_date:
                         candidate['DATE'] = block_muat_date
+                else:
+                    # Jika DATE terisi sama dengan Tgl RO tetapi blok punya Tgl Muat berbeda
+                    # dan baris ini tidak punya JAM, utamakan Tgl Muat blok.
+                    cand_time = str(candidate.get('TIME', '')).strip()
+                    cand_date_existing = str(candidate.get('DATE', '')).strip()
+                    if (not cand_time) and block_muat_date and block_ro_date:
+                        if cand_date_existing == block_ro_date and block_muat_date != block_ro_date:
+                            candidate['DATE'] = block_muat_date
 
                 for col in ['UNIT_TYPE', 'DATE', 'RO_DATE']:
                     val = candidate.get(col)
