@@ -716,6 +716,10 @@ def enforce_block_quota(df):
                 if candidate_ro:
                     block_ro_date = candidate_ro
                     break
+        if not block_ro_date and block_text:
+            ro_from_block = extract_ro_date_from_text(block_text)
+            if ro_from_block:
+                block_ro_date = ro_from_block
         if block_ro_date:
             header_row['RO_DATE'] = block_ro_date
 
@@ -727,12 +731,22 @@ def enforce_block_quota(df):
                 break
         # Ambil urutan Waktu loading dalam block untuk pemetaan berurutan
         loading_queue = {}
+        block_has_segera = False
+        block_dates = []
+        loading_candidates_list = []
         if block_text:
-            for lc in extract_loading_candidates(block_text):
+            loading_candidates_list = extract_loading_candidates(block_text)
+            for lc in loading_candidates_list:
+                if lc.get('segera'):
+                    block_has_segera = True
+                if lc.get('date'):
+                    block_dates.append(lc.get('date'))
                 t_key = str(lc.get('time', '')).strip().upper()
                 if not t_key:
                     continue
                 loading_queue.setdefault(t_key, []).append(lc)
+        if not block_muat_date and block_dates:
+            block_muat_date = block_dates[0]
 
         for i in range(target_qty):
             if i < len(valid_candidates):
@@ -762,17 +776,18 @@ def enforce_block_quota(df):
 
                 # Selaraskan Tgl Muat berdasarkan urutan Waktu loading jika ada.
                 cand_time_key = str(candidate.get('TIME', '')).strip().upper()
+                cand_date_existing = str(candidate.get('DATE', '')).strip()
                 if cand_time_key and cand_time_key in loading_queue and loading_queue[cand_time_key]:
                     lc = loading_queue[cand_time_key].pop(0)
-                    if lc.get("segera"):
-                        candidate['DATE'] = block_ro_date if block_ro_date else candidate.get('RO_DATE', '')
-                        candidate['TIME'] = ""
-                    elif lc.get("date"):
-                        candidate['DATE'] = lc.get("date")
-                        if lc.get("time"):
-                            candidate['TIME'] = lc.get("time")
-                    else:
-                        candidate['DATE'] = block_ro_date if block_ro_date else candidate.get('RO_DATE', '')
+                    if not cand_date_existing:
+                        if lc.get("segera"):
+                            candidate['DATE'] = block_ro_date if block_ro_date else candidate.get('RO_DATE', '')
+                        elif lc.get("date"):
+                            candidate['DATE'] = lc.get("date")
+                        else:
+                            candidate['DATE'] = block_ro_date if block_ro_date else candidate.get('RO_DATE', '')
+                    if not str(candidate.get('TIME', '')).strip() and lc.get("time"):
+                        candidate['TIME'] = lc.get("time")
 
                 # Jika Tgl Muat kosong:
                 # - Jika ada JAM, Tgl Muat mengikuti Tgl RO.
@@ -782,6 +797,8 @@ def enforce_block_quota(df):
                     if cand_time:
                         if block_ro_date:
                             candidate['DATE'] = block_ro_date
+                    elif block_has_segera and block_ro_date:
+                        candidate['DATE'] = block_ro_date
                     elif block_muat_date:
                         candidate['DATE'] = block_muat_date
 
