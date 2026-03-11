@@ -97,23 +97,35 @@ def auto_format_chat_input(text):
         standalone_match = re.search(waktu_loading_standalone, line, re.IGNORECASE)
         if standalone_match:
             jam_raw = standalone_match.group(1).strip()
-            date_in_value = re.search(r'(\d{1,2}[./:-]\d{1,2}[./:-]\d{2,4})', jam_raw)
-            if not date_in_value:
-                date_in_value = re.search(r'(\d{1,2}\s+[a-zA-Z]{3,}\s+\d{2,4})', jam_raw)
-            if date_in_value:
-                jam_part = jam_raw[:date_in_value.start()].strip()
-                jam_part = re.sub(r'[\\/\\-]+\\s*$', '', jam_part).strip()
-                tgl_part = date_in_value.group(1)
+            time_date_slash = re.search(
+                r'(?i)^\s*(\d{1,2}[:.]\d{2})\s*[\\/]\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}\s+[a-zA-Z]{3,}\s+\d{2,4})',
+                jam_raw
+            )
+            if time_date_slash:
+                jam_part = time_date_slash.group(1).strip()
+                tgl_part = time_date_slash.group(2).strip()
                 jam_clean, _ = extract_time_format(jam_part)
                 formatted_lines.append(f"Waktu loading : {jam_clean} {tgl_part}")
                 current_global_date = tgl_part
                 current_block_date = tgl_part
             else:
-                jam_clean, _ = extract_time_format(jam_raw)
-                if current_global_date:
-                    formatted_lines.append(f"Waktu loading : {jam_clean} {current_global_date}")
+                date_in_value = re.search(r'(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})', jam_raw)
+                if not date_in_value:
+                    date_in_value = re.search(r'(\d{1,2}\s+[a-zA-Z]{3,}\s+\d{2,4})', jam_raw)
+                if date_in_value:
+                    jam_part = jam_raw[:date_in_value.start()].strip()
+                    jam_part = re.sub(r'[\\/\\-]+\\s*$', '', jam_part).strip()
+                    tgl_part = date_in_value.group(1)
+                    jam_clean, _ = extract_time_format(jam_part)
+                    formatted_lines.append(f"Waktu loading : {jam_clean} {tgl_part}")
+                    current_global_date = tgl_part
+                    current_block_date = tgl_part
                 else:
-                    formatted_lines.append(f"Waktu loading : {jam_clean}")
+                    jam_clean, _ = extract_time_format(jam_raw)
+                    if current_global_date:
+                        formatted_lines.append(f"Waktu loading : {jam_clean} {current_global_date}")
+                    else:
+                        formatted_lines.append(f"Waktu loading : {jam_clean}")
             continue
 
         formatted_lines.append(line)
@@ -308,6 +320,9 @@ def sanitize_row_data(row):
     orig_text = str(row.get('Original_Text', '')).strip()
     drv = str(row.get('DRIVER', '')).strip()
     ro_date = str(row.get('RO_DATE', '')).strip() if 'RO_DATE' in row else ""
+    date_from_time = ""
+    time_from_value = ""
+    date_from_time_source = False
 
     if d.lower() in ['none', 'nan', 'nat']: d = ""
     if t.lower() in ['none', 'nan', 'nat']: t = ""
@@ -322,13 +337,27 @@ def sanitize_row_data(row):
     if has_segera:
         t = "SEGERA"
     else:
+        # Jika TIME berisi tanggal (contoh: "02.00/10-02-26" atau "06:00/06 Mar 26"),
+        # pindahkan tanggal ke DATE sebelum normalisasi TIME.
+        if t and not d:
+            m_time_date = re.search(r'(?i)^\s*(\d{1,2}[:.]\d{2})\s*[\\/]\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}\s+[a-zA-Z]{3,}\s+\d{2,4})', t)
+            if m_time_date:
+                time_from_value = m_time_date.group(1).strip()
+                date_from_time = m_time_date.group(2).strip()
+                date_from_time_source = True
+                t = time_from_value
+                d = date_from_time
         time_in_date_pattern = r'^(\d{1,2}:\d{2})\s+(.+)$'
         time_in_date_match = re.search(time_in_date_pattern, d)
         if time_in_date_match:
             potential_time = time_in_date_match.group(1)
             remaining_date = time_in_date_match.group(2)
+            if not date_from_time_source:
+                date_from_time = remaining_date.strip()
+                date_from_time_source = True
             if not t or t in ["SEGERA", ""]:
                 t = potential_time
+                time_from_value = potential_time
             d = remaining_date.strip()
 
         is_time_misplaced = re.match(r'^(\d{1,2}|\d{1,2}[:.]\d{2})$', d)
@@ -348,6 +377,8 @@ def sanitize_row_data(row):
             elif re.match(r'^\d{1,2}$', t):
                 hour = int(t.split()[0])
                 t = f"{hour:02d}:00"
+            if date_from_time_source and not time_from_value:
+                time_from_value = t
 
     if not t or t == "":
         fallback_match = re.search(r"(?i)Waktu\s+loading\s*:\s*([0-9]{1,2}\s*:\s*[0-9]{2}|[0-9]{1,2}|SEGERA)", orig_text)
@@ -457,7 +488,17 @@ def sanitize_row_data(row):
     else:
         # Tidak ada Waktu loading sama sekali -> Tgl Muat kosong, Jam kosong
         muat_date = ""
-        t = ""
+        if date_from_time_source:
+            muat_date = date_from_time
+            if not t and time_from_value:
+                t = time_from_value
+        else:
+            t = ""
+
+    if not muat_date and date_from_time_source:
+        muat_date = date_from_time
+        if not t and time_from_value:
+            t = time_from_value
 
     row['DATE'] = muat_date
     row['TIME'] = t
@@ -744,6 +785,7 @@ def enforce_block_quota(df):
         block_has_segera = False
         block_dates = []
         loading_candidates_list = []
+        time_date_map = {}
         if 'Original_Text' in block_data.columns:
             seen_texts = set()
             for txt in block_data['Original_Text']:
@@ -751,6 +793,8 @@ def enforce_block_quota(df):
                 if not s or s in seen_texts:
                     continue
                 seen_texts.add(s)
+                if not block_has_segera and re.search(r'(?i)\bsegera\b', s):
+                    block_has_segera = True
                 loading_candidates_list.extend(extract_loading_candidates(s))
         elif block_text:
             loading_candidates_list = extract_loading_candidates(block_text)
@@ -763,6 +807,8 @@ def enforce_block_quota(df):
             if not t_key:
                 continue
             loading_queue.setdefault(t_key, []).append(lc)
+            if lc.get('date') and t_key not in time_date_map:
+                time_date_map[t_key] = lc.get('date')
         if not block_muat_date and block_dates:
             block_muat_date = block_dates[0]
         if not block_muat_date and block_has_segera and block_ro_date:
@@ -808,6 +854,9 @@ def enforce_block_quota(df):
                             candidate['DATE'] = block_ro_date if block_ro_date else candidate.get('RO_DATE', '')
                     if not str(candidate.get('TIME', '')).strip() and lc.get("time"):
                         candidate['TIME'] = lc.get("time")
+                elif cand_time_key and not cand_date_existing:
+                    if cand_time_key in time_date_map:
+                        candidate['DATE'] = time_date_map[cand_time_key]
 
                 # Jika Tgl Muat kosong:
                 # - Jika ada JAM, Tgl Muat mengikuti Tgl RO.
