@@ -150,11 +150,40 @@ def normalize_phone_number(phone):
     if phone_digits.startswith('62'): phone_digits = '0' + phone_digits[2:]
     return phone_digits
 
+def extract_phone_numbers_from_text(original_text):
+    if pd.isna(original_text) or not str(original_text).strip():
+        return []
+    text = str(original_text)
+    labels = [
+        r'no\.?\s*hp',
+        r'no\.?\s*telp',
+        r'no\.?\s*tlp',
+        r'kontak',
+        r'\bhp\b',
+    ]
+    numbers = []
+    for label in labels:
+        for m in re.finditer(label, text, re.IGNORECASE):
+            tail = text[m.end():m.end()+60]
+            mnum = re.search(r'([+0-9][0-9\s\-]{6,})', tail)
+            if mnum:
+                num = normalize_phone_number(mnum.group(1))
+                if num and num not in numbers:
+                    numbers.append(num)
+    return numbers
+
+def extract_phone_pair_from_text(original_text):
+    nums = extract_phone_numbers_from_text(original_text)
+    if len(nums) >= 2:
+        return (nums[0], nums[1])
+    return ("", "")
+
 def normalize_origin(text):
     if pd.isna(text) or not str(text).strip(): return ""
     origin = str(text).upper().strip()
     if origin.lower() in ['none', 'nan', 'nat']: return ""
     origin = re.sub(r'[â€“â€”âˆ’]', '-', origin)
+    origin = origin.replace('*', ' ')
     origin = origin.replace('/', ' ')
     origin = re.sub(r'\s*-\s*', ' ', origin)
     origin = origin.replace(',', ' ')
@@ -264,6 +293,15 @@ def extract_unit_qty(text, unit_qty_raw=""):
             return None
     return None
 
+def extract_unit_type_from_text(text):
+    if pd.isna(text) or not str(text).strip():
+        return ""
+    # Ambil tipe unit dari baris "X unit ..."
+    m = re.search(r'(?im)^\s*\d+\s*unit\s+([^\n\r]+)', str(text))
+    if m:
+        return normalize_unit_type(m.group(1))
+    return ""
+
 def extract_loading_candidates(text):
     if pd.isna(text) or not str(text).strip():
         return []
@@ -330,6 +368,77 @@ def clean_driver_name(name):
         if bad_word.lower() in clean_name.lower(): return ""
     return clean_name
 
+def _clean_driver_fragment(text):
+    if not text:
+        return ""
+    # Potong jika ada field lain di baris yang sama
+    text = re.split(r'\b(no\.?\s*hp|no\.?\s*pol|nopol|hp|telp|phone)\b', text, flags=re.IGNORECASE)[0]
+    text = re.sub(r'[^A-Za-z\s]', ' ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return clean_driver_name(text)
+
+def extract_driver_pair_from_text(original_text):
+    if not original_text:
+        return ("", "")
+    patterns = [
+        r'(?:driver|pengemudi)\s*\.?\s*1\s*[:=]?\s*([^\n\r]+)',
+        r'(?:driver|pengemudi)\s*\.?\s*2\s*[:=]?\s*([^\n\r]+)'
+    ]
+    m1 = re.search(patterns[0], original_text, re.IGNORECASE)
+    m2 = re.search(patterns[1], original_text, re.IGNORECASE)
+    d1 = _clean_driver_fragment(m1.group(1)) if m1 else ""
+    d2 = _clean_driver_fragment(m2.group(1)) if m2 else ""
+    return (d1, d2)
+
+def apply_driver_pair_from_text(df_final):
+    if df_final is None or df_final.empty:
+        return df_final
+    if 'Original_Text' not in df_final.columns or 'DRIVER' not in df_final.columns:
+        return df_final
+    df = df_final.copy()
+    for idx, row in df.iterrows():
+        original_text = str(row.get('Original_Text', ''))
+        d1, d2 = extract_driver_pair_from_text(original_text)
+        if not d1 or not d2:
+            continue
+        if d1.lower() == d2.lower():
+            combined = d1
+        else:
+            combined = f"{d1} & {d2}"
+        current = str(row.get('DRIVER', '')).strip()
+        if not current:
+            df.at[idx, 'DRIVER'] = combined
+            continue
+        current_norm = clean_driver_name(current).lower()
+        if current_norm in [d1.lower(), d2.lower()] or '&' in current:
+            df.at[idx, 'DRIVER'] = combined
+    return df
+
+def apply_phone_pair_from_text(df_final):
+    if df_final is None or df_final.empty:
+        return df_final
+    if 'Original_Text' not in df_final.columns or 'PHONE' not in df_final.columns:
+        return df_final
+    df = df_final.copy()
+    for idx, row in df.iterrows():
+        original_text = str(row.get('Original_Text', ''))
+        d1, d2 = extract_driver_pair_from_text(original_text)
+        if not d1 or not d2:
+            continue
+        p1, p2 = extract_phone_pair_from_text(original_text)
+        if not p1 or not p2:
+            continue
+        combined = p1 if p1 == p2 else f"{p1} & {p2}"
+        current = str(row.get('PHONE', '')).strip()
+        if not current:
+            df.at[idx, 'PHONE'] = combined
+            continue
+        if '&' in current:
+            continue
+        if current in [p1, p2] or current in [f"{p1}{p2}", f"{p2}{p1}"]:
+            df.at[idx, 'PHONE'] = combined
+    return df
+
 def sanitize_row_data(row):
     d = str(row.get('DATE', '')).strip()
     t = str(row.get('TIME', '')).strip()
@@ -343,6 +452,12 @@ def sanitize_row_data(row):
     if d.lower() in ['none', 'nan', 'nat']: d = ""
     if t.lower() in ['none', 'nan', 'nat']: t = ""
     if ro_date.lower() in ['none', 'nan', 'nat']: ro_date = ""
+
+    if not clean_driver_name(drv):
+        d1, d2 = extract_driver_pair_from_text(orig_text)
+        if d1 and d2:
+            row['DRIVER'] = f"{d1} & {d2}" if d1.lower() != d2.lower() else d1
+            drv = row['DRIVER']
 
     has_segera = False
     if "segera" in t.lower(): has_segera = True
@@ -416,11 +531,25 @@ def sanitize_row_data(row):
                     t = waktu_fallback
 
     if 'PHONE' in row:
-        raw_phone = str(row.get('PHONE', '')).strip()
-        if raw_phone and raw_phone.lower() not in ['none', 'nan', 'nat', '']:
-            row['PHONE'] = normalize_phone_number(raw_phone)
-        else:
-            row['PHONE'] = ""
+        phone_from_pair = False
+        d1, d2 = extract_driver_pair_from_text(orig_text)
+        if d1 and d2:
+            p1, p2 = extract_phone_pair_from_text(orig_text)
+            if p1 and p2:
+                row['PHONE'] = p1 if p1 == p2 else f"{p1} & {p2}"
+                phone_from_pair = True
+        if not phone_from_pair:
+            raw_phone = str(row.get('PHONE', '')).strip()
+            if raw_phone and raw_phone.lower() not in ['none', 'nan', 'nat', '']:
+                # Jika ada lebih dari satu nomor dalam satu field, gabungkan dengan "&"
+                nums = [normalize_phone_number(n) for n in re.findall(r'\d{6,}', raw_phone)]
+                nums = [n for n in nums if n]
+                if len(nums) >= 2:
+                    row['PHONE'] = f"{nums[0]} & {nums[1]}"
+                else:
+                    row['PHONE'] = normalize_phone_number(raw_phone)
+            else:
+                row['PHONE'] = ""
     
     if 'ORIGIN' in row:
         raw_origin = str(row.get('ORIGIN', '')).strip()
@@ -450,6 +579,10 @@ def sanitize_row_data(row):
             row['UNIT_TYPE'] = normalize_unit_type(raw_unit)
         else:
             row['UNIT_TYPE'] = ""
+        if not row.get('UNIT_TYPE'):
+            unit_from_text = extract_unit_type_from_text(str(row.get('Original_Text', '')).strip())
+            if unit_from_text:
+                row['UNIT_TYPE'] = unit_from_text
 
     ro_from_text = extract_ro_date_from_text(orig_text)
     if ro_from_text:
@@ -579,6 +712,13 @@ def repair_headers(df):
             df.at[i, 'ORIGIN'] = normalize_origin(df.at[i, 'ORIGIN'])
         if pd.notna(df.at[i, 'DESTINATION']):
             df.at[i, 'DESTINATION'] = normalize_route(df.at[i, 'DESTINATION'])
+        if pd.notna(df.at[i, 'UNIT_TYPE']):
+            df.at[i, 'UNIT_TYPE'] = normalize_unit_type(df.at[i, 'UNIT_TYPE'])
+
+        if pd.isna(df.at[i, 'UNIT_TYPE']) or str(df.at[i, 'UNIT_TYPE']).strip() == "":
+            unit_from_text = extract_unit_type_from_text(orig_text)
+            if unit_from_text:
+                df.at[i, 'UNIT_TYPE'] = unit_from_text
 
         if origin_from_text:
             origin_norm = normalize_origin(origin_from_text)
@@ -594,6 +734,22 @@ def repair_headers(df):
             route_norm = normalize_route(route_from_text)
             # Rute dari teks asli jadi sumber utama Tujuan.
             df.at[i, 'DESTINATION'] = route_norm
+
+        # Jika driver kosong tapi ada Driver 1 & Driver 2 di teks, gabungkan.
+        drv_val = str(df.at[i, 'DRIVER']).strip() if 'DRIVER' in df.columns else ""
+        if not clean_driver_name(drv_val):
+            d1, d2 = extract_driver_pair_from_text(orig_text)
+            if d1 and d2:
+                df.at[i, 'DRIVER'] = f"{d1} & {d2}" if d1.lower() != d2.lower() else d1
+        if 'PHONE' in df.columns:
+            cur_phone = str(df.at[i, 'PHONE']).strip() if pd.notna(df.at[i, 'PHONE']) else ""
+            d1, d2 = extract_driver_pair_from_text(orig_text)
+            if d1 and d2:
+                p1, p2 = extract_phone_pair_from_text(orig_text)
+                if p1 and p2:
+                    combined = p1 if p1 == p2 else f"{p1} & {p2}"
+                    if not cur_phone or (('&' not in cur_phone) and (cur_phone in [p1, p2])):
+                        df.at[i, 'PHONE'] = combined
 
         ro_from_text = extract_ro_date_from_text(orig_text)
         if ro_from_text:
@@ -656,6 +812,19 @@ def enforce_block_quota(df):
     if df is None or df.empty: return df
     final_rows = []
     last_ro_date = ""
+
+    def _clean_empty(val):
+        if val is None:
+            return ""
+        try:
+            if pd.isna(val):
+                return ""
+        except Exception:
+            pass
+        s = str(val).strip()
+        if not s or s.lower() in ['nan', 'none', 'nat']:
+            return ""
+        return s
 
     def _compact(text):
         return re.sub(r'[^A-Z0-9]', '', str(text).upper())
@@ -746,6 +915,17 @@ def enforce_block_quota(df):
         except:
             block_text = ""
         block_route_from_text = normalize_route(extract_route_from_text(block_text)) if block_text else ""
+        block_driver_pair = ""
+        if block_text:
+            bd1, bd2 = extract_driver_pair_from_text(block_text)
+            if bd1 and bd2:
+                block_driver_pair = f"{bd1} & {bd2}" if bd1.lower() != bd2.lower() else bd1
+        block_plate = extract_plate_aggressive(block_text) if block_text else ""
+        block_phone_pair = ""
+        if block_text and block_driver_pair:
+            bp1, bp2 = extract_phone_pair_from_text(block_text)
+            if bp1 and bp2:
+                block_phone_pair = bp1 if bp1 == bp2 else f"{bp1} & {bp2}"
 
         origin_pool = []
         destination_pool = []
@@ -773,10 +953,10 @@ def enforce_block_quota(df):
         else:
             block_destination = normalize_route(header_row.get('DESTINATION', ''))
 
-        block_ro_date = str(header_row.get('RO_DATE', '')).strip()
+        block_ro_date = _clean_empty(header_row.get('RO_DATE', ''))
         if not block_ro_date:
             for src_row in [header_row] + valid_candidates:
-                candidate_ro = str(src_row.get('RO_DATE', '')).strip()
+                candidate_ro = _clean_empty(src_row.get('RO_DATE', ''))
                 if candidate_ro:
                     block_ro_date = candidate_ro
                     break
@@ -852,6 +1032,8 @@ def enforce_block_quota(df):
                 cand_destination = normalize_route(candidate.get('DESTINATION', ''))
                 if not cand_destination:
                     cand_destination = block_destination
+                elif block_destination and cand_destination == block_origin:
+                    cand_destination = block_destination
                 elif block_destination and cand_destination != block_destination:
                     if ',' in block_destination and _compact(cand_destination) == _compact(block_destination):
                         cand_destination = block_destination
@@ -907,16 +1089,23 @@ def enforce_block_quota(df):
                 for col in ['UNIT_TYPE', 'DATE', 'RO_DATE']:
                     val = candidate.get(col)
                     if pd.isna(val) or str(val).strip() == "":
-                        header_val = header_row.get(col)
+                        header_val = _clean_empty(header_row.get(col))
                         if col == 'DATE':
                             if header_val and (re.search(r'\d', str(header_val))): candidate[col] = header_val
                         else:
                             candidate[col] = header_val
+                if not str(candidate.get('DRIVER', '')).strip() and block_driver_pair:
+                    candidate['DRIVER'] = block_driver_pair
+                if not str(candidate.get('PLATE', '')).strip() and block_plate:
+                    candidate['PLATE'] = block_plate
+                if not str(candidate.get('PHONE', '')).strip() and block_phone_pair:
+                    candidate['PHONE'] = block_phone_pair
                 final_rows.append(candidate)
             else:
                 clean_slot = header_row.copy()
                 clean_slot['DRIVER'] = ""; clean_slot['PLATE'] = ""; clean_slot['PHONE'] = ""; clean_slot['TIME'] = ""; clean_slot['UNIT_QTY'] = 1
-                if header_row.get('DATE') and re.search(r'\d', str(header_row.get('DATE'))): clean_slot['DATE'] = header_row['DATE']
+                header_date = _clean_empty(header_row.get('DATE'))
+                if header_date and re.search(r'\d', str(header_date)): clean_slot['DATE'] = header_date
                 else: clean_slot['DATE'] = ""
                 if block_ro_date:
                     clean_slot['RO_DATE'] = block_ro_date
@@ -1506,6 +1695,8 @@ def main():
                     
                     # Terapkan fungsi revisi yang sudah DIPERBAIKI
                     df_final = apply_revisions_from_chat(chat_input, df_final)
+                    df_final = apply_driver_pair_from_text(df_final)
+                    df_final = apply_phone_pair_from_text(df_final)
 
                     accuracy = calculate_extraction_accuracy(df_raw, df_final)
                     

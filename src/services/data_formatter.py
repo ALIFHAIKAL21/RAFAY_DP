@@ -60,6 +60,34 @@ def normalize_phone_number(phone):
         phone_digits = '0' + phone_digits[2:]
     return phone_digits
 
+def extract_phone_numbers_from_text(original_text):
+    if pd.isna(original_text) or not str(original_text).strip():
+        return []
+    text = str(original_text)
+    labels = [
+        r'no\.?\s*hp',
+        r'no\.?\s*telp',
+        r'no\.?\s*tlp',
+        r'kontak',
+        r'\bhp\b',
+    ]
+    numbers = []
+    for label in labels:
+        for m in re.finditer(label, text, re.IGNORECASE):
+            tail = text[m.end():m.end()+60]
+            mnum = re.search(r'([+0-9][0-9\s\-]{6,})', tail)
+            if mnum:
+                num = normalize_phone_number(mnum.group(1))
+                if num and num not in numbers:
+                    numbers.append(num)
+    return numbers
+
+def extract_phone_pair_from_text(original_text):
+    nums = extract_phone_numbers_from_text(original_text)
+    if len(nums) >= 2:
+        return (nums[0], nums[1])
+    return ("", "")
+
 def normalize_route(text):
     """Normalisasi format rute: uppercase, pisahkan dengan koma+spasi."""
     if pd.isna(text) or not str(text).strip():
@@ -73,6 +101,7 @@ def normalize_route(text):
     
     # Step 2: Ganti semua "–" dan "/" menjadi "-"
     route = route.replace('–', '-').replace('/', '-')
+    route = route.replace('*', ' ')
     
     # Step 3: Hapus spasi berlebih
     route = re.sub(r'\s+', ' ', route)
@@ -102,11 +131,87 @@ def clean_driver_name(name):
         if bad_word.lower() in clean_name.lower(): return ""
     return clean_name
 
+def _clean_driver_fragment(text):
+    if not text:
+        return ""
+    text = re.split(r'\b(no\.?\s*hp|no\.?\s*pol|nopol|hp|telp|phone)\b', text, flags=re.IGNORECASE)[0]
+    text = re.sub(r'[^A-Za-z\s]', ' ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return clean_driver_name(text)
+
+def extract_driver_pair_from_text(original_text):
+    if not original_text:
+        return ("", "")
+    patterns = [
+        r'(?:driver|pengemudi)\s*\.?\s*1\s*[:=]?\s*([^\n\r]+)',
+        r'(?:driver|pengemudi)\s*\.?\s*2\s*[:=]?\s*([^\n\r]+)'
+    ]
+    m1 = re.search(patterns[0], original_text, re.IGNORECASE)
+    m2 = re.search(patterns[1], original_text, re.IGNORECASE)
+    d1 = _clean_driver_fragment(m1.group(1)) if m1 else ""
+    d2 = _clean_driver_fragment(m2.group(1)) if m2 else ""
+    return (d1, d2)
+
+def apply_driver_pair_from_text(df_final):
+    if df_final is None or df_final.empty:
+        return df_final
+    if 'Original_Text' not in df_final.columns or 'DRIVER' not in df_final.columns:
+        return df_final
+    df = df_final.copy()
+    for idx, row in df.iterrows():
+        original_text = str(row.get('Original_Text', ''))
+        d1, d2 = extract_driver_pair_from_text(original_text)
+        if not d1 or not d2:
+            continue
+        if d1.lower() == d2.lower():
+            combined = d1
+        else:
+            combined = f"{d1} & {d2}"
+        current = str(row.get('DRIVER', '')).strip()
+        if not current:
+            df.at[idx, 'DRIVER'] = combined
+            continue
+        current_norm = clean_driver_name(current).lower()
+        if current_norm in [d1.lower(), d2.lower()] or '&' in current:
+            df.at[idx, 'DRIVER'] = combined
+    return df
+
+def apply_phone_pair_from_text(df_final):
+    if df_final is None or df_final.empty:
+        return df_final
+    if 'Original_Text' not in df_final.columns or 'PHONE' not in df_final.columns:
+        return df_final
+    df = df_final.copy()
+    for idx, row in df.iterrows():
+        original_text = str(row.get('Original_Text', ''))
+        d1, d2 = extract_driver_pair_from_text(original_text)
+        if not d1 or not d2:
+            continue
+        p1, p2 = extract_phone_pair_from_text(original_text)
+        if not p1 or not p2:
+            continue
+        combined = p1 if p1 == p2 else f"{p1} & {p2}"
+        current = str(row.get('PHONE', '')).strip()
+        if not current:
+            df.at[idx, 'PHONE'] = combined
+            continue
+        if '&' in current:
+            continue
+        if current in [p1, p2] or current in [f"{p1}{p2}", f"{p2}{p1}"]:
+            df.at[idx, 'PHONE'] = combined
+    return df
+
 def sanitize_row_data(row):
     d = str(row.get('DATE', '')).strip(); t = str(row.get('TIME', '')).strip()
     orig_text = str(row.get('Original_Text', '')).strip(); drv = str(row.get('DRIVER', '')).strip()
     if d.lower() in ['none', 'nan', 'nat']: d = ""
     if t.lower() in ['none', 'nan', 'nat']: t = ""
+
+    if not clean_driver_name(drv):
+        d1, d2 = extract_driver_pair_from_text(orig_text)
+        if d1 and d2:
+            row['DRIVER'] = f"{d1} & {d2}" if d1.lower() != d2.lower() else d1
+            drv = row['DRIVER']
     
     has_segera = False
     if "segera" in t.lower(): has_segera = True
@@ -127,11 +232,24 @@ def sanitize_row_data(row):
     
     # FIX 1: Normalisasi nomor HP
     if 'PHONE' in row:
-        raw_phone = str(row.get('PHONE', '')).strip()
-        if raw_phone and raw_phone.lower() not in ['none', 'nan', 'nat', '']:
-            row['PHONE'] = normalize_phone_number(raw_phone)
-        else:
-            row['PHONE'] = ""
+        phone_from_pair = False
+        d1, d2 = extract_driver_pair_from_text(orig_text)
+        if d1 and d2:
+            p1, p2 = extract_phone_pair_from_text(orig_text)
+            if p1 and p2:
+                row['PHONE'] = p1 if p1 == p2 else f"{p1} & {p2}"
+                phone_from_pair = True
+        if not phone_from_pair:
+            raw_phone = str(row.get('PHONE', '')).strip()
+            if raw_phone and raw_phone.lower() not in ['none', 'nan', 'nat', '']:
+                nums = [normalize_phone_number(n) for n in re.findall(r'\d{6,}', raw_phone)]
+                nums = [n for n in nums if n]
+                if len(nums) >= 2:
+                    row['PHONE'] = f"{nums[0]} & {nums[1]}"
+                else:
+                    row['PHONE'] = normalize_phone_number(raw_phone)
+            else:
+                row['PHONE'] = ""
     
     # FIX 2: Normalisasi format ORIGIN dan DESTINATION
     for route_field in ['ORIGIN', 'DESTINATION']:
@@ -443,6 +561,9 @@ def generate_office_report(df_raw):
         df_proc[col] = df_proc.groupby('BLOCK_ID')[col].ffill()
     
     df_final = enforce_block_quota(df_proc)
+    df_final = apply_driver_pair_from_text(df_final)
+    df_final = apply_phone_pair_from_text(df_final)
+    df_final = apply_driver_pair_from_text(df_final)
     
     df_office = pd.DataFrame()
     df_office['No.'] = range(1, len(df_final) + 1)
