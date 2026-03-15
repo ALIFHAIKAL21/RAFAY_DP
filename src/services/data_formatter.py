@@ -47,6 +47,22 @@ def extract_plate_aggressive(text):
     match = re.search(r"\b([A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3})\b", str(text).upper())
     return match.group(1) if match else ""
 
+def clean_plate_value(plate):
+    if plate is None:
+        return ""
+    s = str(plate).strip().upper()
+    if not s or s.lower() in ['none', 'nan', 'nat']:
+        return ""
+    s = re.sub(r'[^A-Z0-9\s]', ' ', s)
+    s = re.sub(r'\s+', ' ', s).strip()
+    if re.fullmatch(r'0+', s):
+        return ""
+    if not re.search(r'[A-Z]', s):
+        return ""
+    if not re.search(r'\d', s):
+        return ""
+    return s
+
 def normalize_phone_number(phone):
     """Normalisasi nomor HP: hapus non-digit, handle prefix 62, tanpa spasi."""
     if pd.isna(phone) or not str(phone).strip():
@@ -105,6 +121,8 @@ def normalize_route(text):
     
     # Step 3: Hapus spasi berlebih
     route = re.sub(r'\s+', ' ', route)
+    if not re.search(r'[A-Z]', route):
+        return ""
     
     # Step 4: Split berdasarkan "-" atau "," jika ada
     if '-' in route or ',' in route:
@@ -309,16 +327,16 @@ def enforce_block_quota(df):
 
             row = sanitize_row_data(row)
             d_name = clean_driver_name(row.get('DRIVER', ''))
-            t_val = str(row.get('TIME', '')).lower()
-            has_time = pd.notna(row.get('TIME')) and (any(c.isdigit() for c in t_val) or "segera" in t_val)
             
             if not str(row.get('PLATE', '')) or str(row.get('PLATE', '')).lower() == 'nan':
                 found_plate = extract_plate_aggressive(str(row.get('Original_Text', '')) + " " + str(row.get('DRIVER', '')))
                 if found_plate: row['PLATE'] = found_plate
             
             has_plate = pd.notna(row.get('PLATE')) and len(str(row.get('PLATE'))) > 3
-            if d_name or has_time or has_plate:
-                row['DRIVER'] = d_name; valid_candidates.append(row)
+            has_phone = pd.notna(row.get('PHONE')) and len(str(row.get('PHONE')).strip()) > 5
+            if d_name or has_plate or has_phone:
+                row['DRIVER'] = d_name
+                valid_candidates.append(row)
         
         if header_row is None and len(block_data) > 0: header_row = block_data.iloc[0]
 
@@ -564,6 +582,8 @@ def generate_office_report(df_raw):
     df_final = apply_driver_pair_from_text(df_final)
     df_final = apply_phone_pair_from_text(df_final)
     df_final = apply_driver_pair_from_text(df_final)
+    if 'PLATE' in df_final.columns:
+        df_final['PLATE'] = df_final['PLATE'].apply(clean_plate_value)
     
     df_office = pd.DataFrame()
     df_office['No.'] = range(1, len(df_final) + 1)
@@ -578,6 +598,27 @@ def generate_office_report(df_raw):
     df_office['Driver'] = df_final['DRIVER'].fillna("").astype(str).str.title()
     df_office['Kontak Driver'] = df_final['PHONE']
     df_office['Jam Loading'] = df_final['TIME'] 
+    def _is_filled(val):
+        if val is None:
+            return False
+        s = str(val).strip()
+        if not s:
+            return False
+        if s.lower() in ["-", "null", "none", "nan", "undefined"]:
+            return False
+        return True
+    def _classify_status(row):
+        fields = [
+            'Job Number', 'Tgl RO', 'Tgl Muat', 'Pickup', 'Tujuan',
+            'No. Plat', 'Type Truck', 'Driver', 'Kontak Driver'
+        ]
+        filled = sum(1 for f in fields if _is_filled(row.get(f)))
+        if filled == 9:
+            return "ASSIGNED"
+        if filled >= 3:
+            return "PARTIAL"
+        return "UNASSIGNED"
+    df_office['status_unit'] = df_office.apply(_classify_status, axis=1)
     
     return df_office
 

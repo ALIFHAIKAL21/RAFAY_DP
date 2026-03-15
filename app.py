@@ -143,6 +143,22 @@ def extract_plate_aggressive(text):
     if match: return match.group(1)
     return ""
 
+def clean_plate_value(plate):
+    if plate is None:
+        return ""
+    s = str(plate).strip().upper()
+    if not s or s.lower() in ['none', 'nan', 'nat']:
+        return ""
+    s = re.sub(r'[^A-Z0-9\s]', ' ', s)
+    s = re.sub(r'\s+', ' ', s).strip()
+    if re.fullmatch(r'0+', s):
+        return ""
+    if not re.search(r'[A-Z]', s):
+        return ""
+    if not re.search(r'\d', s):
+        return ""
+    return s
+
 def normalize_phone_number(phone):
     if pd.isna(phone) or not str(phone).strip(): return ""
     phone_digits = re.sub(r'\D', '', str(phone))
@@ -199,6 +215,8 @@ def normalize_route(text):
     route = route.replace('*', ' ')
     route = re.sub(r'[^\w\s,/-]', ' ', route)
     route = re.sub(r'\s+', ' ', route).strip(" ,-")
+    if not re.search(r'[A-Z]', route):
+        return ""
 
     # Route jadi format "A, B" hanya jika input memang punya separator route.
     if '-' in route or ',' in route or '/' in route:
@@ -874,19 +892,16 @@ def enforce_block_quota(df):
 
             row = sanitize_row_data(row)
             d_name = clean_driver_name(row.get('DRIVER', ''))
-            t_val = str(row.get('TIME', '')).lower()
-            has_time = pd.notna(row.get('TIME')) and (any(c.isdigit() for c in t_val) or "segera" in t_val)
-            if not has_time:
-                if re.search(r'(?i)\bWaktu\s*loading\b', orig_text) or re.search(r'(?i)\bsegera\b', orig_text):
-                    has_time = True
             if not str(row.get('PLATE', '')) or str(row.get('PLATE', '')).lower() == 'nan':
                 search_text = str(row.get('Original_Text', '')) + " " + str(row.get('DRIVER', ''))
                 found_plate = extract_plate_aggressive(search_text)
                 if found_plate: row['PLATE'] = found_plate
             has_plate = pd.notna(row.get('PLATE')) and len(str(row.get('PLATE'))) > 3
             added_as_candidate = False
-            if d_name or has_time or has_plate:
-                row['DRIVER'] = d_name; valid_candidates.append(row)
+            has_phone = pd.notna(row.get('PHONE')) and len(str(row.get('PHONE')).strip()) > 5
+            if d_name or has_plate or has_phone:
+                row['DRIVER'] = d_name
+                valid_candidates.append(row)
                 added_as_candidate = True
 
             if not explicit_qty_found and not added_as_candidate:
@@ -1415,29 +1430,6 @@ def calculate_extraction_accuracy(df_raw, df_final):
     accuracy = round((filled_fields / total_fields) * 100, 1) if total_fields > 0 else 0.0
     return min(accuracy, 100.0)
 
-def calculate_confidence_score(df):
-    scores = []
-    for _, row in df.iterrows():
-        score = 0.0
-        plate_key = 'No. Plat' if 'No. Plat' in df.columns else 'PLATE'
-        plate_val = str(row.get(plate_key, '')).strip() if plate_key in df.columns else ""
-        if len(plate_val) > 3: score += 0.4
-
-        driver_key = 'Driver' if 'Driver' in df.columns else 'DRIVER'
-        driver_val = str(row.get(driver_key, '')).strip() if driver_key in df.columns else ""
-        if driver_val and driver_val.lower() != 'nan': score += 0.3
-
-        tujuan_key = 'Tujuan' if 'Tujuan' in df.columns else 'DESTINATION'
-        tujuan_val = str(row.get(tujuan_key, '')).strip() if tujuan_key in df.columns else ""
-        if tujuan_val and tujuan_val.lower() != 'nan': score += 0.2
-
-        tgl_key = 'Tgl Muat' if 'Tgl Muat' in df.columns else 'DATE'
-        tgl_val = str(row.get(tgl_key, '')).strip() if tgl_key in df.columns else ""
-        if tgl_val and tgl_val.lower() != 'nan': score += 0.1
-
-        scores.append(round(min(score, 1.0), 3))
-    return scores
-
 # =================================================================================
 # --- FRONTEND UI: WHITE THEME - PROFESSIONAL EDITION ---
 # =================================================================================
@@ -1568,7 +1560,6 @@ def init_db():
             driver TEXT,
             kontak_driver TEXT,
             jam_loading TEXT,
-            confidence REAL,
             status TEXT DEFAULT 'Valid',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -1583,7 +1574,7 @@ def render_top_ui(proses_waktu="--", baris="--", akurasi="--"):
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20z"></path><path d="M12 6v6l4 2"></path></svg>
                 <div>
                     <h1 class="nav-title">Rafay Logistics <span class="nav-accent">IDP</span></h1>
-                    <p class="nav-subtitle">Intelligent Document Processing v2.0 (IndoBERT + LayoutLMv3)</p>
+                    <p class="nav-subtitle">Intelligent Document Processing v1.0 (LayoutLMv3)</p>
                 </div>
             </div>
             <div class="nav-status">
@@ -1605,7 +1596,6 @@ def main():
     if 'waktu' not in st.session_state: st.session_state.waktu = "--"
     if 'baris' not in st.session_state: st.session_state.baris = "--"
     if 'akurasi' not in st.session_state: st.session_state.akurasi = "--"
-    if 'avg_confidence' not in st.session_state: st.session_state.avg_confidence = 0.0
     if 'processing_time' not in st.session_state: st.session_state.processing_time = 0.0
     
     render_top_ui(st.session_state.waktu, st.session_state.baris, st.session_state.akurasi)
@@ -1697,6 +1687,8 @@ def main():
                     df_final = apply_revisions_from_chat(chat_input, df_final)
                     df_final = apply_driver_pair_from_text(df_final)
                     df_final = apply_phone_pair_from_text(df_final)
+                    if 'PLATE' in df_final.columns:
+                        df_final['PLATE'] = df_final['PLATE'].apply(clean_plate_value)
 
                     accuracy = calculate_extraction_accuracy(df_raw, df_final)
                     
@@ -1718,6 +1710,27 @@ def main():
                     df_office['Type Truck'] = df_final['UNIT_TYPE'].str.upper()
                     df_office['Driver'] = df_final['DRIVER'].fillna("").astype(str).str.title()
                     df_office['Kontak Driver'] = df_final['PHONE']
+                    def _is_filled(val):
+                        if val is None:
+                            return False
+                        s = str(val).strip()
+                        if not s:
+                            return False
+                        if s.lower() in ["-", "null", "none", "nan", "undefined"]:
+                            return False
+                        return True
+                    def _classify_status(row):
+                        fields = [
+                            'Job Number', 'Tgl RO', 'Tgl Muat', 'Pickup', 'Tujuan',
+                            'No. Plat', 'Type Truck', 'Driver', 'Kontak Driver'
+                        ]
+                        filled = sum(1 for f in fields if _is_filled(row.get(f)))
+                        if filled == 9:
+                            return "ASSIGNED"
+                        if filled >= 3:
+                            return "PARTIAL"
+                        return "UNASSIGNED"
+                    df_office['status_unit'] = df_office.apply(_classify_status, axis=1)
 
                     # Sorting output berdasarkan Tgl Muat lalu Tgl RO
                     df_office['_sort_muat'] = df_office['Tgl Muat'].apply(parse_date_custom)
@@ -1731,10 +1744,6 @@ def main():
                     df_office['No.'] = range(1, len(df_office) + 1)
                     df_office['Job Number'] = [f"{job_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_office))]
 
-                    confidence_scores = calculate_confidence_score(df_office)
-                    avg_confidence = round((sum(confidence_scores) / len(confidence_scores)) * 100, 1) if confidence_scores else 0.0
-                    df_office['Confidence'] = confidence_scores
-
                     end_time = time.time()
                     processing_time = round(end_time - start_time, 2)
 
@@ -1743,7 +1752,6 @@ def main():
                     st.session_state.waktu = f"{processing_time}s"
                     st.session_state.baris = f"{len(df_office)} Order"
                     st.session_state.akurasi = f"{accuracy}%"
-                    st.session_state.avg_confidence = avg_confidence
                     st.session_state.processing_time = processing_time
 
                     st.rerun()
@@ -1754,23 +1762,32 @@ def main():
                 if os.path.exists(temp_path): os.remove(temp_path)
                     
         if 'df_office' in st.session_state:
-            dashboard_col1, dashboard_col2, dashboard_col3 = st.columns(3, gap="medium")
+            dashboard_col1, dashboard_col2 = st.columns(2, gap="medium")
             with dashboard_col1:
-                st.markdown(f"""<div class="metric-box"><div class="metric-box-label">Model Confidence</div><div class="metric-box-value">{st.session_state.get('avg_confidence', 0.0)}%</div></div>""", unsafe_allow_html=True)
-            with dashboard_col2:
                 st.markdown(f"""<div class="metric-box"><div class="metric-box-label">Processing Time</div><div class="metric-box-value">{st.session_state.get('processing_time', 0.0)}s</div></div>""", unsafe_allow_html=True)
-            with dashboard_col3:
+            with dashboard_col2:
                 st.markdown(f"""<div class="metric-box"><div class="metric-box-label">Total Records</div><div class="metric-box-value">{len(st.session_state['df_office'])}</div></div>""", unsafe_allow_html=True)
 
             st.divider()
             st.markdown("<div class='result-container'>", unsafe_allow_html=True)
-            st.markdown("<div class='result-header'><svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='3' width='18' height='18' rx='2' ry='2'></rect><line x1='3' y1='9' x2='21' y2='9'></line><line x1='9' y1='21' x2='9' y2='9'></line></svg>Hasil Ekstraksi & Validasi</div>", unsafe_allow_html=True)
-            st.dataframe(st.session_state['df_office'], use_container_width=True)
-            
+            st.markdown("<div class='result-header'><svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='3' width='18' height='18' rx='2' ry='2'></rect><line x1='3' y1='9' x2='21' y2='9'></line><line x1='9' y1='21' x2='9' y2='9'></line></svg>Hasil Ekstraksi</div>", unsafe_allow_html=True)
+            def _status_row_style(row):
+                status = str(row.get('status_unit', '')).strip().upper()
+                if status == "ASSIGNED":
+                    return ['background-color: rgba(46, 204, 113, 0.12)'] * len(row)
+                if status == "PARTIAL":
+                    return ['background-color: rgba(241, 196, 15, 0.12)'] * len(row)
+                if status == "UNASSIGNED":
+                    return ['background-color: rgba(231, 76, 60, 0.12)'] * len(row)
+                return [''] * len(row)
+            st.dataframe(
+                st.session_state['df_office'].style.apply(_status_row_style, axis=1),
+                use_container_width=True
+            )
+
             buffer = BytesIO()
             with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-                # Jangan sertakan 'Confidence' ke Excel final
-                df_export = st.session_state['df_office'].drop(columns=['Confidence'], errors='ignore')
+                df_export = st.session_state['df_office']
                 df_export.to_excel(writer, index=False, sheet_name='Laporan')
                 wb = writer.book
                 ws = writer.sheets['Laporan']
@@ -1778,7 +1795,7 @@ def main():
                 b_fmt = wb.add_format({'border': 1, 'valign': 'vcenter'})
                 for c, val in enumerate(df_export.columns): ws.write(0, c, val, h_fmt)
                 ws.set_column('A:A', 5)
-                ws.set_column('B:L', 18)
+                ws.set_column('B:M', 18)
                 for r in range(len(df_export)):
                     for c in range(len(df_export.columns)):
                         val = df_export.iloc[r, c]

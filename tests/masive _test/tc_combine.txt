@@ -1,4 +1,4 @@
-[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call
+﻿[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call
 
 RAFAY
 1 UNIT TWB 50 Cbm
@@ -8,12 +8,13 @@ Rute/tujuan : CGK- PDG
 driver  : SUTRISNO
 Nopol  : BM 8364 AU
 No hp  :0853-5388-6066
+
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 04 FEBRUARI 2026:
 
 RAFAY
 3 unit Cddl 24 Cbm
 Lokasi : Megahub
-Waktu loading : segera
+Waktu loading : 07:00 05/02/2026
 Rute/tujuan : CGK - JATENG
 driver  : KARYADI
 Nopol  : AD 8517 BA
@@ -64,7 +65,7 @@ driver  : AGUS
 Nopol  : D 9667 AF
 No hp  :08817021866
 
-Rev plat nomor pak @Nomor tidak dikenal @Nomor tidak dikenal @Nomor tidak dikenal 🙏🏻
+Rev plat nomor pak @Nomor tidak dikenal @Nomor tidak dikenal @Nomor tidak dikenal ðŸ™ðŸ»
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 04 FEBRUARI 2026:
 RAFAY
 1 unit Cddl 24 Cbm
@@ -449,7 +450,7 @@ No hp  : +62 822-2851-6922
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL
 
 Tanggal : 12 Februari 2026
-Rute/Tujuan : CGK – SUB
+Rute/Tujuan : CGK - SUB
 Unit/Type : TWB 50 Cbm 
 Nopol : L 9722 UE
 Driver : Akiyat
@@ -462,7 +463,7 @@ Waktu Loading : 03:00
 REQUEST ORDER ONCALL ULANG
 
 Tanggal : 13 Februari 2026
-Rute/Tujuan : CGK – MES
+Rute/Tujuan : CGK - MES
 Unit/Type : TWB 50 CBM
 Nopol : BK 8639 FJ
 Driver : SIMARE
@@ -475,7 +476,7 @@ Waktu Loading : 03:00 WIB
 REQUEST ORDER ONCALL
 
 Tanggal : 13 Februari 2026
-Rute/Tujuan : CGK – PKU
+Rute/Tujuan : CGK - PKU
 Unit/Type : TWB 50 CBM
 Nopol : B 9241 FXS
 Driver : FAJRI
@@ -492,7 +493,7 @@ Rute/Tujuan : CGK - MES
 Unit/Type :  TWB 50 CBM
 Nopol : B 9019 UEX
 Driver : Manulang
-No…
+Noâ€¦
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 15 FEBRUARI 2026:
 
 
@@ -988,6 +989,7 @@ Nama : Dedeng
 Nopol :E 9426 Aa
 No.hp : 0895393659401
 Request Unit On Call Tgl 04 Maret 2026
+
 5 UNIT TWB 50 CBM
 Lokasi : ARGOPANTES
 Waktu loading : SEGERA
@@ -1112,7 +1114,7 @@ Nopol		: BK 8330 VY
 No Tlp	: 082382200400
 
 
-Fyi pak @⁨Sobar JNE⁩ data tambahan nya
+Fyi pak @â¨Sobar JNEâ© data tambahan nya
 REQUER ORDER ULANG DAN TAMBAHAN ON CALL
 06 MARET 2026
 DATA SUMATERA
@@ -1124,6 +1126,7 @@ Waktu loading : SEGERA
 Nama 	: Nasip
 Nopol	: BH 8165 QI
 No Tlp	:+6281272463920
+
 REQUER ORDER ULANG DAN TAMBAHAN ON CALL
 06 MARET 2026
 
