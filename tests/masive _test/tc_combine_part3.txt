@@ -51,7 +51,7 @@ No hp  : +62 822-2851-6922
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL
 
 Tanggal : 12 Februari 2026
-Rute/Tujuan : CGK â€“ SUB
+Rute/Tujuan : CGK - SUB
 Unit/Type : TWB 50 Cbm 
 Nopol : L 9722 UE
 Driver : Akiyat
@@ -63,7 +63,7 @@ Waktu Loading : 03:00
 REQUEST ORDER ONCALL ULANG
 
 Tanggal : 13 Februari 2026
-Rute/Tujuan : CGK â€“ MES
+Rute/Tujuan : CGK - MES
 Unit/Type : TWB 50 CBM
 Nopol : BK 8639 FJ
 Driver : SIMARE
@@ -75,7 +75,7 @@ Waktu Loading : 03:00 WIB
 REQUEST ORDER ONCALL
 
 Tanggal : 13 Februari 2026
-Rute/Tujuan : CGK â€“ PKU
+Rute/Tujuan : CGK - PKU
 Unit/Type : TWB 50 CBM
 Nopol : B 9241 FXS
 Driver : FAJRI

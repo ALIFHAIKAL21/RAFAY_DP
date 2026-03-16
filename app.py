@@ -1438,105 +1438,132 @@ st.set_page_config(page_title="Rafay Logistics IDP v2.0", layout="wide", initial
 
 st.markdown("""
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
         :root {
-            --bg-color: #FFFFFF;
-            --card-bg: #F8F9FA;
-            --border-color: #E1E4E8;
-            --accent-color: #0F766E;
-            --text-main: #1F2937;
-            --text-muted: #6B7280;
-            --success-color: #10B981;
+            --bg-color: #0f1116;
+            --bg-elev-1: #161b22;
+            --bg-elev-2: #1d2430;
+            --card-bg: #121821;
+            --border-color: #2a3441;
+            --accent-color: #007acc;
+            --accent-strong: #1da1ff;
+            --text-main: #e6edf3;
+            --text-muted: #9fb1c3;
+            --text-dim: #7f8da3;
+            --success-color: #2ea043;
+            --warning-color: #d29922;
         }
         
         .stApp {
-            background-color: var(--bg-color) !important;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: radial-gradient(1200px 400px at 12% -10%, rgba(0, 122, 204, 0.18), transparent 60%),
+                        linear-gradient(180deg, #0f1116 0%, #0b0f14 100%) !important;
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
             color: var(--text-main) !important;
         }
 
         #MainMenu {visibility: hidden;}
         header {visibility: hidden;}
         footer {visibility: hidden;}
-        .block-container { padding-top: 2rem !important; max-width: 1400px; }
+        .block-container { padding-top: 1.6rem !important; max-width: 1400px; }
 
         .top-navbar {
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 2px solid var(--border-color); padding-bottom: 20px; margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 22px;
         }
-        .nav-logo { display: flex; align-items: center; gap: 15px; }
-        .nav-title { font-size: 1.5rem; font-weight: 700; color: var(--text-main); margin: 0; line-height: 1.2; }
-        .nav-subtitle { font-size: 0.9rem; color: var(--text-muted); margin: 5px 0 0 0; font-weight: 500; }
+        .nav-logo { display: flex; align-items: center; gap: 14px; }
+        .nav-title { font-size: 1.45rem; font-weight: 700; color: var(--text-main); margin: 0; line-height: 1.15; letter-spacing: 0.3px; }
+        .nav-subtitle { font-size: 0.85rem; color: var(--text-muted); margin: 4px 0 0 0; font-weight: 500; }
         .nav-accent { color: var(--accent-color); font-weight: 700; }
-        .nav-status { display: flex; gap: 20px; }
+        .nav-status { display: flex; gap: 14px; }
         .status-badge {
-            background-color: white; border: 1.5px solid var(--border-color);
-            padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; color: var(--text-muted);
+            background-color: var(--bg-elev-1); border: 1px solid var(--border-color);
+            padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; color: var(--text-muted);
             display: flex; align-items: center; gap: 8px; font-weight: 600;
+            box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset;
         }
-        .status-dot { width: 8px; height: 8px; background-color: var(--success-color); border-radius: 50%; }
+        .status-dot { width: 8px; height: 8px; background-color: var(--success-color); border-radius: 50%; box-shadow: 0 0 8px rgba(46, 160, 67, 0.6); }
 
         .input-panel {
-            background-color: white; border: 1.5px solid var(--border-color);
-            border-radius: 8px; padding: 20px; height: 100%;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            background-color: var(--bg-elev-1); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 18px; height: 100%;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.35);
         }
-        .panel-header { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--text-main); margin-bottom: 15px; }
-        .badge-ml { background-color: rgba(15, 118, 110, 0.1); color: var(--accent-color); font-size: 0.65rem; padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(15, 118, 110, 0.2); font-weight: 600; }
+        .input-panel-wide { padding: 16px 18px 12px 18px; }
+        .panel-header { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--text-main); margin-bottom: 12px; }
+        .badge-ml { background-color: rgba(0, 122, 204, 0.12); color: var(--accent-strong); font-size: 0.65rem; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(0, 122, 204, 0.35); font-weight: 600; }
         
-        .tab-mockup { display: flex; gap: 10px; margin-bottom: 15px; }
-        .tab-btn { background-color: white; border: 1.5px solid var(--border-color); color: var(--text-main); padding: 8px 15px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; width: 50%; text-align: center; cursor: default; }
-        .tab-inactive { background-color: var(--card-bg); color: var(--text-muted); }
+        .tab-mockup { display: flex; gap: 8px; margin-bottom: 12px; }
+        .tab-btn { background-color: var(--bg-elev-2); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; width: 50%; text-align: center; cursor: default; }
+        .tab-inactive { background-color: transparent; color: var(--text-dim); border-style: dashed; }
         
         .stTextArea textarea {
-            background-color: white !important; color: var(--text-main) !important; border: 1.5px solid var(--border-color) !important;
-            border-radius: 6px !important; font-family: 'Courier New', monospace; font-size: 0.85rem; padding: 12px;
+            background-color: #0c121a !important; color: var(--text-main) !important; border: 1px solid var(--border-color) !important;
+            border-radius: 8px !important; font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace !important;
+            font-size: 0.82rem; padding: 14px; line-height: 1.5;
         }
-        .stTextArea textarea:focus { border-color: var(--accent-color) !important; box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1) !important;}
+        .stTextArea textarea:focus { border-color: var(--accent-color) !important; box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.25) !important;}
         
-        div.stButton > button {
-            background-color: var(--accent-color) !important; color: white !important; border: none !important;
-            border-radius: 6px !important; padding: 12px 16px !important; font-weight: 600 !important; width: 100% !important; margin-top: 15px; transition: 0.2s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        .stTextInput input, .stSelectbox div[data-baseweb="select"] > div, .stNumberInput input {
+            background-color: #0c121a !important; color: var(--text-main) !important; border: 1px solid var(--border-color) !important;
+            border-radius: 8px !important;
         }
-        div.stButton > button:hover { background-color: #0D5D56 !important; color: white !important; box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+
+        div.stButton > button {
+            background: linear-gradient(135deg, #007acc 0%, #1da1ff 100%) !important; color: #0b1117 !important; border: none !important;
+            border-radius: 8px !important; padding: 11px 16px !important; font-weight: 700 !important; width: 100% !important; margin-top: 12px; transition: 0.2s;
+            box-shadow: 0 6px 18px rgba(0, 122, 204, 0.35);
+        }
+        div.stButton > button:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 10px 24px rgba(0, 122, 204, 0.4); }
 
         .output-panel {
-            background-color: white; border: 1.5px solid var(--border-color);
-            border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; min-height: 500px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            background-color: var(--bg-elev-1); border: 1px solid var(--border-color);
+            border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; min-height: 500px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.35);
         }
-        .out-icon { background-color: rgba(15, 118, 110, 0.05); padding: 20px; border-radius: 12px; margin-bottom: 20px; position: relative; }
-        .out-icon svg { width: 40px; color: var(--accent-color); }
-        .out-badge { position: absolute; bottom: -5px; right: -5px; background: var(--accent-color); color: white; font-size: 0.6rem; font-weight: 700; padding: 4px 8px; border-radius: 4px; }
-        .out-title { color: var(--text-main); font-weight: 700; font-size: 1.2rem; margin-bottom: 10px; }
-        .out-desc { color: var(--text-muted); font-size: 0.85rem; text-align: center; max-width: 400px; line-height: 1.6; margin-bottom: 30px; }
+        .out-icon { background-color: rgba(0, 122, 204, 0.08); padding: 18px; border-radius: 14px; margin-bottom: 18px; position: relative; }
+        .out-icon svg { width: 38px; color: var(--accent-color); }
+        .out-badge { position: absolute; bottom: -6px; right: -6px; background: var(--accent-color); color: #0b1117; font-size: 0.6rem; font-weight: 700; padding: 4px 8px; border-radius: 999px; }
+        .out-title { color: var(--text-main); font-weight: 700; font-size: 1.15rem; margin-bottom: 8px; }
+        .out-desc { color: var(--text-muted); font-size: 0.82rem; text-align: center; max-width: 420px; line-height: 1.6; margin-bottom: 24px; }
         
-        .out-options { display: flex; gap: 15px; }
-        .opt-box { background: var(--card-bg); border: 1px solid var(--border-color); padding: 12px 20px; border-radius: 6px; text-align: center; }
-        .opt-box p { margin: 0; color: var(--text-main); font-weight: 600; font-size: 0.85rem; }
-        .opt-box span { color: var(--text-muted); font-size: 0.7rem; display: block; margin-top: 3px; }
+        .out-options { display: flex; gap: 12px; }
+        .opt-box { background: var(--card-bg); border: 1px solid var(--border-color); padding: 10px 16px; border-radius: 8px; text-align: center; }
+        .opt-box p { margin: 0; color: var(--text-main); font-weight: 600; font-size: 0.82rem; }
+        .opt-box span { color: var(--text-dim); font-size: 0.7rem; display: block; margin-top: 2px; }
 
-        [data-testid="stDataFrame"] { background-color: white !important; }
-        .stDataFrame { background-color: white !important; }
-        [data-testid="stDataFrame"] > div { background-color: white !important; }
-        [data-testid="stDataFrame"] tbody td { color: var(--text-main) !important; background-color: white !important; border-color: var(--border-color) !important; }
-        [data-testid="stDataFrame"] thead th { background-color: #F0F4F4 !important; color: var(--text-main) !important; border-color: var(--border-color) !important; font-weight: 600; }
-        [data-testid="stDataFrame"] tbody tr:nth-child(odd) { background-color: white !important; }
-        [data-testid="stDataFrame"] tbody tr:nth-child(even) { background-color: #FAFBFC !important; }
+        [data-testid="stDataFrame"] { background-color: var(--bg-elev-1) !important; }
+        .stDataFrame { background-color: var(--bg-elev-1) !important; }
+        [data-testid="stDataFrame"] > div { background-color: var(--bg-elev-1) !important; }
+        [data-testid="stDataFrame"] tbody td { color: var(--text-main) !important; background-color: #0f151d !important; border-color: var(--border-color) !important; }
+        [data-testid="stDataFrame"] thead th { background-color: #19212b !important; color: var(--text-main) !important; border-color: var(--border-color) !important; font-weight: 600; }
+        [data-testid="stDataFrame"] tbody tr:nth-child(odd) { background-color: #0f151d !important; }
+        [data-testid="stDataFrame"] tbody tr:nth-child(even) { background-color: #111924 !important; }
         [data-testid="stDataFrame"] table { border-color: var(--border-color) !important; border-collapse: collapse; }
         [data-testid="stDataFrame"] th, [data-testid="stDataFrame"] td { border-color: var(--border-color) !important; padding: 10px 12px; }
-        [data-testid="stDataFrame"] tbody tr:hover { background-color: rgba(15, 118, 110, 0.08) !important; }
+        [data-testid="stDataFrame"] tbody tr:hover { background-color: rgba(0, 122, 204, 0.18) !important; }
         
-        div.stDownloadButton > button { background-color: var(--success-color) !important; color: white !important; border: none !important; border-radius: 6px !important; font-weight: 600 !important; width: 100% !important; margin-top: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        div.stDownloadButton > button:hover { background-color: #059669 !important; box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        div.stDownloadButton > button { background: linear-gradient(135deg, #2ea043 0%, #3fb950 100%) !important; color: #0b1117 !important; border: none !important; border-radius: 8px !important; font-weight: 700 !important; width: 100% !important; margin-top: 12px; box-shadow: 0 6px 18px rgba(46, 160, 67, 0.35); }
+        div.stDownloadButton > button:hover { filter: brightness(1.05); box-shadow: 0 10px 24px rgba(46, 160, 67, 0.4); }
 
-        .result-container { background-color: white; padding: 25px; border-radius: 8px; border: 1.5px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-        .result-header { color: var(--text-main); font-weight: 700; font-size: 1.1rem; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .result-container { background-color: var(--bg-elev-1); padding: 22px; border-radius: 10px; border: 1px solid var(--border-color); box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+        .result-header { color: var(--text-main); font-weight: 700; font-size: 1rem; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
 
-        .dashboard-container { width: 100%; margin-bottom: 20px; }
-        .metric-box { background-color: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 20px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .metric-box-label { font-size: 0.75rem; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-        .metric-box-value { font-size: 1.75rem; font-weight: 700; color: #1B6987; line-height: 1.2; }
+        .dashboard-container { width: 100%; margin-bottom: 16px; }
+        .metric-box { background-color: var(--bg-elev-2); border: 1px solid var(--border-color); border-radius: 10px; padding: 18px; text-align: center; box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
+        .metric-box-label { font-size: 0.7rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+        .metric-box-value { font-size: 1.6rem; font-weight: 700; color: var(--accent-strong); line-height: 1.2; }
+
+        .muted-preview { font-size: 0.86rem; color: var(--text-muted); }
+        .processing-box { background-color: var(--bg-elev-1); border: 1px solid var(--border-color); border-radius: 10px; padding: 22px; box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+        .processing-title { font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px; }
+        .section-spacer { height: 14px; }
+        .full-width { width: 100%; }
+
+        .stMarkdown p, .stMarkdown li, .stMarkdown span { color: var(--text-main); }
+        .stMarkdown small, .stMarkdown .caption { color: var(--text-muted); }
+        code, pre { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace !important; }
+        .stAlert, .stInfo, .stWarning, .stSuccess { border-radius: 10px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -1600,213 +1627,240 @@ def main():
     
     render_top_ui(st.session_state.waktu, st.session_state.baris, st.session_state.akurasi)
     
-    col_left, col_right = st.columns([1, 1.5], gap="large")
-    
-    with col_left:
+    st.markdown("""
+    <div class="input-panel input-panel-wide">
+        <div class="panel-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            Input Dokumen <span class="badge-ml">VISION + NLP</span>
+        </div>
+        <div class="tab-mockup">
+            <div class="tab-btn">WhatsApp Chat</div>
+            <div class="tab-btn tab-inactive">Dokumen PDF</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("**Konfigurasi Job Number**")
+    col_job1, col_job2, col_job3, col_job4 = st.columns(4, gap="small")
+
+    with col_job1:
+        job_start = st.number_input("Nomor", value=st.session_state.get('job_start', 1), min_value=1, step=1)
+        st.session_state['job_start'] = job_start
+
+    with col_job2:
+        job_company = st.text_input("Company", value=st.session_state.get('job_company', 'JNE'), max_chars=6)
+        st.session_state['job_company'] = job_company.upper()
+
+    with col_job3:
+        month_options = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII']
+        month_idx = month_options.index(st.session_state.get('job_month', 'II')) if st.session_state.get('job_month', 'II') in month_options else 1
+        job_month = st.selectbox("Bulan", month_options, index=month_idx)
+        st.session_state['job_month'] = job_month
+
+    with col_job4:
+        job_year = st.number_input("Tahun", value=st.session_state.get('job_year', 2026), min_value=2000, max_value=2100, step=1)
+        st.session_state['job_year'] = job_year
+
+    preview_format = f"{job_start:03d}/{job_company.upper()}-RAFAY/{job_month}/{job_year}"
+    st.markdown(f"<span class='muted-preview'>Preview: <code>{preview_format}</code></span>", unsafe_allow_html=True)
+
+    chat_input = st.text_area(
+        "Input", height=260, label_visibility="collapsed",
+        placeholder="Paste data chat WhatsApp atau dokumen logistik di sini..."
+    )
+
+    btn = st.button("Mulai Ekstraksi Data")
+
+    st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
+
+    if not btn and 'df_office' not in st.session_state:
         st.markdown("""
-        <div class="input-panel">
-            <div class="panel-header">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                Input Dokumen <span class="badge-ml">VISION + NLP</span>
+        <div class="output-panel full-width">
+            <div class="out-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <div class="out-badge">AI</div>
             </div>
-            <div class="tab-mockup">
-                <div class="tab-btn">WhatsApp Chat</div>
-                <div class="tab-btn tab-inactive">Dokumen PDF</div>
-            </div>
+            <div class="out-title">Siap Memproses Data</div>
+            <div class="out-desc">Input dokumen logistik Rafay pada panel input, lalu klik Mulai Ekstraksi.</div>
         </div>
         """, unsafe_allow_html=True)
-
-        st.markdown("**Konfigurasi Job Number**")
-        col_job1, col_job2, col_job3, col_job4 = st.columns(4, gap="small")
-
-        with col_job1:
-            job_start = st.number_input("Nomor", value=st.session_state.get('job_start', 1), min_value=1, step=1)
-            st.session_state['job_start'] = job_start
-
-        with col_job2:
-            job_company = st.text_input("Company", value=st.session_state.get('job_company', 'JNE'), max_chars=6)
-            st.session_state['job_company'] = job_company.upper()
-
-        with col_job3:
-            month_options = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII']
-            month_idx = month_options.index(st.session_state.get('job_month', 'II')) if st.session_state.get('job_month', 'II') in month_options else 1
-            job_month = st.selectbox("Bulan", month_options, index=month_idx)
-            st.session_state['job_month'] = job_month
-
-        with col_job4:
-            job_year = st.number_input("Tahun", value=st.session_state.get('job_year', 2026), min_value=2000, max_value=2100, step=1)
-            st.session_state['job_year'] = job_year
-
-        preview_format = f"{job_start:03d}/{job_company.upper()}-RAFAY/{job_month}/{job_year}"
-        st.markdown(f"<span style='font-size:0.9rem; color:#666;'>Preview: <code>{preview_format}</code></span>", unsafe_allow_html=True)
-
-        chat_input = st.text_area(
-            "Input", height=300, label_visibility="collapsed",
-            placeholder="Paste data chat WhatsApp atau dokumen logistik di sini..."
-        )
-
-        btn = st.button("Mulai Ekstraksi Data")
-
-    with col_right:
-        if not btn and 'df_office' not in st.session_state:
-            st.markdown("""
-            <div class="output-panel">
-                <div class="out-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    <div class="out-badge">AI</div>
-                </div>
-                <div class="out-title">Siap Memproses Data</div>
-                <div class="out-desc">Input dokumen logistik Rafay pada panel input, lalu klik Mulai Ekstraksi.</div>
-            </div>
-            """, unsafe_allow_html=True)
+        
+    if btn:
+        if not chat_input.strip():
+            st.error("Input kosong. Silakan paste data dokumen terlebih dahulu.")
+        else:
+            processing_container = st.empty()
+            start_time = time.time()
             
-        if btn:
-            if not chat_input.strip():
-                st.error("Input kosong. Silakan paste data dokumen terlebih dahulu.")
+            with processing_container.container():
+                st.markdown("""<div class='processing-box'><div class='processing-title'>Mengekstraksi data dengan AI...</div>""", unsafe_allow_html=True)
+                st.progress(0.45)
+                st.markdown("</div>", unsafe_allow_html=True)
+            
+            formatted_input = auto_format_chat_input(chat_input)
+            temp_path = "temp.txt"
+            with open(temp_path, "w", encoding="utf-8") as f: 
+                f.write(formatted_input)
+            
+            df_raw = get_processor().process_file(temp_path)
+
+            if df_raw is not None and not df_raw.empty:
+                df_proc = preprocess_context(df_raw)
+                df_final = enforce_block_quota(df_proc)
+                
+                # Terapkan fungsi revisi yang sudah DIPERBAIKI
+                df_final = apply_revisions_from_chat(chat_input, df_final)
+                df_final = apply_driver_pair_from_text(df_final)
+                df_final = apply_phone_pair_from_text(df_final)
+                if 'PLATE' in df_final.columns:
+                    df_final['PLATE'] = df_final['PLATE'].apply(clean_plate_value)
+
+                accuracy = calculate_extraction_accuracy(df_raw, df_final)
+                
+                df_office = pd.DataFrame()
+                df_office['No.'] = range(1, len(df_final) + 1)
+
+                job_start = st.session_state.get('job_start', 1)
+                job_company = st.session_state.get('job_company', 'JNE').upper()
+                job_month = st.session_state.get('job_month', 'II')
+                job_year = st.session_state.get('job_year', 2026)
+
+                df_office['Job Number'] = [f"{job_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_final))]
+                df_office['Tgl RO'] = df_final['RO_DATE'].apply(format_date_custom) if 'RO_DATE' in df_final.columns else ""
+                df_office['Tgl Muat'] = df_final['DATE'].apply(format_date_custom)
+                df_office['Vendor'] = ""
+                df_office['Pickup'] = df_final['ORIGIN'].apply(normalize_origin)
+                df_office['Tujuan'] = df_final['DESTINATION'].apply(clean_destination_format)
+                df_office['No. Plat'] = df_final['PLATE'].str.upper()
+                df_office['Type Truck'] = df_final['UNIT_TYPE'].str.upper()
+                df_office['Driver'] = df_final['DRIVER'].fillna("").astype(str).str.title()
+                df_office['Kontak Driver'] = df_final['PHONE']
+                def _is_filled(val):
+                    if val is None:
+                        return False
+                    s = str(val).strip()
+                    if not s:
+                        return False
+                    if s.lower() in ["-", "null", "none", "nan", "undefined"]:
+                        return False
+                    return True
+                def _classify_status(row):
+                    fields = [
+                        'Job Number', 'Tgl RO', 'Tgl Muat', 'Pickup', 'Tujuan',
+                        'No. Plat', 'Type Truck', 'Driver', 'Kontak Driver'
+                    ]
+                    filled = sum(1 for f in fields if _is_filled(row.get(f)))
+                    if filled == 9:
+                        return "ASSIGNED"
+                    if filled >= 3:
+                        return "PARTIAL"
+                    return "UNASSIGNED"
+                df_office['status_unit'] = df_office.apply(_classify_status, axis=1)
+
+                # Sorting output berdasarkan Tgl Muat lalu Tgl RO
+                df_office['_sort_muat'] = df_office['Tgl Muat'].apply(parse_date_custom)
+                df_office['_sort_ro'] = df_office['Tgl RO'].apply(parse_date_custom)
+                df_office = df_office.sort_values(
+                    by=['_sort_muat', '_sort_ro', 'No.'],
+                    na_position='last'
+                ).reset_index(drop=True)
+                df_office = df_office.drop(columns=['_sort_muat', '_sort_ro'])
+                # Renumber setelah sorting
+                df_office['No.'] = range(1, len(df_office) + 1)
+                df_office['Job Number'] = [f"{job_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_office))]
+
+                end_time = time.time()
+                processing_time = round(end_time - start_time, 2)
+
+                processing_container.empty()
+                st.session_state['df_office'] = df_office
+                st.session_state.waktu = f"{processing_time}s"
+                st.session_state.baris = f"{len(df_office)} Order"
+                st.session_state.akurasi = f"{accuracy}%"
+                st.session_state.processing_time = processing_time
+
+                st.rerun()
             else:
-                processing_container = st.empty()
-                start_time = time.time()
+                processing_container.empty()
+                st.error("Ekstraksi data gagal. Silakan periksa format input dokumen.")
                 
-                with processing_container.container():
-                    st.markdown("""<div style='background-color: white; border: 1.5px solid #E1E4E8; border-radius: 8px; padding: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);'><div style='font-size: 1rem; font-weight: 700; color: #1F2937; margin-bottom: 15px;'>Mengekstraksi data dengan AI...</div>""", unsafe_allow_html=True)
-                    st.progress(0.45)
-                    st.markdown("</div>", unsafe_allow_html=True)
+            if os.path.exists(temp_path): os.remove(temp_path)
                 
-                formatted_input = auto_format_chat_input(chat_input)
-                temp_path = "temp.txt"
-                with open(temp_path, "w", encoding="utf-8") as f: 
-                    f.write(formatted_input)
-                
-                df_raw = get_processor().process_file(temp_path)
+    if 'df_office' in st.session_state:
+        dashboard_col1, dashboard_col2 = st.columns(2, gap="medium")
+        with dashboard_col1:
+            st.markdown(f"""<div class="metric-box"><div class="metric-box-label">Processing Time</div><div class="metric-box-value">{st.session_state.get('processing_time', 0.0)}s</div></div>""", unsafe_allow_html=True)
+        with dashboard_col2:
+            st.markdown(f"""<div class="metric-box"><div class="metric-box-label">Total Records</div><div class="metric-box-value">{len(st.session_state['df_office'])}</div></div>""", unsafe_allow_html=True)
 
-                if df_raw is not None and not df_raw.empty:
-                    df_proc = preprocess_context(df_raw)
-                    df_final = enforce_block_quota(df_proc)
-                    
-                    # Terapkan fungsi revisi yang sudah DIPERBAIKI
-                    df_final = apply_revisions_from_chat(chat_input, df_final)
-                    df_final = apply_driver_pair_from_text(df_final)
-                    df_final = apply_phone_pair_from_text(df_final)
-                    if 'PLATE' in df_final.columns:
-                        df_final['PLATE'] = df_final['PLATE'].apply(clean_plate_value)
-
-                    accuracy = calculate_extraction_accuracy(df_raw, df_final)
-                    
-                    df_office = pd.DataFrame()
-                    df_office['No.'] = range(1, len(df_final) + 1)
-
-                    job_start = st.session_state.get('job_start', 1)
-                    job_company = st.session_state.get('job_company', 'JNE').upper()
-                    job_month = st.session_state.get('job_month', 'II')
-                    job_year = st.session_state.get('job_year', 2026)
-
-                    df_office['Job Number'] = [f"{job_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_final))]
-                    df_office['Tgl RO'] = df_final['RO_DATE'].apply(format_date_custom) if 'RO_DATE' in df_final.columns else ""
-                    df_office['Tgl Muat'] = df_final['DATE'].apply(format_date_custom)
-                    df_office['Vendor'] = ""
-                    df_office['Pickup'] = df_final['ORIGIN'].apply(normalize_origin)
-                    df_office['Tujuan'] = df_final['DESTINATION'].apply(clean_destination_format)
-                    df_office['No. Plat'] = df_final['PLATE'].str.upper()
-                    df_office['Type Truck'] = df_final['UNIT_TYPE'].str.upper()
-                    df_office['Driver'] = df_final['DRIVER'].fillna("").astype(str).str.title()
-                    df_office['Kontak Driver'] = df_final['PHONE']
-                    def _is_filled(val):
-                        if val is None:
-                            return False
-                        s = str(val).strip()
-                        if not s:
-                            return False
-                        if s.lower() in ["-", "null", "none", "nan", "undefined"]:
-                            return False
-                        return True
-                    def _classify_status(row):
-                        fields = [
-                            'Job Number', 'Tgl RO', 'Tgl Muat', 'Pickup', 'Tujuan',
-                            'No. Plat', 'Type Truck', 'Driver', 'Kontak Driver'
-                        ]
-                        filled = sum(1 for f in fields if _is_filled(row.get(f)))
-                        if filled == 9:
-                            return "ASSIGNED"
-                        if filled >= 3:
-                            return "PARTIAL"
-                        return "UNASSIGNED"
-                    df_office['status_unit'] = df_office.apply(_classify_status, axis=1)
-
-                    # Sorting output berdasarkan Tgl Muat lalu Tgl RO
-                    df_office['_sort_muat'] = df_office['Tgl Muat'].apply(parse_date_custom)
-                    df_office['_sort_ro'] = df_office['Tgl RO'].apply(parse_date_custom)
-                    df_office = df_office.sort_values(
-                        by=['_sort_muat', '_sort_ro', 'No.'],
-                        na_position='last'
-                    ).reset_index(drop=True)
-                    df_office = df_office.drop(columns=['_sort_muat', '_sort_ro'])
-                    # Renumber setelah sorting
-                    df_office['No.'] = range(1, len(df_office) + 1)
-                    df_office['Job Number'] = [f"{job_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_office))]
-
-                    end_time = time.time()
-                    processing_time = round(end_time - start_time, 2)
-
-                    processing_container.empty()
-                    st.session_state['df_office'] = df_office
-                    st.session_state.waktu = f"{processing_time}s"
-                    st.session_state.baris = f"{len(df_office)} Order"
-                    st.session_state.akurasi = f"{accuracy}%"
-                    st.session_state.processing_time = processing_time
-
-                    st.rerun()
-                else:
-                    processing_container.empty()
-                    st.error("Ekstraksi data gagal. Silakan periksa format input dokumen.")
-                    
-                if os.path.exists(temp_path): os.remove(temp_path)
-                    
-        if 'df_office' in st.session_state:
-            dashboard_col1, dashboard_col2 = st.columns(2, gap="medium")
-            with dashboard_col1:
-                st.markdown(f"""<div class="metric-box"><div class="metric-box-label">Processing Time</div><div class="metric-box-value">{st.session_state.get('processing_time', 0.0)}s</div></div>""", unsafe_allow_html=True)
-            with dashboard_col2:
-                st.markdown(f"""<div class="metric-box"><div class="metric-box-label">Total Records</div><div class="metric-box-value">{len(st.session_state['df_office'])}</div></div>""", unsafe_allow_html=True)
-
-            st.divider()
-            st.markdown("<div class='result-container'>", unsafe_allow_html=True)
-            st.markdown("<div class='result-header'><svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='3' width='18' height='18' rx='2' ry='2'></rect><line x1='3' y1='9' x2='21' y2='9'></line><line x1='9' y1='21' x2='9' y2='9'></line></svg>Hasil Ekstraksi</div>", unsafe_allow_html=True)
-            def _status_row_style(row):
-                status = str(row.get('status_unit', '')).strip().upper()
-                if status == "ASSIGNED":
-                    return ['background-color: rgba(46, 204, 113, 0.12)'] * len(row)
-                if status == "PARTIAL":
-                    return ['background-color: rgba(241, 196, 15, 0.12)'] * len(row)
-                if status == "UNASSIGNED":
-                    return ['background-color: rgba(231, 76, 60, 0.12)'] * len(row)
-                return [''] * len(row)
-            st.dataframe(
-                st.session_state['df_office'].style.apply(_status_row_style, axis=1),
-                use_container_width=True
+        st.divider()
+        st.markdown("<div class='result-container'>", unsafe_allow_html=True)
+        st.markdown("<div class='result-header'><svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='3' width='18' height='18' rx='2' ry='2'></rect><line x1='3' y1='9' x2='21' y2='9'></line><line x1='9' y1='21' x2='9' y2='9'></line></svg>Hasil Ekstraksi</div>", unsafe_allow_html=True)
+        filter_col, _ = st.columns([1, 3], gap="large")
+        with filter_col:
+            filter_label = st.selectbox(
+                "Filter Status",
+                ["All", "Assigned", "Partial", "Unassigned"],
+                index=0
             )
 
+        def _apply_status_filter(df_in, label):
+            if label == "Assigned":
+                return df_in[df_in['status_unit'].str.upper() == "ASSIGNED"]
+            if label == "Partial":
+                return df_in[df_in['status_unit'].str.upper() == "PARTIAL"]
+            if label == "Unassigned":
+                return df_in[df_in['status_unit'].str.upper() == "UNASSIGNED"]
+            return df_in
+
+        df_all = st.session_state['df_office']
+        df_view = _apply_status_filter(df_all, filter_label)
+
+        dl_col1, dl_col2, _ = st.columns([1, 1, 2], gap="small")
+        def _to_excel_bytes(df_in):
             buffer = BytesIO()
             with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-                df_export = st.session_state['df_office']
-                df_export.to_excel(writer, index=False, sheet_name='Laporan')
+                df_in.to_excel(writer, index=False, sheet_name='Orders')
                 wb = writer.book
-                ws = writer.sheets['Laporan']
+                ws = writer.sheets['Orders']
                 h_fmt = wb.add_format({'bold': True, 'bg_color': '#0F766E', 'font_color': 'white', 'border': 1, 'align': 'center', 'valign': 'vcenter'})
                 b_fmt = wb.add_format({'border': 1, 'valign': 'vcenter'})
-                for c, val in enumerate(df_export.columns): ws.write(0, c, val, h_fmt)
+                for c, val in enumerate(df_in.columns): ws.write(0, c, val, h_fmt)
                 ws.set_column('A:A', 5)
                 ws.set_column('B:M', 18)
-                for r in range(len(df_export)):
-                    for c in range(len(df_export.columns)):
-                        val = df_export.iloc[r, c]
+                for r in range(len(df_in)):
+                    for c in range(len(df_in.columns)):
+                        val = df_in.iloc[r, c]
                         ws.write(r+1, c, "" if pd.isna(val) else val, b_fmt)
+            return buffer.getvalue()
 
+        with dl_col1:
             st.download_button(
-                label="Download Laporan Excel Rafay",
-                data=buffer.getvalue(),
-                file_name=f"Rafay_IDP_Report_{datetime.now().strftime('%d%m%Y_%H%M%S')}.xlsx"
+                label="Download All",
+                data=_to_excel_bytes(df_all),
+                file_name="orders_all.xlsx"
             )
-            st.markdown("</div>", unsafe_allow_html=True)
+        with dl_col2:
+            st.download_button(
+                label="Download Assigned",
+                data=_to_excel_bytes(_apply_status_filter(df_all, "Assigned")),
+                file_name="orders_assigned.xlsx"
+            )
+
+        def _status_row_style(row):
+            status = str(row.get('status_unit', '')).strip().upper()
+            if status == "ASSIGNED":
+                return ['background-color: rgba(46, 204, 113, 0.12)'] * len(row)
+            if status == "PARTIAL":
+                return ['background-color: rgba(241, 196, 15, 0.12)'] * len(row)
+            if status == "UNASSIGNED":
+                return ['background-color: rgba(231, 76, 60, 0.12)'] * len(row)
+            return [''] * len(row)
+        st.dataframe(
+            df_view.style.apply(_status_row_style, axis=1),
+            use_container_width=True
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
