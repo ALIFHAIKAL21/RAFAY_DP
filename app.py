@@ -4,7 +4,6 @@ from io import BytesIO
 import os
 import sys
 import re
-import sqlite3
 from pathlib import Path
 from datetime import datetime
 import time
@@ -14,6 +13,13 @@ ROOT_DIR = Path(__file__).resolve().parent
 sys.path.append(str(ROOT_DIR))
 
 from src.inference.batch_processor import ChatBatchProcessor
+from db import (
+    db_enabled,
+    init_db,
+    save_raw_chat,
+    save_extractions_from_df,
+    save_orders_from_df,
+)
 
 # --- KONFIGURASI RAFAY IDP v2.0 ---
 DRIVER_BLACKLIST = ["RAFAY","AKBAR","ADMIN","JNE","LOGISTIK","EXPEDISI","PENGIRIM","ONCALL","REQUEST"]
@@ -1570,30 +1576,6 @@ st.markdown("""
 @st.cache_resource
 def get_processor(): return ChatBatchProcessor()
 
-def init_db():
-    conn = sqlite3.connect("rafay_database.db")
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            job_number TEXT UNIQUE,
-            tgl_ro TEXT,
-            tgl_muat TEXT,
-            vendor TEXT,
-            pickup TEXT,
-            tujuan TEXT,
-            nopol TEXT,
-            type_truck TEXT,
-            driver TEXT,
-            kontak_driver TEXT,
-            jam_loading TEXT,
-            status TEXT DEFAULT 'Valid',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    conn.commit()
-    conn.close()
-
 def render_top_ui(proses_waktu="--", baris="--", akurasi="--"):
     st.markdown(f"""
         <div class="top-navbar">
@@ -1768,6 +1750,15 @@ def main():
                 # Renumber setelah sorting
                 df_office['No.'] = range(1, len(df_office) + 1)
                 df_office['Job Number'] = [f"{job_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_office))]
+
+                # Optional: persist to PostgreSQL if enabled (no impact when disabled)
+                if db_enabled():
+                    try:
+                        message_id = save_raw_chat(chat_input)
+                        save_extractions_from_df(df_final, message_id=message_id)
+                        save_orders_from_df(df_office)
+                    except Exception:
+                        pass
 
                 end_time = time.time()
                 processing_time = round(end_time - start_time, 2)
