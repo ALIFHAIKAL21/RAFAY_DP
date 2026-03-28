@@ -12,11 +12,94 @@ import time
 ROOT_DIR = Path(__file__).resolve().parent
 sys.path.append(str(ROOT_DIR))
 
+
+ACCUM_OUTPUT_PATH = ROOT_DIR / "data" / "accumulated_output.csv"
+
+
+def _load_accumulated_df():
+    if not ACCUM_OUTPUT_PATH.exists():
+        return None
+    try:
+        df = pd.read_csv(ACCUM_OUTPUT_PATH)
+        return df if df is not None and not df.empty else None
+    except Exception:
+        return None
+
+
+def _save_accumulated_df(df):
+    try:
+        ACCUM_OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        df.to_csv(ACCUM_OUTPUT_PATH, index=False)
+    except Exception:
+        pass
+
+
+
+def _order_key_series(df):
+    if df is None or df.empty:
+        return None
+    cols = {
+        'pickup': 'Pickup',
+        'tujuan': 'Tujuan',
+        'tgl_muat': 'Tgl Muat',
+        'no_plat': 'No. Plat',
+        'type_truck': 'Type Truck',
+        'driver': 'Driver',
+    }
+    data = []
+    for key, col in cols.items():
+        if col in df.columns:
+            s = df[col].fillna('').astype(str).str.strip().str.lower()
+        else:
+            s = pd.Series([''] * len(df))
+        data.append(s)
+    # key order: pickup|tujuan|tgl_muat|no_plat|type_truck|driver
+    return data[0] + '|' + data[1] + '|' + data[2] + '|' + data[3] + '|' + data[4] + '|' + data[5]
+
+
+
+def _parse_job_number(value):
+    if value is None:
+        return None
+    s = str(value).strip()
+    m = re.match(r"^(\d+)\s*/\s*([A-Za-z0-9]+)-RAFAY\s*/\s*([IVX]+)\s*/\s*(\d{4})$", s)
+    if not m:
+        return None
+    return int(m.group(1)), m.group(2).upper(), m.group(3).upper(), int(m.group(4))
+
+
+def _suggest_job_start(df_accum, company, month, year):
+    if df_accum is None or df_accum.empty:
+        return 1
+    if 'Job Number' not in df_accum.columns:
+        return 1
+    max_seq = 0
+    for val in df_accum['Job Number']:
+        parts = _parse_job_number(val)
+        if not parts:
+            continue
+        seq, comp, mon, yr = parts
+        if comp == company and mon == month and yr == year:
+            if seq > max_seq:
+                max_seq = seq
+    return max_seq + 1 if max_seq > 0 else 1
+
+
+def _clear_accumulated_output():
+    try:
+        if ACCUM_OUTPUT_PATH.exists():
+            ACCUM_OUTPUT_PATH.unlink()
+    except Exception:
+        pass
+
 from src.inference.batch_processor import ChatBatchProcessor
 from db import (
     db_enabled,
     init_db,
+    chat_exists,
+    clear_all_data,
     save_raw_chat,
+    save_raw_chat_if_new,
     save_extractions_from_df,
     save_orders_from_df,
 )
@@ -1602,6 +1685,12 @@ def render_top_ui(proses_waktu="--", baris="--", akurasi="--"):
 
 def main():
     init_db()
+    if 'df_office' not in st.session_state:
+        df_accum = _load_accumulated_df()
+        if df_accum is not None and not df_accum.empty:
+            st.session_state['df_office'] = df_accum
+            if 'baris' not in st.session_state:
+                st.session_state.baris = f"{len(df_accum)} Order"
     if 'waktu' not in st.session_state: st.session_state.waktu = "--"
     if 'baris' not in st.session_state: st.session_state.baris = "--"
     if 'akurasi' not in st.session_state: st.session_state.akurasi = "--"
@@ -1643,15 +1732,47 @@ def main():
         job_year = st.number_input("Tahun", value=st.session_state.get('job_year', 2026), min_value=2000, max_value=2100, step=1)
         st.session_state['job_year'] = job_year
 
-    preview_format = f"{job_start:03d}/{job_company.upper()}-RAFAY/{job_month}/{job_year}"
+    df_accum_preview = _load_accumulated_df()
+    suggested_start = _suggest_job_start(df_accum_preview, job_company.upper(), job_month, job_year)
+    effective_start = max(job_start, suggested_start)
+    preview_format = f"{effective_start:03d}/{job_company.upper()}-RAFAY/{job_month}/{job_year}"
     st.markdown(f"<span class='muted-preview'>Preview: <code>{preview_format}</code></span>", unsafe_allow_html=True)
+    if effective_start != job_start:
+        st.info(f"Job Number otomatis dilanjutkan dari {effective_start:03d} berdasarkan output sebelumnya.")
 
     chat_input = st.text_area(
         "Input", height=260, label_visibility="collapsed",
         placeholder="Paste data chat WhatsApp atau dokumen logistik di sini..."
     )
 
-    btn = st.button("Mulai Ekstraksi Data")
+    btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1], gap="small")
+    with btn_col1:
+        btn = st.button("Mulai Ekstraksi Data")
+    with btn_col2:
+        btn_clear = st.button("Hapus Output")
+    with btn_col3:
+        btn_clear_db = st.button("Hapus Data DB")
+
+    if btn_clear:
+        _clear_accumulated_output()
+        st.session_state.pop('df_office', None)
+        st.session_state.waktu = "--"
+        st.session_state.baris = "--"
+        st.session_state.akurasi = "--"
+        st.session_state.processing_time = 0.0
+        st.success("Output akumulasi sudah dihapus.")
+        st.rerun()
+
+    if btn_clear_db:
+        if not db_enabled():
+            st.warning("Database tidak aktif.")
+        else:
+            ok = clear_all_data()
+            if ok:
+                st.success("Semua data database berhasil dihapus.")
+            else:
+                st.error("Gagal menghapus data database.")
+        st.rerun()
 
     st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
 
@@ -1671,6 +1792,13 @@ def main():
         if not chat_input.strip():
             st.error("Input kosong. Silakan paste data dokumen terlebih dahulu.")
         else:
+            if db_enabled() and chat_exists(chat_input):
+                st.warning("Chat sudah pernah diproses. Data lama dipertahankan dan tidak diproses ulang.")
+                df_accum = _load_accumulated_df()
+                if df_accum is not None and not df_accum.empty:
+                    st.session_state['df_office'] = df_accum
+                    st.session_state.baris = f"{len(df_accum)} Order"
+                st.rerun()
             processing_container = st.empty()
             start_time = time.time()
             
@@ -1706,8 +1834,11 @@ def main():
                 job_company = st.session_state.get('job_company', 'JNE').upper()
                 job_month = st.session_state.get('job_month', 'II')
                 job_year = st.session_state.get('job_year', 2026)
+                df_accum_start = _load_accumulated_df()
+                suggested_start = _suggest_job_start(df_accum_start, job_company, job_month, job_year)
+                effective_start = max(job_start, suggested_start)
 
-                df_office['Job Number'] = [f"{job_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_final))]
+                df_office['Job Number'] = [f"{effective_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_final))]
                 df_office['Tgl RO'] = df_final['RO_DATE'].apply(format_date_custom) if 'RO_DATE' in df_final.columns else ""
                 df_office['Tgl Muat'] = df_final['DATE'].apply(format_date_custom)
                 df_office['Vendor'] = ""
@@ -1749,14 +1880,40 @@ def main():
                 df_office = df_office.drop(columns=['_sort_muat', '_sort_ro'])
                 # Renumber setelah sorting
                 df_office['No.'] = range(1, len(df_office) + 1)
-                df_office['Job Number'] = [f"{job_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_office))]
+                df_office['Job Number'] = [f"{effective_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_office))]
+
+                df_office_new = df_office.copy()
+
+                # Append to accumulated output (persistent across restarts)
+                df_accum = _load_accumulated_df()
+                if df_accum is not None and not df_accum.empty:
+                    existing_keys = _order_key_series(df_accum)
+                    new_keys = _order_key_series(df_office_new)
+                    if existing_keys is not None and new_keys is not None:
+                        existing_set = set(existing_keys.tolist())
+                        keep_mask = ~new_keys.isin(existing_set)
+                        df_office_new = df_office_new[keep_mask].reset_index(drop=True)
+                    df_office = pd.concat([df_accum, df_office_new], ignore_index=True)
+                else:
+                    df_office = df_office_new.copy()
+                df_office['_sort_muat'] = df_office['Tgl Muat'].apply(parse_date_custom)
+                df_office['_sort_ro'] = df_office['Tgl RO'].apply(parse_date_custom)
+                df_office = df_office.sort_values(
+                    by=['_sort_muat', '_sort_ro', 'No.'],
+                    na_position='last'
+                ).reset_index(drop=True)
+                df_office = df_office.drop(columns=['_sort_muat', '_sort_ro'])
+                df_office['No.'] = range(1, len(df_office) + 1)
+                _save_accumulated_df(df_office)
+
 
                 # Optional: persist to PostgreSQL if enabled (no impact when disabled)
                 if db_enabled():
                     try:
-                        message_id = save_raw_chat(chat_input)
-                        save_extractions_from_df(df_final, message_id=message_id)
-                        save_orders_from_df(df_office)
+                        message_id = save_raw_chat_if_new(chat_input)
+                        if message_id is not None:
+                            save_extractions_from_df(df_final, message_id=message_id)
+                            save_orders_from_df(df_office_new)
                     except Exception:
                         pass
 

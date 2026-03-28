@@ -2,13 +2,33 @@
 from .models import WhatsAppMessage, Extraction, Order, OrderUnit
 from .session import db_enabled, get_session
 
-
 def _safe_text(value):
     if value is None:
         return None
     s = str(value).strip()
     return s if s else None
 
+def chat_exists(raw_text):
+    if raw_text is None:
+        return False
+    if not db_enabled():
+        return False
+    session = get_session()
+    if session is None:
+        return False
+    try:
+        existing = session.query(WhatsAppMessage).filter_by(raw_text=str(raw_text)).first()
+        return existing is not None
+    except SQLAlchemyError:
+        session.rollback()
+        return False
+    finally:
+        session.close()
+
+def save_raw_chat_if_new(raw_text):
+    if chat_exists(raw_text):
+        return None
+    return save_raw_chat(raw_text)
 
 def save_raw_chat(raw_text):
     if not db_enabled():
@@ -27,7 +47,6 @@ def save_raw_chat(raw_text):
         return None
     finally:
         session.close()
-
 
 def save_extractions_from_df(df, message_id=None):
     if not db_enabled():
@@ -55,7 +74,6 @@ def save_extractions_from_df(df, message_id=None):
         return 0
     finally:
         session.close()
-
 
 def save_orders_from_df(df):
     if not db_enabled():
@@ -98,3 +116,44 @@ def save_orders_from_df(df):
         return 0
     finally:
         session.close()
+
+def process_chat_batch(chat_list, pipeline_handler=None):
+    # Incremental batch processing with deduplication.
+    if not chat_list:
+        return 0
+    processed = 0
+    for chat_text in chat_list:
+        message_id = save_raw_chat_if_new(chat_text)
+        if message_id is None:
+            continue
+        if pipeline_handler is None:
+            processed += 1
+            continue
+        try:
+            df_final, df_office = pipeline_handler(chat_text)
+        except Exception:
+            continue
+        save_extractions_from_df(df_final, message_id=message_id)
+        save_orders_from_df(df_office)
+        processed += 1
+    return processed
+
+def clear_all_data():
+    if not db_enabled():
+        return False
+    session = get_session()
+    if session is None:
+        return False
+    try:
+        session.query(OrderUnit).delete()
+        session.query(Order).delete()
+        session.query(Extraction).delete()
+        session.query(WhatsAppMessage).delete()
+        session.commit()
+        return True
+    except SQLAlchemyError:
+        session.rollback()
+        return False
+    finally:
+        session.close()
+
