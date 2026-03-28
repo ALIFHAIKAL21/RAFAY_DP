@@ -36,19 +36,41 @@ class ChatBatchProcessor:
         """
         # 1. Normalisasi enter biar gampang dipisah
         clean_text = raw_text.replace("\r", "")
-        
-        # 2. Regex Splitter TERBARU (ANTI GUMPAL)
-        pattern = r"(\[.*?\]|(?:\n|^)\s*(?=Waktu loading)|(?:\n|^)\s*(?=REQUEST))"
-        
+
+        # 2. Prioritas: kalau ada header REQUEST/ONCALL, split hanya per header
+        # Ini mencegah gumpal/duplikasi karena split di "Waktu loading".
+        header_regex = re.compile(r'(?im)^\s*(?:request|requer|oncall|unit\s+on\s+call|on\s+call)\b')
+        header_hits = [m.start() for m in header_regex.finditer(clean_text)]
+        if header_hits:
+            # Tambahkan akhir teks sebagai batas terakhir
+            header_hits.append(len(clean_text))
+            final_chunks = []
+            for i in range(len(header_hits) - 1):
+                start = header_hits[i]
+                end = header_hits[i + 1]
+                chunk = clean_text[start:end].strip()
+                if chunk:
+                    final_chunks.append(chunk)
+            return final_chunks
+
+        # 3. Fallback: split lama untuk teks tanpa header
+        pattern = (
+            r"(?i)("
+            r"\[.*?\]"
+            r"|(?:\n|^)\s*(?=Waktu\s*loading)"
+            r"|(?:\n|^)\s*(?=(?:request|requer|oncall|unit\s+on\s+call|on\s+call))"
+            r")"
+        )
+
         chunks = re.split(pattern, clean_text)
-        
+
         # Gabungkan kembali delimiter dengan isinya
         final_chunks = []
         current_chunk = ""
-        
+
         for chunk in chunks:
-            if not chunk: continue
-            
+            if not chunk:
+                continue
             # Jika chunk adalah delimiter, jadikan awal baru
             if re.match(pattern, chunk, re.DOTALL):
                 if current_chunk:
@@ -56,10 +78,10 @@ class ChatBatchProcessor:
                 current_chunk = chunk
             else:
                 current_chunk += chunk
-                
+
         if current_chunk:
             final_chunks.append(current_chunk.strip())
-            
+
         return final_chunks
 
     def process_file(self, file_path, output_excel="output_orderan.xlsx"):
