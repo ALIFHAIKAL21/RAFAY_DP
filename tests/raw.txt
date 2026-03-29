@@ -33,7 +33,7 @@ Nopol  : L 9511 AL
 No hp  : 082191633212
 Waktu loading : 03:00
 Rute/tujuan : CGK - SUB
-Revisi
+
 driver  : Ahmad Wahyudi
 Nopol  : W 8323 NV
 No hp  : 085792725002
@@ -68,7 +68,6 @@ driver  : FAJRI
 Nopol  : B 9241 FXS
 No hp  :81382418508
 
-REVISI NOPOL
 REQUEST ORDER ONCALL 13 FEBRUARI 2026:
 
 5 UNIT TWB 50 Cbm
@@ -449,8 +448,6 @@ Nopol  : BN 8038 RP
 No Hp :082211762649
 REQUEST ORDER ONCALL
 04 MARET 2026:
-
-REVISI NOPOL BE 8610 DB
 
 5 UNIT TWB 50 CBM
 Lokasi : ARGOPANTES

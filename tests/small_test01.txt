@@ -1,0 +1,193 @@
+﻿== CASE 1 - BASIC (10 ORDER RECORD) ==
+
+REQUEST ORDER ONCALL 3 MARET 2026
+
+5 UNIT WB/50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : 23:00
+Rute/tujuan : CGK - MES
+Driver : SAMOSIR
+Nopol : B 9727 UEX
+No hp : +62 822-7429-6236
+
+REQUEST ORDER ONCALL 3 MARET 2026
+
+5 UNIT WB/50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : SEGERA
+Rute/tujuan : CGK - PKU
+Driver : SONI RAHMAT
+Nopol : BM 8142 RY
+No hp : 082282001964
+
+Waktu loading : 15:00
+Rute/tujuan : CGK - PKU
+Driver :
+Nopol :
+No hp :
+
+Waktu loading : 20:00
+Rute/tujuan : CGK - PKU
+Driver :
+Nopol :
+No hp :
+
+Waktu loading : 02:00/04-03-2026
+Rute/tujuan : CGK - PKU
+Driver :
+Nopol :
+No hp :
+
+Waktu loading : 07:00/04-03-2026
+Rute/tujuan : CGK - PKU
+Driver :
+Nopol :
+No hp :
+
+
+== CASE 2 - PARTIAL MIX (10 ORDER RECORD) ==
+
+REQUEST ORDER ONCALL 3 MARET 2026
+
+5 UNIT WB/50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : 23:00
+Rute/tujuan : CGK - MES
+Driver : SAMOSIR
+Nopol : B 9727 UEX
+No hp : +62 82274296236
+
+REQUEST ORDER ONCALL 3 MARET 2026
+
+5 UNIT WB/50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : Segera
+Rute/tujuan : CGK - PKU
+Driver : SONI RAHMAT
+Nopol : BM 8142 RY
+No hp : 082282001964
+
+Waktu loading : 15;00
+Rute/tujuan : CGK - PKU
+Driver : ANGI NANDA
+Nopol : AB 28277 BA
+No hp : 2817318412
+
+Waktu loading : 20:00
+Rute/tujuan : CGK - PKU
+Driver :
+Nopol :
+No hp :
+
+Waktu loading : 02:00/04-03-2026
+Rute/tujuan : CGK - PKU
+Driver : ALIF
+Nopol : B 8887 NU
+No hp : 081574673448
+
+Waktu loading : 07:00/04-03-2026
+Rute/tujuan : CGK - PKU
+Driver :
+Nopol :
+No hp :
+
+
+== CASE 3 - FULL DETAIL (10 ORDER RECORD) ==
+
+REQUEST ORDER ONCALL 3 MARET 2026
+
+5 UNIT WB/50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : 23:00
+Rute/tujuan : CGK - MES
+Driver : SAMOSIR
+Nopol : B 9727 UEX
+No hp : +62 822-7429-6236
+
+Lokasi : ARGOPANTES
+Waktu loading : 23:00
+Rute/tujuan : CGK - MES
+Driver : SAMBALADO
+Nopol : B 9727 UXA
+No hp : +62 822-7429-6288
+
+REQUEST ORDER ONCALL 3 MARET 2026
+
+5 UNIT WB/50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : Segera
+Rute/tujuan : CGK - PKU
+Driver : SONI RAHMAT
+Nopol : BM 8142 RY
+No hp : 082282001964
+
+Waktu loading : 15:00
+Rute/tujuan : CGK - PKU
+Driver : ANGI NANDA
+Nopol : AB 28277 BA
+No hp : 2817318412
+
+Waktu loading : 20:00
+Rute/tujuan : CGK - PKU
+Driver : INDAH KUSUMA
+Nopol : YU 788990 BM
+No hp : 821837474
+
+Waktu loading : 02:00/04-03-2026
+Rute/tujuan : CGK - PKU
+Driver : ALIF
+Nopol : B 8887 NU
+No hp : 081574673448
+
+Waktu loading : 07:00/04-03-2026
+Rute/tujuan : CGK - PKU
+Driver : BAYU
+Nopol : B 3424 MA
+No hp : 09276355544
+
+
+== CASE 4 - FORMAT VARIATION (10 ORDER RECORD) ==
+
+Request Unit On Call Tgl 03 Mar 26
+
+5 unit wb 50 cbm
+Lokasi : Argopantes
+Waktu loading : 23.00
+Rute/tujuan : CGK-MES
+Driver : samosir
+No pol : B9727UEX
+No tlp : +62 822 7429 6236
+
+Request Unit On Call Tgl 03 Mar 26
+
+5 unit wb/50 cbm
+Lokasi : ARGOPANTES
+Waktu loading : segera
+Rute/tujuan : CGK - PKU
+Driver : soni rahmat
+Nopol : BM8142RY
+HP : 082282001964
+
+Waktu loading : 15;00
+Rute/tujuan : CGK - PKU
+Driver : Angi nanda
+Nopol : AB28277BA
+No hp : 2817318412
+
+Waktu loading : 20.00
+Rute/tujuan : CGK - PKU
+Driver : Indah Kusuma
+Nopol : YU788990BM
+Kontak : 821837474
+
+Waktu loading : 02:00 / 04-03-26
+Rute/tujuan : CGK - PKU
+Driver : Alif
+Nopol : B8887NU
+No hp : 081574673448
+
+Waktu loading : 07:00 / 04-03-2026
+Rute/tujuan : CGK - PKU
+Driver : Bayu
+Nopol : B3424MA
+No hp : 09276355544

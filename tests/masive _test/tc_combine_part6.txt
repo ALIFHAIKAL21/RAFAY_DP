@@ -121,4 +121,3 @@ Rute/tujuan : CGK - PKU
 driver  : Syarial
 Nopol  :BM 8486 AU
 No Hp :081317708658
-

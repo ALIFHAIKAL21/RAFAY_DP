@@ -13,96 +13,7 @@ ROOT_DIR = Path(__file__).resolve().parent
 sys.path.append(str(ROOT_DIR))
 
 
-ACCUM_OUTPUT_PATH = ROOT_DIR / "data" / "accumulated_output.csv"
-
-
-def _load_accumulated_df():
-    if not ACCUM_OUTPUT_PATH.exists():
-        return None
-    try:
-        df = pd.read_csv(ACCUM_OUTPUT_PATH)
-        return df if df is not None and not df.empty else None
-    except Exception:
-        return None
-
-
-def _save_accumulated_df(df):
-    try:
-        ACCUM_OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-        df.to_csv(ACCUM_OUTPUT_PATH, index=False)
-    except Exception:
-        pass
-
-
-
-def _order_key_series(df):
-    if df is None or df.empty:
-        return None
-    cols = {
-        'pickup': 'Pickup',
-        'tujuan': 'Tujuan',
-        'tgl_muat': 'Tgl Muat',
-        'no_plat': 'No. Plat',
-        'type_truck': 'Type Truck',
-        'driver': 'Driver',
-    }
-    data = []
-    for key, col in cols.items():
-        if col in df.columns:
-            s = df[col].fillna('').astype(str).str.strip().str.lower()
-        else:
-            s = pd.Series([''] * len(df))
-        data.append(s)
-    # key order: pickup|tujuan|tgl_muat|no_plat|type_truck|driver
-    return data[0] + '|' + data[1] + '|' + data[2] + '|' + data[3] + '|' + data[4] + '|' + data[5]
-
-
-
-def _parse_job_number(value):
-    if value is None:
-        return None
-    s = str(value).strip()
-    m = re.match(r"^(\d+)\s*/\s*([A-Za-z0-9]+)-RAFAY\s*/\s*([IVX]+)\s*/\s*(\d{4})$", s)
-    if not m:
-        return None
-    return int(m.group(1)), m.group(2).upper(), m.group(3).upper(), int(m.group(4))
-
-
-def _suggest_job_start(df_accum, company, month, year):
-    if df_accum is None or df_accum.empty:
-        return 1
-    if 'Job Number' not in df_accum.columns:
-        return 1
-    max_seq = 0
-    for val in df_accum['Job Number']:
-        parts = _parse_job_number(val)
-        if not parts:
-            continue
-        seq, comp, mon, yr = parts
-        if comp == company and mon == month and yr == year:
-            if seq > max_seq:
-                max_seq = seq
-    return max_seq + 1 if max_seq > 0 else 1
-
-
-def _clear_accumulated_output():
-    try:
-        if ACCUM_OUTPUT_PATH.exists():
-            ACCUM_OUTPUT_PATH.unlink()
-    except Exception:
-        pass
-
 from src.inference.batch_processor import ChatBatchProcessor
-from db import (
-    db_enabled,
-    init_db,
-    chat_exists,
-    clear_all_data,
-    save_raw_chat,
-    save_raw_chat_if_new,
-    save_extractions_from_df,
-    save_orders_from_df,
-)
 
 # --- KONFIGURASI RAFAY IDP v2.0 ---
 DRIVER_BLACKLIST = ["RAFAY","AKBAR","ADMIN","JNE","LOGISTIK","EXPEDISI","PENGIRIM","ONCALL","REQUEST"]
@@ -112,7 +23,8 @@ def extract_time_format(time_str):
     time_str = str(time_str).strip().upper()
     if "SEGERA" in time_str:
         return ("SEGERA", "segera")
-    m = re.search(r'(\d{1,2})[:\.](\d{2})', time_str)
+    # Toleransi separator jam: ":" "." ";"
+    m = re.search(r'(\d{1,2})[:\.;](\d{2})', time_str)
     if m:
         hour = int(m.group(1))
         minute = m.group(2)
@@ -125,6 +37,8 @@ def extract_time_format(time_str):
 
 def auto_format_chat_input(text):
     if not text: return ""
+    # Hilangkan BOM jika ada agar header pertama tetap terbaca.
+    text = str(text).lstrip("\ufeff").replace("\ufeff", "")
     wa_pattern = r"(?=\[\d{2}[.,:]\d{2}[, ]+\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\]\s*[^:]+:)"
     chunks = re.split(wa_pattern, text)
     valid_text = ""
@@ -424,6 +338,13 @@ def extract_loading_candidates(text):
         val_upper = val.upper()
         has_segera = "SEGERA" in val_upper
         date_part = ""
+        # Prioritas: format inline "HH:MM/DATE" atau "HH.MM / DATE"
+        inline_slash = re.search(
+            r'(?i)^\s*\d{1,2}[:\.;]\d{2}\s*[\\/]\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}\s+[a-zA-Z]{3,}\s+\d{2,4})',
+            val
+        )
+        if inline_slash:
+            date_part = inline_slash.group(1).strip()
         for m in re.finditer(date_pattern, val):
             cand = m.group(1).strip()
             if re.search(r'[/-]', cand):
@@ -453,6 +374,61 @@ def extract_loading_candidates(text):
                 time_part = ""
         candidates.append({"time": time_part, "date": date_part, "segera": has_segera, "raw": val, "pos": pos})
     return candidates
+
+def extract_loading_details(text):
+    if pd.isna(text) or not str(text).strip():
+        return []
+    text_str = str(text)
+    details = []
+    loading_matches = list(re.finditer(r'(?im)^\s*Waktu\s*loading\s*:\s*([^\n\r]+)', text_str))
+    for idx, m in enumerate(loading_matches):
+        val = str(m.group(1)).strip()
+        if not val:
+            continue
+        start = m.start()
+        end = loading_matches[idx + 1].start() if (idx + 1) < len(loading_matches) else len(text_str)
+        section = text_str[start:end]
+
+        base = extract_loading_candidates(f"Waktu loading : {val}")
+        if base:
+            time_part = str(base[0].get("time", "")).strip()
+            date_part = str(base[0].get("date", "")).strip()
+            has_segera = bool(base[0].get("segera"))
+        else:
+            time_part, _ = extract_time_format(val)
+            date_part = ""
+            has_segera = "SEGERA" in val.upper()
+
+        driver = ""
+        plate = ""
+        phone = ""
+
+        driver_match = re.search(r'(?im)^[ \t]*(?:driver|pengemudi)[ \t]*[:.]?[ \t]*([^\n\r]*)', section)
+        if driver_match:
+            driver = clean_driver_name(driver_match.group(1))
+
+        plate_match = re.search(
+            r'(?im)^[ \t]*(?:nopol|no\.?\s*pol(?:isi)?|no\.?\s*plat|plat)[ \t]*[:.]?[ \t]*([^\n\r]*)',
+            section
+        )
+        if plate_match:
+            plate = clean_plate_value(plate_match.group(1))
+
+        phone_match = re.search(r'(?im)^[ \t]*(?:no\.?\s*hp|hp|no\.?\s*telp|no\.?\s*tlp|kontak)[ \t]*[:.]?[ \t]*([^\n\r]*)', section)
+        if phone_match:
+            phone = normalize_phone_number(phone_match.group(1))
+
+        details.append({
+            "time": time_part,
+            "date": date_part,
+            "segera": has_segera,
+            "driver": driver,
+            "plate": plate,
+            "phone": phone,
+            "raw": val,
+            "pos": start,
+        })
+    return details
 
 def normalize_unit_type(unit_type):
     if pd.isna(unit_type) or not str(unit_type).strip(): return ""
@@ -1087,6 +1063,7 @@ def enforce_block_quota(df):
         block_has_segera = False
         block_dates = []
         loading_candidates_list = []
+        loading_details_list = []
         time_date_map = {}
         if 'Original_Text' in block_data.columns:
             seen_texts = set()
@@ -1098,8 +1075,10 @@ def enforce_block_quota(df):
                 if not block_has_segera and re.search(r'(?i)\bsegera\b', s):
                     block_has_segera = True
                 loading_candidates_list.extend(extract_loading_candidates(s))
+                loading_details_list.extend(extract_loading_details(s))
         elif block_text:
             loading_candidates_list = extract_loading_candidates(block_text)
+            loading_details_list = extract_loading_details(block_text)
         for lc in loading_candidates_list:
             if lc.get('segera'):
                 block_has_segera = True
@@ -1111,6 +1090,74 @@ def enforce_block_quota(df):
             loading_queue.setdefault(t_key, []).append(lc)
             if lc.get('date') and t_key not in time_date_map:
                 time_date_map[t_key] = lc.get('date')
+
+        # Urutan loading dipakai untuk mengisi slot partial (clean_slot) agar
+        # tanggal per unit mengikuti urutan Waktu loading pada pesan asli.
+        loading_sequence = []
+        for idx_lc, lc in enumerate(loading_candidates_list):
+            item = {
+                "time": str(lc.get("time", "")).strip(),
+                "date": str(lc.get("date", "")).strip(),
+                "segera": bool(lc.get("segera")),
+                "driver": "",
+                "plate": "",
+                "phone": "",
+            }
+            if idx_lc < len(loading_details_list):
+                det = loading_details_list[idx_lc]
+                item["driver"] = clean_driver_name(det.get("driver", ""))
+                item["plate"] = clean_plate_value(det.get("plate", ""))
+                item["phone"] = normalize_phone_number(det.get("phone", ""))
+            loading_sequence.append(item)
+        loading_slots = [dict(x) for x in loading_sequence]
+
+        def _consume_loading_sequence(preferred_time_key=""):
+            if not loading_sequence:
+                return None
+            pref = str(preferred_time_key).strip().upper()
+            if pref:
+                for idx, item in enumerate(loading_sequence):
+                    item_key = str(item.get("time", "")).strip().upper()
+                    if item_key and item_key == pref:
+                        return loading_sequence.pop(idx)
+            return loading_sequence.pop(0)
+
+        def _valid_time_token(time_val):
+            t = str(time_val).strip().upper()
+            if not t:
+                return ""
+            if t == "SEGERA":
+                return "SEGERA"
+            if re.match(r'^\d{1,2}:\d{2}$', t):
+                return t
+            return ""
+
+        def _apply_identity_from_seq(row_obj, seq_item, overwrite=False):
+            if not seq_item:
+                return
+            seq_driver = clean_driver_name(seq_item.get("driver", ""))
+            seq_plate = clean_plate_value(seq_item.get("plate", ""))
+            seq_phone = normalize_phone_number(seq_item.get("phone", ""))
+
+            if seq_driver and (overwrite or not str(row_obj.get('DRIVER', '')).strip()):
+                row_obj['DRIVER'] = seq_driver
+            if seq_plate and (overwrite or not str(row_obj.get('PLATE', '')).strip()):
+                row_obj['PLATE'] = seq_plate
+            if seq_phone and (overwrite or not str(row_obj.get('PHONE', '')).strip()):
+                row_obj['PHONE'] = seq_phone
+
+        def _apply_datetime_from_seq(row_obj, seq_item):
+            if not seq_item:
+                return
+            seq_time = _valid_time_token(seq_item.get("time", ""))
+            seq_date = str(seq_item.get("date", "")).strip()
+            cur_time = str(row_obj.get("TIME", "")).strip()
+            cur_date = str(row_obj.get("DATE", "")).strip()
+            if seq_time and not cur_time:
+                row_obj["TIME"] = seq_time
+            if seq_date:
+                if (not cur_date) or (block_ro_date and cur_date == block_ro_date and seq_date != block_ro_date):
+                    row_obj["DATE"] = seq_date
         if not block_muat_date and block_dates:
             block_muat_date = block_dates[0]
         if not block_muat_date and block_has_segera and block_ro_date:
@@ -1152,6 +1199,26 @@ def enforce_block_quota(df):
                 # Selaraskan Tgl Muat berdasarkan urutan Waktu loading jika ada.
                 cand_time_key = str(candidate.get('TIME', '')).strip().upper()
                 cand_date_existing = str(candidate.get('DATE', '')).strip()
+                # Sinkronkan konsumsi urutan loading agar slot partial berikutnya
+                # tidak mengambil slot waktu yang sudah dipakai kandidat ini.
+                if cand_time_key:
+                    seq_used = _consume_loading_sequence(cand_time_key)
+                    if seq_used:
+                        # Jika slot waktu sudah cocok, detail segmen adalah sumber utama.
+                        _apply_identity_from_seq(candidate, seq_used, overwrite=True)
+                elif i == 0 and loading_sequence:
+                    # Jika kandidat utama tidak punya TIME (umum pada hasil model),
+                    # tetapi blok dimulai dari "SEGERA", anggap slot pertama sudah
+                    # terwakili oleh kandidat utama agar mapping slot partial tetap urut.
+                    first_seq = loading_sequence[0] if loading_sequence else None
+                    cand_has_identity = bool(
+                        str(candidate.get('DRIVER', '')).strip()
+                        or str(candidate.get('PLATE', '')).strip()
+                        or str(candidate.get('PHONE', '')).strip()
+                    )
+                    if cand_has_identity and first_seq and bool(first_seq.get("segera")):
+                        seq_used = _consume_loading_sequence()
+                        _apply_identity_from_seq(candidate, seq_used, overwrite=True)
                 if cand_time_key and cand_time_key in loading_queue and loading_queue[cand_time_key]:
                     lc = loading_queue[cand_time_key].pop(0)
                     if not cand_date_existing:
@@ -1206,6 +1273,10 @@ def enforce_block_quota(df):
                     candidate['PLATE'] = block_plate
                 if not str(candidate.get('PHONE', '')).strip() and block_phone_pair:
                     candidate['PHONE'] = block_phone_pair
+                # Guardrail: urutan slot dari teks asli jadi acuan utama per indeks unit.
+                if i < len(loading_slots):
+                    _apply_identity_from_seq(candidate, loading_slots[i], overwrite=True)
+                    _apply_datetime_from_seq(candidate, loading_slots[i])
                 final_rows.append(candidate)
             else:
                 clean_slot = header_row.copy()
@@ -1215,10 +1286,28 @@ def enforce_block_quota(df):
                 else: clean_slot['DATE'] = ""
                 if block_ro_date:
                     clean_slot['RO_DATE'] = block_ro_date
-                if block_muat_date:
+                seq_slot = _consume_loading_sequence()
+                if seq_slot:
+                    seq_time = _valid_time_token(seq_slot.get("time", ""))
+                    seq_date = str(seq_slot.get("date", "")).strip()
+                    if seq_time:
+                        clean_slot['TIME'] = seq_time
+                    _apply_identity_from_seq(clean_slot, seq_slot, overwrite=True)
+                    if seq_date:
+                        clean_slot['DATE'] = seq_date
+                    elif seq_slot.get("segera") and block_ro_date:
+                        clean_slot['DATE'] = block_ro_date
+                    elif seq_time and block_ro_date:
+                        clean_slot['DATE'] = block_ro_date
+                    elif block_muat_date:
+                        clean_slot['DATE'] = block_muat_date
+                elif block_muat_date:
                     clean_slot['DATE'] = block_muat_date
                 elif block_has_segera and block_ro_date:
                     clean_slot['DATE'] = block_ro_date
+                if i < len(loading_slots):
+                    _apply_identity_from_seq(clean_slot, loading_slots[i], overwrite=True)
+                    _apply_datetime_from_seq(clean_slot, loading_slots[i])
                 final_rows.append(clean_slot)
     return pd.DataFrame(final_rows).reset_index(drop=True)
 
@@ -1622,6 +1711,43 @@ st.markdown("""
         .opt-box { background: var(--card-bg); border: 1px solid var(--border-color); padding: 10px 16px; border-radius: 8px; text-align: center; }
         .opt-box p { margin: 0; color: var(--text-main); font-weight: 600; font-size: 0.82rem; }
         .opt-box span { color: var(--text-dim); font-size: 0.7rem; display: block; margin-top: 2px; }
+        .stat-control {
+            width: 100%;
+        }
+        .stat-control-label {
+            color: var(--text-main);
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.2;
+            margin: 0 0 0.3rem 0;
+        }
+        .stat-chip {
+            background-color: #0c121a;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 14px;
+            height: 48px;
+            width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .stat-chip-label {
+            color: var(--text-main);
+            font-size: 0.84rem;
+            font-weight: 600;
+            margin: 0;
+            line-height: 1.1;
+        }
+        .stat-chip-value {
+            color: var(--accent-strong);
+            font-size: 1rem;
+            font-weight: 700;
+            line-height: 1;
+            margin: 0;
+        }
 
         [data-testid="stDataFrame"] { background-color: var(--bg-elev-1) !important; }
         .stDataFrame { background-color: var(--bg-elev-1) !important; }
@@ -1659,7 +1785,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 @st.cache_resource
-def get_processor(): return ChatBatchProcessor()
+def get_processor(split_version="split_v3_multi_unit"):
+    # Argumen versi dipakai untuk memastikan cache ter-refresh saat logika split berubah.
+    return ChatBatchProcessor()
 
 def render_top_ui(proses_waktu="--", baris="--", akurasi="--"):
     st.markdown(f"""
@@ -1686,12 +1814,10 @@ def render_top_ui(proses_waktu="--", baris="--", akurasi="--"):
 
 
 def main():
-    init_db()
     if 'waktu' not in st.session_state: st.session_state.waktu = "--"
     if 'baris' not in st.session_state: st.session_state.baris = "--"
     if 'akurasi' not in st.session_state: st.session_state.akurasi = "--"
     if 'processing_time' not in st.session_state: st.session_state.processing_time = 0.0
-    if 'use_batch' not in st.session_state: st.session_state.use_batch = False
     
     render_top_ui(st.session_state.waktu, st.session_state.baris, st.session_state.akurasi)
     
@@ -1709,8 +1835,6 @@ def main():
     """, unsafe_allow_html=True)
 
     st.markdown("**Konfigurasi Job Number**")
-    use_batch = st.checkbox("Mode Batch (akumulasi output & DB)", value=st.session_state.use_batch)
-    st.session_state.use_batch = use_batch
     col_job1, col_job2, col_job3, col_job4 = st.columns(4, gap="small")
 
     with col_job1:
@@ -1731,47 +1855,28 @@ def main():
         job_year = st.number_input("Tahun", value=st.session_state.get('job_year', 2026), min_value=2000, max_value=2100, step=1)
         st.session_state['job_year'] = job_year
 
-    df_accum_preview = _load_accumulated_df() if use_batch else None
-    suggested_start = _suggest_job_start(df_accum_preview, job_company.upper(), job_month, job_year) if use_batch else job_start
-    effective_start = max(job_start, suggested_start) if use_batch else job_start
+    effective_start = job_start
     preview_format = f"{effective_start:03d}/{job_company.upper()}-RAFAY/{job_month}/{job_year}"
     st.markdown(f"<span class='muted-preview'>Preview: <code>{preview_format}</code></span>", unsafe_allow_html=True)
-    if use_batch and effective_start != job_start:
-        st.info(f"Job Number otomatis dilanjutkan dari {effective_start:03d} berdasarkan output sebelumnya.")
 
     chat_input = st.text_area(
         "Input", height=260, label_visibility="collapsed",
         placeholder="Paste data chat WhatsApp atau dokumen logistik di sini..."
     )
 
-    btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1], gap="small")
+    btn_col1, btn_col2 = st.columns([1, 1], gap="small")
     with btn_col1:
         btn = st.button("Mulai Ekstraksi Data")
     with btn_col2:
         btn_clear = st.button("Hapus Output")
-    with btn_col3:
-        btn_clear_db = st.button("Hapus Data DB")
 
     if btn_clear:
-        if use_batch:
-            _clear_accumulated_output()
         st.session_state.pop('df_office', None)
         st.session_state.waktu = "--"
         st.session_state.baris = "--"
         st.session_state.akurasi = "--"
         st.session_state.processing_time = 0.0
         st.success("Output sudah dihapus.")
-        st.rerun()
-
-    if btn_clear_db:
-        if not db_enabled():
-            st.warning("Database tidak aktif.")
-        else:
-            ok = clear_all_data()
-            if ok:
-                st.success("Semua data database berhasil dihapus.")
-            else:
-                st.error("Gagal menghapus data database.")
         st.rerun()
 
     st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
@@ -1792,13 +1897,6 @@ def main():
         if not chat_input.strip():
             st.error("Input kosong. Silakan paste data dokumen terlebih dahulu.")
         else:
-            if use_batch and db_enabled() and chat_exists(chat_input):
-                st.warning("Chat sudah pernah diproses. Data lama dipertahankan dan tidak diproses ulang.")
-                df_accum = _load_accumulated_df()
-                if df_accum is not None and not df_accum.empty:
-                    st.session_state['df_office'] = df_accum
-                    st.session_state.baris = f"{len(df_accum)} Order"
-                st.rerun()
             processing_container = st.empty()
             start_time = time.time()
             
@@ -1834,9 +1932,7 @@ def main():
                 job_company = st.session_state.get('job_company', 'JNE').upper()
                 job_month = st.session_state.get('job_month', 'II')
                 job_year = st.session_state.get('job_year', 2026)
-                df_accum_start = _load_accumulated_df() if use_batch else None
-                suggested_start = _suggest_job_start(df_accum_start, job_company, job_month, job_year) if use_batch else job_start
-                effective_start = max(job_start, suggested_start) if use_batch else job_start
+                effective_start = job_start
 
                 df_office['Job Number'] = [f"{effective_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_final))]
                 df_office['Tgl RO'] = df_final['RO_DATE'].apply(format_date_custom) if 'RO_DATE' in df_final.columns else ""
@@ -1882,43 +1978,6 @@ def main():
                 df_office['No.'] = range(1, len(df_office) + 1)
                 df_office['Job Number'] = [f"{effective_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_office))]
 
-                df_office_new = df_office.copy()
-                if use_batch:
-                    # Append to accumulated output (persistent across restarts)
-                    df_accum = _load_accumulated_df()
-                    if df_accum is not None and not df_accum.empty:
-                        existing_keys = _order_key_series(df_accum)
-                        new_keys = _order_key_series(df_office_new)
-                        if existing_keys is not None and new_keys is not None:
-                            existing_set = set(existing_keys.tolist())
-                            keep_mask = ~new_keys.isin(existing_set)
-                            df_office_new = df_office_new[keep_mask].reset_index(drop=True)
-                        df_office = pd.concat([df_accum, df_office_new], ignore_index=True)
-                    else:
-                        df_office = df_office_new.copy()
-                    df_office['_sort_muat'] = df_office['Tgl Muat'].apply(parse_date_custom)
-                    df_office['_sort_ro'] = df_office['Tgl RO'].apply(parse_date_custom)
-                    df_office = df_office.sort_values(
-                        by=['_sort_muat', '_sort_ro', 'No.'],
-                        na_position='last'
-                    ).reset_index(drop=True)
-                    df_office = df_office.drop(columns=['_sort_muat', '_sort_ro'])
-                    df_office['No.'] = range(1, len(df_office) + 1)
-                    _save_accumulated_df(df_office)
-                else:
-                    df_office = df_office_new.copy()
-
-
-                # Optional: persist to PostgreSQL if enabled (only in batch mode)
-                if use_batch and db_enabled():
-                    try:
-                        message_id = save_raw_chat_if_new(chat_input)
-                        if message_id is not None:
-                            save_extractions_from_df(df_final, message_id=message_id)
-                            save_orders_from_df(df_office_new)
-                    except Exception:
-                        pass
-
                 end_time = time.time()
                 processing_time = round(end_time - start_time, 2)
 
@@ -1946,12 +2005,19 @@ def main():
         st.divider()
         st.markdown("<div class='result-container'>", unsafe_allow_html=True)
         st.markdown("<div class='result-header'><svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='3' width='18' height='18' rx='2' ry='2'></rect><line x1='3' y1='9' x2='21' y2='9'></line><line x1='9' y1='21' x2='9' y2='9'></line></svg>Hasil Ekstraksi</div>", unsafe_allow_html=True)
-        filter_col, _ = st.columns([1, 3], gap="large")
+        filter_col, mode_col, assigned_col, partial_col = st.columns([1, 1, 1, 1], gap="large")
         with filter_col:
             filter_label = st.selectbox(
                 "Filter Status",
-                ["All", "Assigned", "Partial", "Unassigned"],
+                ["All", "Assigned", "Partial"],
                 index=0
+            )
+        with mode_col:
+            job_number_mode = st.selectbox(
+                "Mode Nomor Job",
+                ["Ringkas per Status", "Ikuti Urutan Master"],
+                index=0,
+                help="Ringkas per Status: nomor berurutan rapi di filter Assigned/Partial. Ikuti Urutan Master: nomor mengikuti urutan data All."
             )
 
         def _apply_status_filter(df_in, label):
@@ -1963,8 +2029,76 @@ def main():
                 return df_in[df_in['status_unit'].str.upper() == "UNASSIGNED"]
             return df_in
 
+        def _parse_job_number_local(value):
+            if value is None:
+                return None
+            s = str(value).strip()
+            m = re.match(r"^(\d+)\s*/\s*([A-Za-z0-9]+)-RAFAY\s*/\s*([IVX]+)\s*/\s*(\d{4})$", s)
+            if not m:
+                return None
+            return int(m.group(1)), m.group(2).upper(), m.group(3).upper(), int(m.group(4))
+
+        def _get_job_base(df_source):
+            if df_source is not None and not df_source.empty and 'Job Number' in df_source.columns:
+                for v in df_source['Job Number']:
+                    parsed = _parse_job_number_local(v)
+                    if parsed:
+                        return parsed
+            # Fallback ke konfigurasi UI saat parse tidak tersedia
+            return (
+                int(st.session_state.get('job_start', 1)),
+                str(st.session_state.get('job_company', 'JNE')).upper(),
+                str(st.session_state.get('job_month', 'II')).upper(),
+                int(st.session_state.get('job_year', 2026)),
+            )
+
+        def _with_adaptive_job_number(df_in, job_base, enabled=True):
+            out = df_in.copy()
+            if out.empty:
+                return out
+            if enabled and 'No.' in out.columns:
+                out['No.'] = range(1, len(out) + 1)
+            if enabled and 'Job Number' in out.columns and job_base:
+                seq_start, comp, mon, yr = job_base
+                out['Job Number'] = [f"{seq_start+i:03d}/{comp}-RAFAY/{mon}/{yr}" for i in range(len(out))]
+            return out
+
         df_all = st.session_state['df_office']
-        df_view = _apply_status_filter(df_all, filter_label)
+        assigned_count = int((df_all['status_unit'].str.upper() == "ASSIGNED").sum()) if 'status_unit' in df_all.columns else 0
+        partial_count = int((df_all['status_unit'].str.upper() == "PARTIAL").sum()) if 'status_unit' in df_all.columns else 0
+        with assigned_col:
+            st.markdown(
+                (
+                    "<div class='stat-control'>"
+                    "<div class='stat-control-label'>Assigned</div>"
+                    f"<div class='stat-chip'><span class='stat-chip-label'>Assigned</span><span class='stat-chip-value'>{assigned_count}</span></div>"
+                    "</div>"
+                ),
+                unsafe_allow_html=True
+            )
+        with partial_col:
+            st.markdown(
+                (
+                    "<div class='stat-control'>"
+                    "<div class='stat-control-label'>Partial</div>"
+                    f"<div class='stat-chip'><span class='stat-chip-label'>Partial</span><span class='stat-chip-value'>{partial_count}</span></div>"
+                    "</div>"
+                ),
+                unsafe_allow_html=True
+            )
+
+        job_base = _get_job_base(df_all)
+        adaptive_enabled = (job_number_mode == "Ringkas per Status")
+        df_all_view = _with_adaptive_job_number(df_all, job_base, enabled=adaptive_enabled)
+        df_assigned_view = _with_adaptive_job_number(_apply_status_filter(df_all, "Assigned"), job_base, enabled=adaptive_enabled)
+        df_partial_view = _with_adaptive_job_number(_apply_status_filter(df_all, "Partial"), job_base, enabled=adaptive_enabled)
+
+        if filter_label == "All":
+            df_view = df_all_view
+        elif filter_label == "Assigned":
+            df_view = df_assigned_view
+        else:
+            df_view = df_partial_view
 
         dl_col1, dl_col2, _ = st.columns([1, 1, 2], gap="small")
         def _to_excel_bytes(df_in):
@@ -1987,13 +2121,13 @@ def main():
         with dl_col1:
             st.download_button(
                 label="Download All",
-                data=_to_excel_bytes(df_all),
+                data=_to_excel_bytes(df_all_view),
                 file_name="orders_all.xlsx"
             )
         with dl_col2:
             st.download_button(
                 label="Download Assigned",
-                data=_to_excel_bytes(_apply_status_filter(df_all, "Assigned")),
+                data=_to_excel_bytes(df_assigned_view),
                 file_name="orders_assigned.xlsx"
             )
 

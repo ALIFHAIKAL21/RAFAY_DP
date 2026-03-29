@@ -32,33 +32,47 @@ class ChatBatchProcessor:
     def smart_split(self, raw_text):
         """
         Memecah chat panjang menjadi potongan order kecil.
-        FIX: Menambahkan \s* agar tahan terhadap spasi/indentasi.
+        Strategi:
+        1) Split per header REQUEST/ONCALL (pesan WA).
+        2) Jika satu pesan berisi beberapa baris "X UNIT ...", pecah lagi per baris unit.
+           Ini menjaga kuota order tidak turun pada pesan gabungan multi-order.
         """
         # 1. Normalisasi enter biar gampang dipisah
         clean_text = raw_text.replace("\r", "")
+        # Hapus BOM/karakter tak terlihat di awal agar header pertama tidak hilang.
+        clean_text = clean_text.lstrip("\ufeff").replace("\ufeff", "")
 
         # 2. Prioritas: kalau ada header REQUEST/ONCALL, split hanya per header
         # Ini mencegah gumpal/duplikasi karena split di "Waktu loading".
-        header_regex = re.compile(r'(?im)^\s*(?:request|requer|oncall|unit\s+on\s+call|on\s+call)\b')
+        # Header bisa diawali metadata WA "[HH.MM, DD/MM/YYYY] Nama: ...".
+        # Jangan anggap "REQUEST ORDER KHUSUS" (auto-format) sebagai header pemisah.
+        header_regex = re.compile(
+            r'(?im)^\s*(?:\[[^\]]+\]\s*[^:]+:\s*)?'
+            r'(?:request(?!\s+order\s+khusus)|requer|oncall|unit\s+on\s+call|on\s+call)\b'
+        )
         header_hits = [m.start() for m in header_regex.finditer(clean_text)]
         if header_hits:
+            # Jika ada teks sebelum header pertama, jangan dibuang.
+            prefix = clean_text[:header_hits[0]].strip()
+            if header_hits[0] > 0 and prefix:
+                header_hits = [0] + header_hits
             # Tambahkan akhir teks sebagai batas terakhir
             header_hits.append(len(clean_text))
-            final_chunks = []
+            header_chunks = []
             for i in range(len(header_hits) - 1):
                 start = header_hits[i]
                 end = header_hits[i + 1]
                 chunk = clean_text[start:end].strip()
                 if chunk:
-                    final_chunks.append(chunk)
-            return final_chunks
+                    header_chunks.append(chunk)
+            return self._split_multi_unit_chunks(header_chunks)
 
         # 3. Fallback: split lama untuk teks tanpa header
         pattern = (
             r"(?i)("
             r"\[.*?\]"
             r"|(?:\n|^)\s*(?=Waktu\s*loading)"
-            r"|(?:\n|^)\s*(?=(?:request|requer|oncall|unit\s+on\s+call|on\s+call))"
+            r"|(?:\n|^)\s*(?=(?:request(?!\s+order\s+khusus)|requer|oncall|unit\s+on\s+call|on\s+call))"
             r")"
         )
 
@@ -82,7 +96,39 @@ class ChatBatchProcessor:
         if current_chunk:
             final_chunks.append(current_chunk.strip())
 
-        return final_chunks
+        return self._split_multi_unit_chunks(final_chunks)
+
+    def _split_multi_unit_chunks(self, chunks):
+        """
+        Pecah chunk yang memuat beberapa "X UNIT" menjadi beberapa sub-chunk.
+        Header konteks tetap dibawa ke tiap sub-chunk agar model tetap stabil.
+        """
+        if not chunks:
+            return chunks
+
+        unit_line_regex = re.compile(r'(?im)^\s*\d{1,3}\s*unit\b')
+        normalized_chunks = []
+
+        for chunk in chunks:
+            unit_hits = list(unit_line_regex.finditer(chunk))
+            if len(unit_hits) <= 1:
+                normalized_chunks.append(chunk)
+                continue
+
+            first_unit_pos = unit_hits[0].start()
+            header_context = chunk[:first_unit_pos].strip()
+            starts = [m.start() for m in unit_hits] + [len(chunk)]
+
+            for i in range(len(starts) - 1):
+                body = chunk[starts[i]:starts[i + 1]].strip()
+                if not body:
+                    continue
+                if header_context:
+                    normalized_chunks.append((header_context + "\n" + body).strip())
+                else:
+                    normalized_chunks.append(body)
+
+        return normalized_chunks
 
     def process_file(self, file_path, output_excel="output_orderan.xlsx"):
         """Baca file txt, proses, simpan ke Excel"""

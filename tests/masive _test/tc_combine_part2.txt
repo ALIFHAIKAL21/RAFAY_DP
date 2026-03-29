@@ -96,7 +96,8 @@ No hp  : 082191633212
 Waktu loading : 03:00
 Rute/tujuan : CGK - SUB
 
-[05.31, 7/3/2026] Akbar Rafay: 3 UNIT CDDL 24 CBM
+[05.31, 7/3/2026] Akbar Rafay: 
+3 UNIT CDDL 24 CBM
 Lokasi  : CIKOKOL
 Waktu loading  : SEGERA
 Rute/tujuan : CGK-JATENG TENTATIF
@@ -128,7 +129,6 @@ Nopol  : B 9241 FXS
 No hp  :81382418508
 
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 13 FEBRUARI 2026:
-
 5 UNIT TWB 50 Cbm
 Lokasi : ARGOPANTES
 Waktu loading : 23:00
@@ -153,8 +153,6 @@ Nopol  :BK 8639 FJ
 No hp  :+62 812-6934-5748
 
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 13 FEBRUARI 2026:
-
-
 
 1 unit Cddl 24 Cbm
 Lokasi : Megahub
