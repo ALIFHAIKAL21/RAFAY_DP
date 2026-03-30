@@ -15,6 +15,21 @@ sys.path.append(str(ROOT_DIR))
 
 from src.inference.batch_processor import ChatBatchProcessor
 
+try:
+    from db.persistence import load_all_order_rows as db_load_all_order_rows
+    from db.persistence import prepare_chat_for_parsing as db_prepare_chat_for_parsing
+    from db.persistence import reset_all_data as db_reset_all_data
+    from db.persistence import save_parsed_rows as db_save_parsed_rows
+    from db.session import init_db as db_init_db
+    DB_PERSISTENCE_ENABLED = True
+except Exception:
+    db_load_all_order_rows = None
+    db_prepare_chat_for_parsing = None
+    db_reset_all_data = None
+    db_save_parsed_rows = None
+    db_init_db = None
+    DB_PERSISTENCE_ENABLED = False
+
 # --- KONFIGURASI RAFAY IDP v2.0 ---
 DRIVER_BLACKLIST = ["RAFAY","AKBAR","ADMIN","JNE","LOGISTIK","EXPEDISI","PENGIRIM","ONCALL","REQUEST"]
 
@@ -59,29 +74,117 @@ def auto_format_chat_input(text):
 
     current_global_date = ""
     current_block_date = ""
+    # Fallback tanggal per pesan WhatsApp (dipakai saat header REQUEST/ONCALL tidak punya tanggal detail).
+    current_wa_message_date = ""
+    active_request_has_header_date = False
+    active_request_wa_date = ""
+    active_request_fallback_line_indexes = []
+    active_request_explicit_dates = []
+
+    month_map = {
+        "JAN": 1, "JANUARI": 1,
+        "FEB": 2, "FEBRUARI": 2, "FEBUARI": 2,
+        "MAR": 3, "MARET": 3,
+        "APR": 4, "APRIL": 4,
+        "MEI": 5,
+        "JUN": 6, "JUNI": 6,
+        "JUL": 7, "JULI": 7,
+        "AUG": 8, "AGUSTUS": 8, "AGUS": 8,
+        "SEP": 9, "SEPT": 9, "SEPTEMBER": 9,
+        "OKT": 10, "OKTOBER": 10, "OCT": 10,
+        "NOV": 11, "NOVEMBER": 11,
+        "DES": 12, "DESEMBER": 12, "DEC": 12,
+    }
+
+    def _parse_date_triplet(date_text):
+        if not date_text:
+            return None
+        s = str(date_text).strip().upper()
+
+        m_num = re.search(r'\b(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\b', s)
+        if m_num:
+            day = int(m_num.group(1))
+            month = int(m_num.group(2))
+            year = int(m_num.group(3))
+            if year < 100:
+                year += 2000
+            if 1 <= day <= 31 and 1 <= month <= 12:
+                return day, month, year
+
+        m_named = re.search(r'\b(\d{1,2})\s+([A-Z]+)\s+(\d{2,4})\b', s)
+        if m_named:
+            day = int(m_named.group(1))
+            month = month_map.get(m_named.group(2), 0)
+            year = int(m_named.group(3))
+            if year < 100:
+                year += 2000
+            if month and 1 <= day <= 31:
+                return day, month, year
+
+        return None
+
+    def _finalize_active_request_dates():
+        nonlocal active_request_fallback_line_indexes
+        if active_request_has_header_date:
+            return
+        if not active_request_wa_date or not active_request_fallback_line_indexes:
+            return
+
+        wa_parts = _parse_date_triplet(active_request_wa_date)
+        if not wa_parts:
+            return
+
+        ref_parts = None
+        for dt in active_request_explicit_dates:
+            parsed = _parse_date_triplet(dt)
+            if parsed:
+                ref_parts = parsed
+                break
+        if not ref_parts:
+            return
+
+        wa_day, wa_month, wa_year = wa_parts
+        _, ref_month, ref_year = ref_parts
+        if wa_month == ref_month and wa_year == ref_year:
+            return
+
+        corrected_date = f"{wa_day}/{ref_month:02d}/{ref_year:04d}"
+        for idx_line in active_request_fallback_line_indexes:
+            if 0 <= idx_line < len(formatted_lines):
+                formatted_lines[idx_line] = re.sub(
+                    r'(\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b)\s*$',
+                    corrected_date,
+                    formatted_lines[idx_line],
+                )
 
     for line in lines:
         header_timestamp_pattern = r'\[(\d{2}[.,:]\d{2})\s*,\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\]'
         timestamp_match = re.search(header_timestamp_pattern, line)
         if timestamp_match:
-            # Timestamp WhatsApp hanya metadata waktu chat, tidak boleh menjadi Tgl Muat.
+            # Simpan tanggal pesan WhatsApp sebagai fallback untuk header tanpa tanggal detail.
+            current_wa_message_date = timestamp_match.group(2).strip()
             # Reset konteks tanggal per pesan baru agar tidak carry-over ke pesan berikutnya.
             current_global_date = ""
             current_block_date = ""
-            # Netralisasi tanggal timestamp agar model tidak mengekstraknya sebagai DATE.
+            # Netralisasi tanggal timestamp agar model tidak mengekstraknya langsung sebagai DATE.
             # Tetap pertahankan bracket token supaya pemecahan chunk tetap stabil.
             line = re.sub(header_timestamp_pattern, "[WA_TS]", line)
 
         is_request_header = re.search(r"(?i)(?:REQUEST|ONCALL|TAMBAHAN)", line)
         if is_request_header:
+            _finalize_active_request_dates()
             header_match = re.search(date_header_pattern, line, re.IGNORECASE)
             if header_match:
                 current_global_date = header_match.group(1)
                 current_block_date = current_global_date
             else:
-                # Header tanpa tanggal: pastikan Tgl Muat tidak terisi dari konteks sebelumnya.
-                current_global_date = ""
-                current_block_date = ""
+                # Header tanpa tanggal detail: fallback ke tanggal timestamp WhatsApp pada pesan yang sama.
+                current_global_date = current_wa_message_date if current_wa_message_date else ""
+                current_block_date = current_global_date
+            active_request_has_header_date = bool(header_match)
+            active_request_wa_date = current_wa_message_date if current_wa_message_date else ""
+            active_request_fallback_line_indexes = []
+            active_request_explicit_dates = []
             formatted_lines.append(line)
             continue
 
@@ -99,6 +202,7 @@ def auto_format_chat_input(text):
             formatted_lines.append(f"{prefix}{jam_clean}")
             current_global_date = tgl
             current_block_date = tgl
+            active_request_explicit_dates.append(tgl)
             continue
 
         standalone_match = re.search(waktu_loading_standalone, line, re.IGNORECASE)
@@ -115,6 +219,7 @@ def auto_format_chat_input(text):
                 formatted_lines.append(f"Waktu loading : {jam_clean} {tgl_part}")
                 current_global_date = tgl_part
                 current_block_date = tgl_part
+                active_request_explicit_dates.append(tgl_part)
             else:
                 date_in_value = re.search(r'(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})', jam_raw)
                 if not date_in_value:
@@ -127,16 +232,24 @@ def auto_format_chat_input(text):
                     formatted_lines.append(f"Waktu loading : {jam_clean} {tgl_part}")
                     current_global_date = tgl_part
                     current_block_date = tgl_part
+                    active_request_explicit_dates.append(tgl_part)
                 else:
                     jam_clean, _ = extract_time_format(jam_raw)
                     if current_global_date:
                         formatted_lines.append(f"Waktu loading : {jam_clean} {current_global_date}")
+                        if (
+                            active_request_wa_date
+                            and not active_request_has_header_date
+                            and current_global_date == active_request_wa_date
+                        ):
+                            active_request_fallback_line_indexes.append(len(formatted_lines) - 1)
                     else:
                         formatted_lines.append(f"Waktu loading : {jam_clean}")
             continue
 
         formatted_lines.append(line)
 
+    _finalize_active_request_dates()
     return "\n".join(formatted_lines)
 
 def extract_plate_aggressive(text):
@@ -273,7 +386,11 @@ def extract_ro_date_from_text(text):
         # Jika tanggal ada di baris berikutnya (header multi-line)
         for look_ahead in range(1, 3):
             if idx + look_ahead < len(lines):
-                m_next = re.search(date_pattern, lines[idx + look_ahead])
+                next_line = lines[idx + look_ahead]
+                # Jangan ambil RO date dari baris Waktu loading.
+                if re.search(r'(?i)^\s*waktu\s*loading\s*:', next_line):
+                    continue
+                m_next = re.search(date_pattern, next_line)
                 if m_next:
                     return m_next.group(1).strip()
         break
@@ -493,6 +610,14 @@ def apply_driver_pair_from_text(df_final):
             df.at[idx, 'DRIVER'] = combined
             continue
         current_norm = clean_driver_name(current).lower()
+        # Normalisasi label seperti "driver 1 : nama" atau "1 : nama"
+        # agar tetap bisa dikenali sebagai driver tunggal dari pasangan.
+        current_norm = re.sub(
+            r'^\s*(?:(?:driver|pengemudi)\s*\.?\s*)?\d+\s*[:=\-]?\s*',
+            '',
+            current_norm,
+            flags=re.IGNORECASE,
+        ).strip()
         if current_norm in [d1.lower(), d2.lower()] or '&' in current:
             df.at[idx, 'DRIVER'] = combined
     return df
@@ -957,7 +1082,7 @@ def enforce_block_quota(df):
 
             row = sanitize_row_data(row)
             d_name = clean_driver_name(row.get('DRIVER', ''))
-            if not str(row.get('PLATE', '')) or str(row.get('PLATE', '')).lower() == 'nan':
+            if (not is_master_header) and (not str(row.get('PLATE', '')) or str(row.get('PLATE', '')).lower() == 'nan'):
                 search_text = str(row.get('Original_Text', '')) + " " + str(row.get('DRIVER', ''))
                 found_plate = extract_plate_aggressive(search_text)
                 if found_plate: row['PLATE'] = found_plate
@@ -1110,6 +1235,63 @@ def enforce_block_quota(df):
                 item["phone"] = normalize_phone_number(det.get("phone", ""))
             loading_sequence.append(item)
         loading_slots = [dict(x) for x in loading_sequence]
+        # Jika ada minimal satu slot yang punya identitas eksplisit, maka slot lain yang
+        # identitasnya kosong dianggap memang kosong (jangan diwarisi dari kandidat lain).
+        slot_identity_available = any(
+            clean_driver_name(x.get("driver", ""))
+            or clean_plate_value(x.get("plate", ""))
+            or normalize_phone_number(x.get("phone", ""))
+            for x in loading_slots
+        )
+        strict_slot_identity_mode = slot_identity_available and len(loading_slots) >= target_qty
+
+        def _identity_key(driver_val="", plate_val="", phone_val=""):
+            d = clean_driver_name(driver_val).upper()
+            p = clean_plate_value(plate_val).upper()
+            ph = normalize_phone_number(phone_val)
+            return f"{d}|{p}|{ph}"
+
+        if strict_slot_identity_mode and valid_candidates:
+            slot_time_has_identity = {}
+            slot_identity_limit = {}
+            for slot in loading_slots:
+                t_key = str(slot.get("time", "")).strip().upper()
+                has_identity = bool(
+                    clean_driver_name(slot.get("driver", ""))
+                    or clean_plate_value(slot.get("plate", ""))
+                    or normalize_phone_number(slot.get("phone", ""))
+                )
+                if t_key and t_key not in slot_time_has_identity:
+                    slot_time_has_identity[t_key] = has_identity
+                if has_identity:
+                    s_key = _identity_key(slot.get("driver", ""), slot.get("plate", ""), slot.get("phone", ""))
+                    slot_identity_limit[s_key] = slot_identity_limit.get(s_key, 0) + 1
+
+            seen_identity = {}
+            for idx_cand, cand in enumerate(valid_candidates):
+                cand_key = _identity_key(cand.get("DRIVER", ""), cand.get("PLATE", ""), cand.get("PHONE", ""))
+                if cand_key == "||":
+                    continue
+
+                cand_time_key = str(cand.get("TIME", "")).strip().upper()
+                should_clear = False
+
+                if cand_time_key and cand_time_key in slot_time_has_identity and not slot_time_has_identity[cand_time_key]:
+                    should_clear = True
+
+                if not should_clear:
+                    allowed = slot_identity_limit.get(cand_key, 0)
+                    used = seen_identity.get(cand_key, 0)
+                    if allowed == 0 or used >= allowed:
+                        should_clear = True
+                    else:
+                        seen_identity[cand_key] = used + 1
+
+                if should_clear:
+                    cand['DRIVER'] = ""
+                    cand['PLATE'] = ""
+                    cand['PHONE'] = ""
+                    valid_candidates[idx_cand] = cand
 
         def _consume_loading_sequence(preferred_time_key=""):
             if not loading_sequence:
@@ -1171,6 +1353,8 @@ def enforce_block_quota(df):
         for i in range(target_qty):
             if i < len(valid_candidates):
                 candidate = valid_candidates[i]
+                matched_loading_sequence = False
+                identity_locked_blank = False
 
                 cand_origin = normalize_origin(candidate.get('ORIGIN', ''))
                 if not cand_origin:
@@ -1204,8 +1388,19 @@ def enforce_block_quota(df):
                 if cand_time_key:
                     seq_used = _consume_loading_sequence(cand_time_key)
                     if seq_used:
+                        seq_used_has_identity = bool(
+                            clean_driver_name(seq_used.get("driver", ""))
+                            or clean_plate_value(seq_used.get("plate", ""))
+                            or normalize_phone_number(seq_used.get("phone", ""))
+                        )
+                        if slot_identity_available and not seq_used_has_identity:
+                            candidate['DRIVER'] = ""
+                            candidate['PLATE'] = ""
+                            candidate['PHONE'] = ""
+                            identity_locked_blank = True
                         # Jika slot waktu sudah cocok, detail segmen adalah sumber utama.
                         _apply_identity_from_seq(candidate, seq_used, overwrite=True)
+                        matched_loading_sequence = True
                 elif i == 0 and loading_sequence:
                     # Jika kandidat utama tidak punya TIME (umum pada hasil model),
                     # tetapi blok dimulai dari "SEGERA", anggap slot pertama sudah
@@ -1218,7 +1413,18 @@ def enforce_block_quota(df):
                     )
                     if cand_has_identity and first_seq and bool(first_seq.get("segera")):
                         seq_used = _consume_loading_sequence()
+                        seq_used_has_identity = bool(
+                            clean_driver_name(seq_used.get("driver", "")) if seq_used else ""
+                            or clean_plate_value(seq_used.get("plate", "")) if seq_used else ""
+                            or normalize_phone_number(seq_used.get("phone", "")) if seq_used else ""
+                        )
+                        if slot_identity_available and not seq_used_has_identity:
+                            candidate['DRIVER'] = ""
+                            candidate['PLATE'] = ""
+                            candidate['PHONE'] = ""
+                            identity_locked_blank = True
                         _apply_identity_from_seq(candidate, seq_used, overwrite=True)
+                        matched_loading_sequence = True
                 if cand_time_key and cand_time_key in loading_queue and loading_queue[cand_time_key]:
                     lc = loading_queue[cand_time_key].pop(0)
                     if not cand_date_existing:
@@ -1267,16 +1473,26 @@ def enforce_block_quota(df):
                             if header_val and (re.search(r'\d', str(header_val))): candidate[col] = header_val
                         else:
                             candidate[col] = header_val
-                if not str(candidate.get('DRIVER', '')).strip() and block_driver_pair:
+                if (not identity_locked_blank) and (not str(candidate.get('DRIVER', '')).strip()) and block_driver_pair:
                     candidate['DRIVER'] = block_driver_pair
-                if not str(candidate.get('PLATE', '')).strip() and block_plate:
+                if (not identity_locked_blank) and (not str(candidate.get('PLATE', '')).strip()) and block_plate:
                     candidate['PLATE'] = block_plate
-                if not str(candidate.get('PHONE', '')).strip() and block_phone_pair:
+                if (not identity_locked_blank) and (not str(candidate.get('PHONE', '')).strip()) and block_phone_pair:
                     candidate['PHONE'] = block_phone_pair
                 # Guardrail: urutan slot dari teks asli jadi acuan utama per indeks unit.
                 if i < len(loading_slots):
-                    _apply_identity_from_seq(candidate, loading_slots[i], overwrite=True)
-                    _apply_datetime_from_seq(candidate, loading_slots[i])
+                    seq_slot = loading_slots[i]
+                    seq_has_identity = bool(
+                        clean_driver_name(seq_slot.get("driver", ""))
+                        or clean_plate_value(seq_slot.get("plate", ""))
+                        or normalize_phone_number(seq_slot.get("phone", ""))
+                    )
+                    if slot_identity_available and (not seq_has_identity) and (not matched_loading_sequence):
+                        candidate['DRIVER'] = ""
+                        candidate['PLATE'] = ""
+                        candidate['PHONE'] = ""
+                    _apply_identity_from_seq(candidate, seq_slot, overwrite=True)
+                    _apply_datetime_from_seq(candidate, seq_slot)
                 final_rows.append(candidate)
             else:
                 clean_slot = header_row.copy()
@@ -1306,8 +1522,18 @@ def enforce_block_quota(df):
                 elif block_has_segera and block_ro_date:
                     clean_slot['DATE'] = block_ro_date
                 if i < len(loading_slots):
-                    _apply_identity_from_seq(clean_slot, loading_slots[i], overwrite=True)
-                    _apply_datetime_from_seq(clean_slot, loading_slots[i])
+                    seq_slot = loading_slots[i]
+                    seq_has_identity = bool(
+                        clean_driver_name(seq_slot.get("driver", ""))
+                        or clean_plate_value(seq_slot.get("plate", ""))
+                        or normalize_phone_number(seq_slot.get("phone", ""))
+                    )
+                    if slot_identity_available and not seq_has_identity:
+                        clean_slot['DRIVER'] = ""
+                        clean_slot['PLATE'] = ""
+                        clean_slot['PHONE'] = ""
+                    _apply_identity_from_seq(clean_slot, seq_slot, overwrite=True)
+                    _apply_datetime_from_seq(clean_slot, seq_slot)
                 final_rows.append(clean_slot)
     return pd.DataFrame(final_rows).reset_index(drop=True)
 
@@ -1598,6 +1824,80 @@ def clean_destination_format(text):
     if pd.isna(text): return ""
     return normalize_route(text)
 
+def office_df_to_parser_rows(df_office):
+    if df_office is None or df_office.empty:
+        return []
+    rows = []
+    for _, row in df_office.iterrows():
+        rows.append({
+            "job_number": str(row.get("Job Number", "") or "").strip(),
+            "tgl_ro": str(row.get("Tgl RO", "") or "").strip(),
+            "tgl_muat": str(row.get("Tgl Muat", "") or "").strip(),
+            "pickup": str(row.get("Pickup", "") or "").strip(),
+            "tujuan": str(row.get("Tujuan", "") or "").strip(),
+            "no_plat": str(row.get("No. Plat", "") or "").strip(),
+            "type_truck": str(row.get("Type Truck", "") or "").strip(),
+            "driver": str(row.get("Driver", "") or "").strip(),
+            "kontak_driver": str(row.get("Kontak Driver", "") or "").strip(),
+            "status_unit": str(row.get("status_unit", "") or "").strip(),
+        })
+    return rows
+
+
+def parser_rows_to_office_df(rows):
+    if not rows:
+        return pd.DataFrame()
+
+    df_office = pd.DataFrame(rows)
+    rename_map = {
+        "job_number": "Job Number",
+        "tgl_ro": "Tgl RO",
+        "tgl_muat": "Tgl Muat",
+        "pickup": "Pickup",
+        "tujuan": "Tujuan",
+        "no_plat": "No. Plat",
+        "type_truck": "Type Truck",
+        "driver": "Driver",
+        "kontak_driver": "Kontak Driver",
+        "status_unit": "status_unit",
+    }
+    df_office = df_office.rename(columns=rename_map)
+
+    required_cols = [
+        "Job Number", "Tgl RO", "Tgl Muat", "Vendor", "Pickup", "Tujuan",
+        "No. Plat", "Type Truck", "Driver", "Kontak Driver", "status_unit"
+    ]
+
+    if "Vendor" not in df_office.columns:
+        df_office["Vendor"] = ""
+
+    for col in required_cols:
+        if col not in df_office.columns:
+            df_office[col] = ""
+
+    df_office = df_office[required_cols]
+
+    # Sorting konsisten dengan output utama: prioritas Tgl RO lalu Tgl Muat.
+    df_office["_sort_muat"] = df_office["Tgl Muat"].apply(parse_date_custom)
+    df_office["_sort_ro"] = df_office["Tgl RO"].apply(parse_date_custom)
+    df_office = df_office.sort_values(by=["_sort_ro", "_sort_muat"], na_position='last').reset_index(drop=True)
+    df_office = df_office.drop(columns=["_sort_muat", "_sort_ro"])
+    df_office.insert(0, "No.", range(1, len(df_office) + 1))
+    return df_office
+
+
+def load_df_office_from_db():
+    if not DB_PERSISTENCE_ENABLED or db_load_all_order_rows is None:
+        return None
+    try:
+        rows = db_load_all_order_rows()
+    except Exception:
+        return None
+    if not rows:
+        return pd.DataFrame()
+    return parser_rows_to_office_df(rows)
+
+
 def calculate_extraction_accuracy(df_raw, df_final):
     if df_final is None or df_final.empty:
         return 0.0
@@ -1818,6 +2118,20 @@ def main():
     if 'baris' not in st.session_state: st.session_state.baris = "--"
     if 'akurasi' not in st.session_state: st.session_state.akurasi = "--"
     if 'processing_time' not in st.session_state: st.session_state.processing_time = 0.0
+
+    if 'db_bootstrap_done' not in st.session_state:
+        st.session_state['db_bootstrap_done'] = True
+        if DB_PERSISTENCE_ENABLED and db_init_db is not None:
+            try:
+                db_init_db()
+            except Exception:
+                pass
+
+    if 'df_office' not in st.session_state and DB_PERSISTENCE_ENABLED:
+        df_saved = load_df_office_from_db()
+        if df_saved is not None and not df_saved.empty:
+            st.session_state['df_office'] = df_saved
+            st.session_state.baris = f"{len(df_saved)} Order"
     
     render_top_ui(st.session_state.waktu, st.session_state.baris, st.session_state.akurasi)
     
@@ -1864,11 +2178,13 @@ def main():
         placeholder="Paste data chat WhatsApp atau dokumen logistik di sini..."
     )
 
-    btn_col1, btn_col2 = st.columns([1, 1], gap="small")
+    btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1], gap="small")
     with btn_col1:
         btn = st.button("Mulai Ekstraksi Data")
     with btn_col2:
         btn_clear = st.button("Hapus Output")
+    with btn_col3:
+        btn_reset_db = st.button("Reset DB ke 0")
 
     if btn_clear:
         st.session_state.pop('df_office', None)
@@ -1878,6 +2194,27 @@ def main():
         st.session_state.processing_time = 0.0
         st.success("Output sudah dihapus.")
         st.rerun()
+
+    if btn_reset_db:
+        st.session_state.pop('df_office', None)
+        st.session_state.waktu = "--"
+        st.session_state.baris = "--"
+        st.session_state.akurasi = "--"
+        st.session_state.processing_time = 0.0
+
+        if not DB_PERSISTENCE_ENABLED or db_reset_all_data is None:
+            st.warning("Mode database tidak aktif. Hanya output lokal yang dihapus.")
+            st.rerun()
+
+        try:
+            reset_info = db_reset_all_data()
+        except Exception:
+            st.error("Gagal reset database. Cek koneksi DB lalu coba lagi.")
+        else:
+            order_deleted = reset_info.get("order_dataset_deleted", 0)
+            raw_deleted = reset_info.get("raw_chats_deleted", 0)
+            st.success(f"Database berhasil direset ke 0 data (order_dataset: {order_deleted} baris, raw_chats: {raw_deleted} baris).")
+            st.rerun()
 
     st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
 
@@ -1905,6 +2242,27 @@ def main():
                 st.progress(0.45)
                 st.markdown("</div>", unsafe_allow_html=True)
             
+            db_should_parse = True
+            db_raw_chat_id = None
+            if DB_PERSISTENCE_ENABLED and db_prepare_chat_for_parsing is not None:
+                try:
+                    db_should_parse, db_raw_chat_id = db_prepare_chat_for_parsing(chat_input)
+                except Exception:
+                    db_should_parse = True
+                    db_raw_chat_id = None
+
+            if not db_should_parse:
+                processing_container.empty()
+                df_saved = load_df_office_from_db()
+                if df_saved is not None and not df_saved.empty:
+                    st.session_state['df_office'] = df_saved
+                    st.session_state.waktu = "0.0s"
+                    st.session_state.baris = f"{len(df_saved)} Order"
+                    st.session_state.akurasi = st.session_state.get('akurasi', '--')
+                    st.session_state.processing_time = 0.0
+                st.info("Chat ini sudah pernah diupload. Data lama dipertahankan (tidak diproses ulang).")
+                st.rerun()
+
             formatted_input = auto_format_chat_input(chat_input)
             temp_path = "temp.txt"
             with open(temp_path, "w", encoding="utf-8") as f: 
@@ -1966,17 +2324,28 @@ def main():
                     return "UNASSIGNED"
                 df_office['status_unit'] = df_office.apply(_classify_status, axis=1)
 
-                # Sorting output berdasarkan Tgl Muat lalu Tgl RO
+                # Sorting output berdasarkan Tgl RO lalu Tgl Muat
                 df_office['_sort_muat'] = df_office['Tgl Muat'].apply(parse_date_custom)
                 df_office['_sort_ro'] = df_office['Tgl RO'].apply(parse_date_custom)
                 df_office = df_office.sort_values(
-                    by=['_sort_muat', '_sort_ro', 'No.'],
+                    by=['_sort_ro', '_sort_muat', 'No.'],
                     na_position='last'
                 ).reset_index(drop=True)
                 df_office = df_office.drop(columns=['_sort_muat', '_sort_ro'])
                 # Renumber setelah sorting
                 df_office['No.'] = range(1, len(df_office) + 1)
                 df_office['Job Number'] = [f"{effective_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_office))]
+
+                if DB_PERSISTENCE_ENABLED and db_save_parsed_rows is not None and db_raw_chat_id:
+                    try:
+                        db_rows = office_df_to_parser_rows(df_office)
+                        db_save_parsed_rows(db_raw_chat_id, db_rows)
+                        df_saved = load_df_office_from_db()
+                        if df_saved is not None and not df_saved.empty:
+                            df_office = df_saved
+                    except Exception as e:
+                        # Jangan ganggu alur parser jika penyimpanan DB gagal.
+                        st.warning(f"Penyimpanan ke DB gagal: {e}")
 
                 end_time = time.time()
                 processing_time = round(end_time - start_time, 2)

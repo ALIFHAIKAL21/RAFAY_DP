@@ -1,0 +1,35 @@
+[WA_TS] Akbar Rafay: REQUEST ORDER ULANG ONCALL 09 MARET 2026
+
+5 UNIT TWB 50 CBM
+Lokasi : ARGOPANTES 
+Waktu loading : SEGERA 09 MARET 2026
+Rute/tujuan : CGK - SUB
+driver  :
+Nopol  :
+No hp  :
+
+Waktu loading : 18:00 09 MARET 2026
+Rute/tujuan : CGK - SUB
+driver  : m syaichoni
+Nopol  : N 8872 Rk
+No hp  : +62 812-3189-5971
+
+Waktu loading : 21:00 09 MARET 2026
+Rute/tujuan : CGK - SUB
+driver  :
+Nopol  :
+No hp  :
+
+Waktu loading : 00:00 09 MARET 2026
+Rute/tujuan : CGK - SUB
+driver  :
+Nopol  :
+No hp  :
+
+
+REQUEST ORDER KHUSUS 05/02/2026
+Waktu loading : 03:00
+Rute/tujuan : CGK -SUB
+driver  : Lailan
+Nopol  : S 9272 UP
+No hp  : +62 878-8686-1780

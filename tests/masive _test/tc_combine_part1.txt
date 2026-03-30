@@ -20,7 +20,7 @@ driver  : KARYADI
 Nopol  : AD 8517 BA
 No hp  :085865762797
 
-[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ULANG ONCALL
+[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ULANG ONCALL 09 MARET 2026
 
 5 UNIT TWB 50 CBM
 Lokasi : ARGOPANTES 
@@ -64,8 +64,6 @@ Rute/tujuan : CGK - SUB
 driver  : AGUS
 Nopol  : D 9667 AF
 No hp  :08817021866
-
-Rev plat nomor pak @Nomor tidak dikenal @Nomor tidak dikenal @Nomor tidak dikenal ðŸ™ðŸ»
 
 [05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 04 FEBRUARI 2026:
 RAFAY
