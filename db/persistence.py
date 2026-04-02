@@ -169,8 +169,22 @@ def _row_base_key(norm_row: Dict) -> str:
     return "|".join(fields)
 
 
-def _build_row_hash(base_key: str, occurrence: int) -> str:
-    payload = f"{base_key}|occ:{occurrence}"
+def _chat_scope_key(raw_chat_id) -> str:
+    """
+    Scope hash per raw chat upload.
+    Ini mencegah bentrok hash antar upload batch berbeda yang kebetulan
+    punya baris dengan field identik.
+    """
+    raw_uuid = _to_uuid(raw_chat_id)
+    if raw_uuid is not None:
+        return str(raw_uuid)
+
+    fallback = _clean(raw_chat_id)
+    return fallback if fallback else "global"
+
+
+def _build_row_hash(base_key: str, occurrence: int, chat_scope: str) -> str:
+    payload = f"{chat_scope}|{base_key}|occ:{occurrence}"
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
@@ -185,6 +199,7 @@ def save_parsed_rows(raw_chat_id, parsed_rows: Iterable[Dict]) -> int:
     inserted = 0
     occurrence_map: Dict[str, int] = {}
     raw_chat_uuid = _to_uuid(raw_chat_id)
+    chat_scope = _chat_scope_key(raw_chat_uuid if raw_chat_uuid is not None else raw_chat_id)
 
     try:
         rows = list(_iter_rows(parsed_rows))
@@ -196,7 +211,7 @@ def save_parsed_rows(raw_chat_id, parsed_rows: Iterable[Dict]) -> int:
             base_key = _row_base_key(norm)
             occurrence_map[base_key] = occurrence_map.get(base_key, 0) + 1
             occ = occurrence_map[base_key]
-            row_hash = _build_row_hash(base_key, occ)
+            row_hash = _build_row_hash(base_key, occ, chat_scope)
 
             exists = session.query(OrderDataset.id).filter(OrderDataset.row_hash == row_hash).first()
             if exists:

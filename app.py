@@ -1235,6 +1235,126 @@ def enforce_block_quota(df):
                 item["phone"] = normalize_phone_number(det.get("phone", ""))
             loading_sequence.append(item)
         loading_slots = [dict(x) for x in loading_sequence]
+
+        def _identity_key(driver_val="", plate_val="", phone_val=""):
+            d = clean_driver_name(driver_val).upper()
+            p = clean_plate_value(plate_val).upper()
+            ph = normalize_phone_number(phone_val)
+            return f"{d}|{p}|{ph}"
+
+        def _extract_identity_profiles_from_text(text):
+            """
+            Ambil daftar identitas berurutan dari blok teks.
+            Fokus pada pola:
+            Driver : ...
+            Nopol  : ...
+            No Hp  : ...
+            """
+            if not text:
+                return []
+
+            profiles = []
+            current = {"driver": "", "plate": "", "phone": ""}
+
+            def _flush_current():
+                nonlocal current
+                d = clean_driver_name(current.get("driver", ""))
+                p = clean_plate_value(current.get("plate", ""))
+                ph = normalize_phone_number(current.get("phone", ""))
+                if d or p or ph:
+                    profiles.append({"driver": d, "plate": p, "phone": ph})
+                current = {"driver": "", "plate": "", "phone": ""}
+
+            lines = re.split(r'[\r\n]+', str(text))
+            for raw_line in lines:
+                line = str(raw_line).strip()
+                if not line:
+                    continue
+
+                # Waktu loading baru = batas segmen.
+                if re.search(r'(?i)^Waktu\s*loading\s*:', line):
+                    _flush_current()
+                    continue
+
+                drv_match = re.search(r'(?i)^\s*(?:d+driver|driver|pengemudi)\s*[:.]?\s*(.*)$', line)
+                if drv_match:
+                    if current.get("driver") or current.get("plate") or current.get("phone"):
+                        _flush_current()
+                    current["driver"] = clean_driver_name(drv_match.group(1))
+                    continue
+
+                plate_match = re.search(
+                    r'(?i)^\s*(?:nopol|no\.?\s*pol(?:isi)?|no\.?\s*plat|plat)\s*[:.]?\s*(.*)$',
+                    line,
+                )
+                if plate_match:
+                    current["plate"] = clean_plate_value(plate_match.group(1))
+                    continue
+
+                phone_match = re.search(
+                    r'(?i)^\s*(?:no\.?\s*hp|hp|no\.?\s*telp|no\.?\s*tlp|kontak)\s*[:.]?\s*(.*)$',
+                    line,
+                )
+                if phone_match:
+                    current["phone"] = normalize_phone_number(phone_match.group(1))
+                    continue
+
+            _flush_current()
+
+            unique_profiles = []
+            seen = set()
+            for p in profiles:
+                k = _identity_key(p.get("driver", ""), p.get("plate", ""), p.get("phone", ""))
+                if k == "||" or k in seen:
+                    continue
+                seen.add(k)
+                unique_profiles.append(p)
+            return unique_profiles
+
+        # Kasus khusus: 1 Waktu loading tetapi ada lebih dari 1 blok Driver/Nopol/HP
+        # dalam pesan yang sama. Tambahkan slot identitas ekstra tanpa mengubah kuota.
+        driver_line_count = 0
+        if block_text:
+            driver_line_count = len(
+                re.findall(r'(?im)^\s*(?:d+driver|driver|pengemudi)\s*[:.]?', block_text)
+            )
+        if (
+            block_text
+            and target_qty > len(loading_slots)
+            and len(loading_candidates_list) <= 1
+            and driver_line_count >= 2
+        ):
+            profile_list = _extract_identity_profiles_from_text(block_text)
+            if profile_list:
+                existing_identity = set()
+                for slot in loading_slots:
+                    s_key = _identity_key(slot.get("driver", ""), slot.get("plate", ""), slot.get("phone", ""))
+                    if s_key != "||":
+                        existing_identity.add(s_key)
+
+                base_slot = loading_slots[0] if loading_slots else {}
+                base_time = str(base_slot.get("time", "")).strip()
+                base_date = str(base_slot.get("date", "")).strip()
+                base_segera = bool(base_slot.get("segera", False))
+
+                for p in profile_list:
+                    p_key = _identity_key(p.get("driver", ""), p.get("plate", ""), p.get("phone", ""))
+                    if p_key == "||" or p_key in existing_identity:
+                        continue
+                    if len(loading_slots) >= target_qty:
+                        break
+                    extra_slot = {
+                        "time": base_time,
+                        "date": base_date,
+                        "segera": base_segera,
+                        "driver": p.get("driver", ""),
+                        "plate": p.get("plate", ""),
+                        "phone": p.get("phone", ""),
+                    }
+                    loading_slots.append(dict(extra_slot))
+                    loading_sequence.append(dict(extra_slot))
+                    existing_identity.add(p_key)
+
         # Jika ada minimal satu slot yang punya identitas eksplisit, maka slot lain yang
         # identitasnya kosong dianggap memang kosong (jangan diwarisi dari kandidat lain).
         slot_identity_available = any(
@@ -1244,12 +1364,6 @@ def enforce_block_quota(df):
             for x in loading_slots
         )
         strict_slot_identity_mode = slot_identity_available and len(loading_slots) >= target_qty
-
-        def _identity_key(driver_val="", plate_val="", phone_val=""):
-            d = clean_driver_name(driver_val).upper()
-            p = clean_plate_value(plate_val).upper()
-            ph = normalize_phone_number(phone_val)
-            return f"{d}|{p}|{ph}"
 
         if strict_slot_identity_mode and valid_candidates:
             slot_time_has_identity = {}
