@@ -1,0 +1,208 @@
+﻿== CASE 01 - TYPO RINGAN SEMUA LABEL ==
+[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 07 MARET 2026
+1 UNIT TWB 50 CBM
+Loksai : ARGOPANTES
+Wktu lodaing : 17:00/05-03-2026
+Rute/tujan : CGK - SUB
+drver : Iwan Hariono
+Nopool : BL 8188 JP
+No Hpp : 081389976421
+
+== CASE 02 - TYPO SEDANG + FORMAT WAKTU VARIATIF ==
+2 UNIT CDDL 24 CBM
+Loksi : CIKARANG
+Waktu lodng : 07.00/06-03-2026
+Rute tujuam : CKR - JATENG TENTATIVE
+Drivr : Nana Hermawan
+No Pol : B 9658 TCP
+No Tlp : 082261270165
+
+== CASE 03 - TYPO BERAT DENGAN SPASI ACAK ==
+3 UNIT TWB 50 CBM
+Lo kasi : CIKOKOL
+W aktu loading : SEGERA
+Rute / Tujan : CGK - PKU
+Dri ver : SISWANTO
+No Plat : B 9120 WXR
+No  Hp : 081943564062
+
+== CASE 04 - TYPO DENGAN TANDA BACA CAMPUR ==
+2 UNIT TWB 50 CBM
+LOKASII = JNE SUB
+WAKTU LOADDING : 23;00/07-03-2026
+RUTE/TUJUAN : SUB-CGK
+DRVER : WAHYUDI
+NOPLL : N 9549 UA
+NOHP : 085784422398
+
+== CASE 05 - TYPO LABEL PHONE ALTERNATIF ==
+2 UNIT TWB 50 CBM
+Lokazy : JNE SUB
+Wktu loading : segera
+Rute/Tujuan : SUB - CGK
+Driver : SOFYAN
+Nopol : B 9679 WT
+Kontakk : 082231837381
+
+== CASE 06 - DRIVER PAIR TYPO ==
+1 UNIT CDDL 24 CBM
+Loksii : MEGAHUB
+Wktu loading : SEGERA
+Rute/tujan : CGK - DPS
+drver 1 : Edi Setiawan
+No hp : 0881023544597
+Drver2 : Jatmiyanta
+No wa : 082118558105
+Nopool : F 9647 FH
+
+== CASE 07 - MULTI SLOT TIME TYPO ==
+5 UNIT TWB 50 CBM
+Loksi : ARGOPANTES
+Wktu loading : SEGERA
+Rute/tujan : CGK - SUB
+drver : HENDRA S.P
+Nopol : D 9044 AG
+No hpp : +62 877-8667-6177
+
+Waktu loding : 18:00
+Rute / tujan : CGK - SUB
+drver :
+Nopool :
+No hp :
+
+Waktu lodng : 21:00
+Rute tujuam : CGK - SUB
+Driver :
+No pol :
+No wa :
+
+Wktu loading : 00:00
+Rute/Tujuan : CGK - SUB
+Drivr :
+Nopll :
+Kontak :
+
+Waktu loadding : 03:00 08/03/2026
+Rute/tujan : CGK-SUB
+Drriver : LAILAN
+No plat : S 9272 UP
+No hp : +62 878-8686-1780
+
+== CASE 08 - HEADER TANPA TANGGAL JELAS + TYPO LABEL ==
+REQUEST ULANG ORDER ONCALL
+2 UNIT TWB 50 CBM
+Loksai : CIKOKOL
+Waktu loading : SEGERA
+Rute/tujan : CGK - PLM
+drver : SANDRI
+Nopol : BE 9636 BU
+No hp : +62 889-0702-0037
+
+== CASE 09 - TYPO TUJUAN SATU KATA ==
+1 UNIT TWB 50 CBM
+Loksi : ARGOPANTES
+Wktu loading : 05:00/08-03-2026
+Tujuann : PKU
+Driver : RIZKI
+Nopol : BM 8486 AU
+No hp : 081317708658
+
+== CASE 10 - TYPO EXTREME LABEL ==
+2 UNIT CDDL 24 CBM
+Lks : CIKARANG
+Wkt loading : 06:00/09-03-2026
+Rte/Tjn : CKR - JBR
+Drv : ARIF
+Nopl : B 9209 NCK
+Nohp : 081328851819
+
+== CASE 11 - TYPO + NOISE TEXT ==
+FYI tim, ini data urgent.
+2 UNIT TWB 50 CBM
+Lokasii : ARGOPANTES
+Waktu loadng : SEGERA
+Rute/tujuan : CGK - MES
+Nama driver : MANULANG
+No polisi : B 9019 UEX
+Nomor hp : +62 813-7076-9496
+
+== CASE 12 - TYPO CAMPUR UPPER LOWER ==
+3 unit twb 50 cbm
+lOksAi : argopantes
+wKtu LoAding : 07:30/09-03-2026
+ruTe/TuJan : cgk - pku
+dRvEr : m. ibnu
+nOpOl : l 9511 al
+nO hP : 082191633212
+
+== CASE 13 - FORMAT SLASH + TYPO ==
+2 UNIT TWB 50 CBM
+Lokasi : CIKOKOL
+Wktu loading : 03:00 / 10 Mar 2026
+Rute/Tujan : CGK - TKG
+Drver :
+Nopol :
+No hp :
+
+== CASE 14 - PHONE LABEL VARIAN ==
+1 UNIT CDDL 24 CBM
+Lokasi : CIKARANG
+Waktu loading : 04:00/10-03-2026
+Rute/tujuan : CKR - MXG
+Driver : DAVIT
+Nopol : B 9726 SXW
+No Handphone : 082117275166
+
+== CASE 15 - PLATE LABEL VARIAN ==
+1 UNIT TWB 50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : SEGERA
+Rute/tujuan : CGK - MES
+Driver : AGUNG
+Nomor Plat : BK 8208 VY
+No hp : 082385989323
+
+== CASE 16 - TYPO DENGAN KARAKTER TAMBAHAN ==
+2 UNIT TWB 50 CBM
+Lokasi* : CIKOKOL
+Waktu loading* : SEGERA
+Rute/tujuan* : CGK - MES
+Driver* : HADI
+Nopol* : B 9446 MV
+No hp* : +62 831-9621-8655
+
+== CASE 17 - TYPO NO HP DIGABUNG ==
+1 UNIT TWB 50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : 09:00/10-03-2026
+Rute/tujuan : CGK - SUB
+Driver : AKIYAT
+Nopol : L 9722 UE
+NoHp : 081281122738
+
+== CASE 18 - TYPO RUTE SAJA ==
+1 UNIT TWB 50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : 10:00/10-03-2026
+Rutte/tujuan : CGK - SUB
+Driver : CHANDRA
+Nopol : L 8601 UH
+No hp : 085231681470
+
+== CASE 19 - TYPO LOKASI SAJA ==
+1 UNIT CDDL 24 CBM
+Lokassy : MEGAHUB
+Waktu loading : 11:00/10-03-2026
+Rute/tujuan : CGK - JATENG
+Driver : KARYADI
+Nopol : AD 8517 BA
+No hp : 085865762797
+
+== CASE 20 - TYPO DRIVER SAJA ==
+1 UNIT TWB 50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : 12:00/10-03-2026
+Rute/tujuan : CGK - SUB
+Driiver : ROSYIT
+Nopol : B 9562 TEU
+No hp : 082313572678

@@ -34,6 +34,128 @@ except Exception:
 DRIVER_BLACKLIST = ["RAFAY","AKBAR","ADMIN","JNE","LOGISTIK","EXPEDISI","PENGIRIM","ONCALL","REQUEST"]
 
 # --- 0. HELPER FUNCTIONS ---
+_FIELD_LABEL_ALIASES = {
+    "Lokasi": [
+        "lokasi", "loksi", "loaksi", "lokas", "lokasii", "lokasii", "lok"
+    ],
+    "Waktu loading": [
+        "waktu loading", "waktu load", "waktu muat", "waktuloading",
+        "wktu loading", "wkt loading", "wkatu loading", "waktu lodng",
+        "waktu loadding", "waktu loding", "wktu loding"
+    ],
+    "Rute/tujuan": [
+        "rute tujuan", "rute/tujuan", "rute tujuan", "rutetujuan",
+        "rute tujan", "rute tujuam", "rute/tujan", "rute / tujuan",
+        "route tujuan", "route/tujuan", "tujuan", "rute"
+    ],
+    "driver": [
+        "driver", "ddriver", "drver", "drivr", "diver", "pengemudi", "sopir"
+    ],
+    "Nopol": [
+        "nopol", "nopool", "nopel", "no pol", "no polisi", "no plat", "plat"
+    ],
+    "No hp": [
+        "no hp", "nohp", "nomor hp", "hp", "no telp", "no tlp",
+        "kontak", "no handphone", "no wa"
+    ],
+}
+
+def _compact_label_token(text):
+    s = str(text).lower()
+    s = re.sub(r'[^a-z0-9]+', '', s)
+    return s
+
+def _levenshtein_limited(a, b, max_dist=2):
+    if a == b:
+        return 0
+    if abs(len(a) - len(b)) > max_dist:
+        return None
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        row_min = cur[0]
+        for j, cb in enumerate(b, 1):
+            cost = 0 if ca == cb else 1
+            cur_val = min(
+                prev[j] + 1,
+                cur[j - 1] + 1,
+                prev[j - 1] + cost,
+            )
+            cur.append(cur_val)
+            if cur_val < row_min:
+                row_min = cur_val
+        if row_min > max_dist:
+            return None
+        prev = cur
+    dist = prev[-1]
+    return dist if dist <= max_dist else None
+
+def _normalize_field_label_token(label_text):
+    raw = str(label_text).strip().lower()
+    if not raw:
+        return ""
+
+    raw = re.sub(r'\s+', ' ', raw)
+    raw = re.sub(r'(?i)\bdriver\s*\d+\b', 'driver', raw)
+    raw = re.sub(r'(?i)\b\d+\s*driver\b', 'driver', raw)
+    raw = re.sub(r'\d+', '', raw).strip()
+    compact_raw = _compact_label_token(raw)
+    if not compact_raw:
+        return ""
+
+    # Fast path: exact compact match.
+    for canonical, aliases in _FIELD_LABEL_ALIASES.items():
+        for alias in aliases:
+            if compact_raw == _compact_label_token(alias):
+                return canonical
+
+    # Fuzzy path: tolerate small typos on short label tokens.
+    best_label = ""
+    best_score = None
+    for canonical, aliases in _FIELD_LABEL_ALIASES.items():
+        for alias in aliases:
+            compact_alias = _compact_label_token(alias)
+            if not compact_alias:
+                continue
+            max_dist = 1 if len(compact_alias) <= 5 else 2
+            dist = _levenshtein_limited(compact_raw, compact_alias, max_dist=max_dist)
+            if dist is None:
+                continue
+            score = (dist, abs(len(compact_raw) - len(compact_alias)))
+            if best_score is None or score < best_score:
+                best_score = score
+                best_label = canonical
+    return best_label
+
+def normalize_field_labels_in_text(text):
+    if pd.isna(text) or text is None:
+        return ""
+    text_str = str(text)
+    if not text_str.strip():
+        return text_str
+
+    normalized_lines = []
+    for raw_line in text_str.splitlines():
+        m = re.match(r'^(\s*)([^:\n\r]{2,40}?)(\s*[:=]\s*)(.*)$', raw_line)
+        if not m:
+            normalized_lines.append(raw_line)
+            continue
+        lead, label, sep, value = m.groups()
+        canonical = _normalize_field_label_token(label)
+        if canonical:
+            # Pertahankan indeks Driver 1/2 agar logika pair tetap berjalan.
+            if canonical == "driver":
+                idx = ""
+                m_idx = re.search(r'(?i)(?:driver|dr\w*)\s*([12])|([12])\s*(?:driver|dr\w*)', label)
+                if m_idx:
+                    idx = m_idx.group(1) or m_idx.group(2) or ""
+                if idx:
+                    canonical = f"driver {idx}"
+            normalized_lines.append(f"{lead}{canonical}{sep}{value}")
+        else:
+            normalized_lines.append(raw_line)
+    return "\n".join(normalized_lines)
+
 def extract_time_format(time_str):
     time_str = str(time_str).strip().upper()
     if "SEGERA" in time_str:
@@ -54,6 +176,7 @@ def auto_format_chat_input(text):
     if not text: return ""
     # Hilangkan BOM jika ada agar header pertama tetap terbaca.
     text = str(text).lstrip("\ufeff").replace("\ufeff", "")
+    text = normalize_field_labels_in_text(text)
     wa_pattern = r"(?=\[\d{2}[.,:]\d{2}[, ]+\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\]\s*[^:]+:)"
     chunks = re.split(wa_pattern, text)
     valid_text = ""
@@ -193,6 +316,9 @@ def auto_format_chat_input(text):
             line
         )
         match = None if time_date_slash_line else re.search(pattern_with_date, line)
+        # Guard: jangan anggap "Waktu loading : <DATE_ONLY>" sebagai pola "jam + tanggal".
+        if match and not str(match.group(2) or "").strip():
+            match = None
         if match:
             prefix = match.group(1)
             jam = match.group(2).strip()
@@ -228,11 +354,15 @@ def auto_format_chat_input(text):
                     jam_part = jam_raw[:date_in_value.start()].strip()
                     jam_part = re.sub(r'[\\/\\-]+\\s*$', '', jam_part).strip()
                     tgl_part = date_in_value.group(1)
-                    jam_clean, _ = extract_time_format(jam_part)
-                    formatted_lines.append(f"Waktu loading : {jam_clean} {tgl_part}")
-                    current_global_date = tgl_part
-                    current_block_date = tgl_part
                     active_request_explicit_dates.append(tgl_part)
+                    # Jika value hanya tanggal (tanpa jam/SEGERA), jangan ubah global date context.
+                    if jam_part:
+                        jam_clean, _ = extract_time_format(jam_part)
+                        formatted_lines.append(f"Waktu loading : {jam_clean} {tgl_part}")
+                        current_global_date = tgl_part
+                        current_block_date = tgl_part
+                    else:
+                        formatted_lines.append(f"Waktu loading : {tgl_part}")
                 else:
                     jam_clean, _ = extract_time_format(jam_raw)
                     if current_global_date:
@@ -285,7 +415,7 @@ def normalize_phone_number(phone):
 def extract_phone_numbers_from_text(original_text):
     if pd.isna(original_text) or not str(original_text).strip():
         return []
-    text = str(original_text)
+    text = normalize_field_labels_in_text(original_text)
     labels = [
         r'no\.?\s*hp',
         r'no\.?\s*telp',
@@ -354,13 +484,15 @@ def normalize_route(text):
 
 def extract_route_from_text(text):
     if pd.isna(text) or not str(text).strip(): return ""
-    m = re.search(r'(?im)^\s*Rute\s*(?:/|\s+)\s*(?:tujuan|tuj(?:u(?:an)?)?)\s*:\s*([^\n\r]+)', str(text))
+    norm_text = normalize_field_labels_in_text(text)
+    m = re.search(r'(?im)^\s*Rute\s*(?:/|\s+)\s*(?:tujuan|tuj(?:u(?:an)?)?)\s*:\s*([^\n\r]+)', str(norm_text))
     return m.group(1).strip() if m else ""
 
 def extract_origin_from_text(text):
     if pd.isna(text) or not str(text).strip():
         return ""
-    m = re.search(r'(?im)^\s*Lokasi\s*:\s*([^\n\r]+)', str(text))
+    norm_text = normalize_field_labels_in_text(text)
+    m = re.search(r'(?im)^\s*Lokasi\s*:\s*([^\n\r]+)', str(norm_text))
     return m.group(1).strip() if m else ""
 
 def extract_ro_date_from_text(text):
@@ -443,11 +575,12 @@ def extract_unit_type_from_text(text):
 def extract_loading_candidates(text):
     if pd.isna(text) or not str(text).strip():
         return []
+    text = normalize_field_labels_in_text(text)
     candidates = []
     date_token = r'\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}\s+[a-zA-Z]{3,}\s+\d{2,4}'
     date_pattern = rf'\b({date_token})\b'
     khusus_pattern = rf'(?i)REQUEST\s+ORDER\s+KHUSUS\s+({date_token})'
-    for match in re.finditer(r'(?im)^\s*Waktu\s*loading\s*:\s*([^\n\r]+)', str(text)):
+    for match in re.finditer(r'(?im)^\s*Waktu\s*loading\s*:[ \t]*([^\n\r]+)', str(text)):
         val = str(match.group(1)).strip()
         if not val:
             continue
@@ -495,9 +628,9 @@ def extract_loading_candidates(text):
 def extract_loading_details(text):
     if pd.isna(text) or not str(text).strip():
         return []
-    text_str = str(text)
+    text_str = normalize_field_labels_in_text(text)
     details = []
-    loading_matches = list(re.finditer(r'(?im)^\s*Waktu\s*loading\s*:\s*([^\n\r]+)', text_str))
+    loading_matches = list(re.finditer(r'(?im)^\s*Waktu\s*loading\s*:[ \t]*([^\n\r]+)', text_str))
     for idx, m in enumerate(loading_matches):
         val = str(m.group(1)).strip()
         if not val:
@@ -520,7 +653,10 @@ def extract_loading_details(text):
         plate = ""
         phone = ""
 
-        driver_match = re.search(r'(?im)^[ \t]*(?:driver|pengemudi)[ \t]*[:.]?[ \t]*([^\n\r]*)', section)
+        driver_match = re.search(
+            r'(?im)^[ \t]*(?:driver|pengemudi)(?:[ \t]*\d+)?[ \t]*[:.]?[ \t]*([^\n\r]*)',
+            section
+        )
         if driver_match:
             driver = clean_driver_name(driver_match.group(1))
 
@@ -580,6 +716,7 @@ def _clean_driver_fragment(text):
 def extract_driver_pair_from_text(original_text):
     if not original_text:
         return ("", "")
+    original_text = normalize_field_labels_in_text(original_text)
     patterns = [
         r'(?:driver|pengemudi)\s*\.?\s*1\s*[:=]?\s*([^\n\r]+)',
         r'(?:driver|pengemudi)\s*\.?\s*2\s*[:=]?\s*([^\n\r]+)'
@@ -1252,6 +1389,7 @@ def enforce_block_quota(df):
             """
             if not text:
                 return []
+            text = normalize_field_labels_in_text(text)
 
             profiles = []
             current = {"driver": "", "plate": "", "phone": ""}
@@ -1276,7 +1414,10 @@ def enforce_block_quota(df):
                     _flush_current()
                     continue
 
-                drv_match = re.search(r'(?i)^\s*(?:d+driver|driver|pengemudi)\s*[:.]?\s*(.*)$', line)
+                drv_match = re.search(
+                    r'(?i)^\s*(?:d+driver|driver|pengemudi)(?:\s*\d+)?\s*[:.]?\s*(.*)$',
+                    line
+                )
                 if drv_match:
                     if current.get("driver") or current.get("plate") or current.get("phone"):
                         _flush_current()
@@ -1316,7 +1457,10 @@ def enforce_block_quota(df):
         driver_line_count = 0
         if block_text:
             driver_line_count = len(
-                re.findall(r'(?im)^\s*(?:d+driver|driver|pengemudi)\s*[:.]?', block_text)
+                re.findall(
+                    r'(?im)^\s*(?:d+driver|driver|pengemudi)(?:\s*\d+)?\s*[:.]?',
+                    normalize_field_labels_in_text(block_text),
+                )
             )
         if (
             block_text
@@ -1442,18 +1586,24 @@ def enforce_block_quota(df):
             if seq_phone and (overwrite or not str(row_obj.get('PHONE', '')).strip()):
                 row_obj['PHONE'] = seq_phone
 
-        def _apply_datetime_from_seq(row_obj, seq_item):
+        def _apply_datetime_from_seq(row_obj, seq_item, force=False):
             if not seq_item:
                 return
             seq_time = _valid_time_token(seq_item.get("time", ""))
             seq_date = str(seq_item.get("date", "")).strip()
+            seq_is_segera = bool(seq_item.get("segera"))
             cur_time = str(row_obj.get("TIME", "")).strip()
             cur_date = str(row_obj.get("DATE", "")).strip()
-            if seq_time and not cur_time:
+            if seq_time and (force or not cur_time):
                 row_obj["TIME"] = seq_time
             if seq_date:
-                if (not cur_date) or (block_ro_date and cur_date == block_ro_date and seq_date != block_ro_date):
+                if force:
                     row_obj["DATE"] = seq_date
+                elif (not cur_date) or (block_ro_date and cur_date == block_ro_date and seq_date != block_ro_date):
+                    row_obj["DATE"] = seq_date
+            elif force and seq_is_segera and block_ro_date:
+                # Slot SEGERA tanpa tanggal eksplisit harus tetap ikut Tgl RO block.
+                row_obj["DATE"] = block_ro_date
         if not block_muat_date and block_dates:
             block_muat_date = block_dates[0]
         if not block_muat_date and block_has_segera and block_ro_date:
@@ -1606,7 +1756,8 @@ def enforce_block_quota(df):
                         candidate['PLATE'] = ""
                         candidate['PHONE'] = ""
                     _apply_identity_from_seq(candidate, seq_slot, overwrite=True)
-                    _apply_datetime_from_seq(candidate, seq_slot)
+                    # Guardrail utama: tanggal/jam per unit mengikuti urutan slot teks asli.
+                    _apply_datetime_from_seq(candidate, seq_slot, force=True)
                 final_rows.append(candidate)
             else:
                 clean_slot = header_row.copy()
@@ -1647,7 +1798,7 @@ def enforce_block_quota(df):
                         clean_slot['PLATE'] = ""
                         clean_slot['PHONE'] = ""
                     _apply_identity_from_seq(clean_slot, seq_slot, overwrite=True)
-                    _apply_datetime_from_seq(clean_slot, seq_slot)
+                    _apply_datetime_from_seq(clean_slot, seq_slot, force=True)
                 final_rows.append(clean_slot)
     return pd.DataFrame(final_rows).reset_index(drop=True)
 
@@ -1688,6 +1839,7 @@ def apply_revisions_from_chat(chat_text, df_final):
         return re.sub(r'\s+', ' ', str(text).upper()).strip()
 
     def extract_revision_payload(msg_text):
+        msg_text = normalize_field_labels_in_text(msg_text)
         payload = {
             'target_time': None,
             'target_origin': "",

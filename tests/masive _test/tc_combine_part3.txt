@@ -152,7 +152,7 @@ No Hp :081328851819
 Lokasi : ARGOPANTES
 Rute / tujuan : cgk - PKU
 Waktu loading : SEGERA
-Nama 	: SISWANTO
+DRIVER 	: SISWANTO
 Nopol	: B 9120 WXR
 No Tlp	:081943564062
 
@@ -162,11 +162,11 @@ No Tlp	:081943564062
 Lokasi : ARGOPANTES
 Rute / tujuan : cgk - MES
 Waktu loading : SEGERA
-Nama 	: Anto
+DRIVER 	: Anto
 Nopol	: B 9285 UEX
 No Tlp	:+62 823-7722-5563
 Waktu loading : 07:00
-Nama 	 : Kudir
+DRIVER 	 : Kudir
 Nopol	: B 9380 UEX
 No Tlp	 :+62 812-6218-9242
 
@@ -198,13 +198,13 @@ REQUER ORDER ULANG DAN TAMBAHAN ON CALL
 Lokasi : ARGOPANTES
 Rute / tujuan : PKU
 Waktu loading : SEGERA
-Nama 	: SISWANTO
+DRIVER 	: SISWANTO
 Nopol		: B 9120 WXR
 No Tlp	:081943564062
 
 Rute / tujuan : PKU
 Waktu loading : 23:00
-Nama 	: FERI IRAWAN
+DRIVER 	: FERI IRAWAN
 Nopol		: BK 8516 W
 No Tlp	:085219216210
 REQUER ORDER ULANG DAN TAMBAHAN ON CALL
@@ -214,32 +214,34 @@ REQUER ORDER ULANG DAN TAMBAHAN ON CALL
 Lokasi : ARGOPANTES
 Rute / tujuan : PLM
 Waktu loading : SEGERA
-Nama 	: SANDRI
+DRIVER 	: SANDRI
 Nopol		:  BE 9636 BU
 No Tlp	:+62 889-0702-0037
-REQUER ORDER ULANG DAN TAMBAHAN ON CALL
+
+REQUEST ORDER ULANG DAN TAMBAHAN ON CALL
 26 FEBUARI 2026
 
 2 UNIT TWB 50 CBM
- Lokasi : ARGOPANTES
+Lokasi : ARGOPANTES
 Rute / tujuan : MES
 Waktu loading : SEGERA
-Nama 	:Hendra setiawan
+DRIVER 	:Hendra setiawan
 Nopol		: BE 8023 WY
 No Tlp	:081280483919
 
 
 Rute / tujuan : MES
 Waktu loading : 23:00
-Nama 	: FEBRIANTO
+DRIVER 	: FEBRIANTO
 Nopol		: BA 9980 PS
 No Tlp	: 082286523993
+
 REQUER ORDER ULANG DAN TAMBAHAN ON CALL
 26 FEBUARI 2026
 
 Rute / tujuan : PLM
 Waktu loading : 23:00
-Nama 	: M Doni saputra
+DRIVER 	: M Doni saputra
 Nopol		: BD 8423 B
 No Tlp	:082164544736
 
@@ -249,7 +251,7 @@ Request Order Oncall  27 Febuari 2026
 Lokasi : JNE SURABAYA
 Rute/ Tujuan   : SUX-CGK
 Waktu loading : SEGERA
-NAMA   : HABIB 
+DRIVER   : HABIB 
 NOPOL : L 8336 UV
 NO HP  :081231540625
 

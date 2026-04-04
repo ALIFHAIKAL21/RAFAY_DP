@@ -68,11 +68,13 @@ Rute/tujuan : CGK - SUB
 driver  : Rosyit
 Nopol  : B 9563 TEU
 No hp  : 082313572678
+
 Waktu loading : SEGERA
 Rute/tujuan : CGK - SUB
 driver  : M.ibnu
 Nopol  : L 9511 AL
 No hp  : 082191633212
+
 Waktu loading : 03:00
 Rute/tujuan : CGK - SUB
 driver  : Akiyat
@@ -88,6 +90,7 @@ Rute/tujuan : CGK - SUB
 driver  : Rosyit
 Nopol  : B 9563 TEU
 No hp  : 082313572678
+
 Waktu loading : SEGERA
 Rute/tujuan : CGK - SUB
 driver  : M.ibnu
