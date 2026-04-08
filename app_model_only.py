@@ -28,10 +28,7 @@ except Exception:
     db_reset_all_data = None
     db_save_parsed_rows = None
     db_init_db = None
-DB_PERSISTENCE_ENABLED = False
-
-# Optional override khusus app.py untuk A/B test model
-APP_MODEL_PATH = os.getenv("RAFAY_APP_MODEL_PATH", "").strip()
+    DB_PERSISTENCE_ENABLED = False
 
 # --- KONFIGURASI RAFAY IDP v2.0 ---
 DRIVER_BLACKLIST = ["RAFAY","AKBAR","ADMIN","JNE","LOGISTIK","EXPEDISI","PENGIRIM","ONCALL","REQUEST"]
@@ -2185,6 +2182,10 @@ def calculate_extraction_accuracy(df_raw, df_final):
 
 st.set_page_config(page_title="Rafay Logistics IDP v2.0", layout="wide", initial_sidebar_state="collapsed")
 
+# Optional override khusus app_model_only agar model tahap-2 bisa diuji
+# tanpa mengubah model default yang dipakai app.py.
+MODEL_ONLY_PATH = os.getenv("RAFAY_MODEL_ONLY_PATH", "").strip()
+
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
@@ -2366,7 +2367,7 @@ def render_top_ui(proses_waktu="--", baris="--", akurasi="--"):
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20z"></path><path d="M12 6v6l4 2"></path></svg>
                 <div>
                     <h1 class="nav-title">Rafay Logistics <span class="nav-accent">IDP</span></h1>
-                    <p class="nav-subtitle">Intelligent Document Processing v1.0 (LayoutLMv3)</p>
+                    <p class="nav-subtitle">Intelligent Document Processing v1.0 (Model-Only Extraction)</p>
                 </div>
             </div>
             <div class="nav-status">
@@ -2404,6 +2405,8 @@ def main():
             st.session_state.baris = f"{len(df_saved)} Order"
     
     render_top_ui(st.session_state.waktu, st.session_state.baris, st.session_state.akurasi)
+    if MODEL_ONLY_PATH:
+        st.caption(f"Model Override (app_model_only): `{MODEL_ONLY_PATH}`")
     
     st.markdown("""
     <div class="input-panel input-panel-wide">
@@ -2533,25 +2536,25 @@ def main():
                 st.info("Chat ini sudah pernah diupload. Data lama dipertahankan (tidak diproses ulang).")
                 st.rerun()
 
-            formatted_input = auto_format_chat_input(chat_input)
+            # Mode model-only: kirim input mentah langsung ke model tanpa
+            # post-processing rule-based di level aplikasi.
+            formatted_input = str(chat_input)
             temp_path = "temp.txt"
             with open(temp_path, "w", encoding="utf-8") as f: 
                 f.write(formatted_input)
             
-            df_raw = get_processor(model_path_override=APP_MODEL_PATH).process_file(temp_path)
+            df_raw = get_processor(model_path_override=MODEL_ONLY_PATH).process_file(temp_path)
 
             if df_raw is not None and not df_raw.empty:
-                df_proc = preprocess_context(df_raw)
-                df_final = enforce_block_quota(df_proc)
-                
-                # Terapkan fungsi revisi yang sudah DIPERBAIKI
-                df_final = apply_revisions_from_chat(chat_input, df_final)
-                df_final = apply_driver_pair_from_text(df_final)
-                df_final = apply_phone_pair_from_text(df_final)
-                if 'PLATE' in df_final.columns:
-                    df_final['PLATE'] = df_final['PLATE'].apply(clean_plate_value)
+                df_final = df_raw.copy()
+                # Pastikan semua kolom dasar ada, tanpa enrichment rule-based.
+                required_model_cols = ['RO_DATE', 'LOAD_DATE', 'DATE', 'ORIGIN', 'DESTINATION', 'PLATE', 'UNIT_TYPE', 'DRIVER', 'PHONE']
+                for col in required_model_cols:
+                    if col not in df_final.columns:
+                        df_final[col] = ""
+                df_final = df_final.fillna("")
 
-                accuracy = calculate_extraction_accuracy(df_raw, df_final)
+                accuracy = calculate_extraction_accuracy(df_raw, df_raw)
                 
                 df_office = pd.DataFrame()
                 df_office['No.'] = range(1, len(df_final) + 1)
@@ -2570,22 +2573,20 @@ def main():
                 elif 'DATE' in df_final.columns and df_final['DATE'].astype(str).str.strip().any():
                     ro_col = 'DATE'
 
-                if 'DATE' in df_final.columns and df_final['DATE'].astype(str).str.strip().any():
-                    muat_col = 'DATE'
-                elif 'LOAD_DATE' in df_final.columns and df_final['LOAD_DATE'].astype(str).str.strip().any():
+                if 'LOAD_DATE' in df_final.columns and df_final['LOAD_DATE'].astype(str).str.strip().any():
                     muat_col = 'LOAD_DATE'
-                elif ro_col:
-                    muat_col = ro_col
+                elif 'DATE' in df_final.columns and df_final['DATE'].astype(str).str.strip().any():
+                    muat_col = 'DATE'
 
-                df_office['Tgl RO'] = df_final[ro_col].apply(format_date_custom) if ro_col else ""
-                df_office['Tgl Muat'] = df_final[muat_col].apply(format_date_custom) if muat_col else ""
+                df_office['Tgl RO'] = df_final[ro_col].astype(str) if ro_col else ""
+                df_office['Tgl Muat'] = df_final[muat_col].astype(str) if muat_col else ""
                 df_office['Vendor'] = ""
-                df_office['Pickup'] = df_final['ORIGIN'].apply(normalize_origin)
-                df_office['Tujuan'] = df_final['DESTINATION'].apply(clean_destination_format)
-                df_office['No. Plat'] = df_final['PLATE'].str.upper()
-                df_office['Type Truck'] = df_final['UNIT_TYPE'].str.upper()
-                df_office['Driver'] = df_final['DRIVER'].fillna("").astype(str).str.title()
-                df_office['Kontak Driver'] = df_final['PHONE']
+                df_office['Pickup'] = df_final['ORIGIN'].astype(str)
+                df_office['Tujuan'] = df_final['DESTINATION'].astype(str)
+                df_office['No. Plat'] = df_final['PLATE'].astype(str)
+                df_office['Type Truck'] = df_final['UNIT_TYPE'].astype(str)
+                df_office['Driver'] = df_final['DRIVER'].astype(str)
+                df_office['Kontak Driver'] = df_final['PHONE'].astype(str)
                 def _is_filled(val):
                     if val is None:
                         return False
@@ -2607,18 +2608,6 @@ def main():
                         return "PARTIAL"
                     return "UNASSIGNED"
                 df_office['status_unit'] = df_office.apply(_classify_status, axis=1)
-
-                # Sorting output berdasarkan Tgl RO lalu Tgl Muat
-                df_office['_sort_muat'] = df_office['Tgl Muat'].apply(parse_date_custom)
-                df_office['_sort_ro'] = df_office['Tgl RO'].apply(parse_date_custom)
-                df_office = df_office.sort_values(
-                    by=['_sort_ro', '_sort_muat', 'No.'],
-                    na_position='last'
-                ).reset_index(drop=True)
-                df_office = df_office.drop(columns=['_sort_muat', '_sort_ro'])
-                # Renumber setelah sorting
-                df_office['No.'] = range(1, len(df_office) + 1)
-                df_office['Job Number'] = [f"{effective_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_office))]
 
                 if DB_PERSISTENCE_ENABLED and db_save_parsed_rows is not None and db_raw_chat_id:
                     try:

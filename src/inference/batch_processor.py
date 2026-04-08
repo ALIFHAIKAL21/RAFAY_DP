@@ -11,9 +11,9 @@ sys.path.append(str(ROOT_DIR))
 from src.inference.pipeline import IndoBERTInference
 
 class ChatBatchProcessor:
-    def __init__(self):
+    def __init__(self, model_path=None):
         print("[LOADING] Memuat Model IndoBERT untuk Batch Processing...")
-        self.pipeline = IndoBERTInference()
+        self.pipeline = IndoBERTInference(model_path=model_path)
         
         # Kata kunci wajib ada (kalau nggak ada ini, dianggap chat sampah/bercanda)
         self.keywords = ["unit", "loading", "tujuan", "kirim", "muat", "driver", "nopol", "request"]

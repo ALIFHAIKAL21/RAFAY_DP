@@ -47,7 +47,7 @@ Kontakk : 082231837381
 == CASE 06 - DRIVER PAIR TYPO ==
 1 UNIT CDDL 24 CBM
 Loksii : MEGAHUB
-Wktu loading : SEGERA
+Wktu loading : SEGERAz
 Rute/tujan : CGK - DPS
 drver 1 : Edi Setiawan
 No hp : 0881023544597
