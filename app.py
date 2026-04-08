@@ -30,8 +30,16 @@ except Exception:
     db_init_db = None
 DB_PERSISTENCE_ENABLED = False
 
-# Optional override khusus app.py untuk A/B test model
-APP_MODEL_PATH = os.getenv("RAFAY_APP_MODEL_PATH", "").strip()
+# Optional override khusus app.py untuk A/B test model.
+# Default diarahkan ke model tahap2 jika tersedia.
+_env_app_model_path = os.getenv("RAFAY_APP_MODEL_PATH", "").strip()
+_default_tahap2_model = ROOT_DIR / "models" / "indobert_tahap2" / "final_model"
+if _env_app_model_path:
+    APP_MODEL_PATH = _env_app_model_path
+elif _default_tahap2_model.exists():
+    APP_MODEL_PATH = str(_default_tahap2_model)
+else:
+    APP_MODEL_PATH = ""
 
 # --- KONFIGURASI RAFAY IDP v2.0 ---
 DRIVER_BLACKLIST = ["RAFAY","AKBAR","ADMIN","JNE","LOGISTIK","EXPEDISI","PENGIRIM","ONCALL","REQUEST"]
