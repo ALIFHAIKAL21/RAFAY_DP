@@ -2182,9 +2182,11 @@ def calculate_extraction_accuracy(df_raw, df_final):
 
 st.set_page_config(page_title="Rafay Logistics IDP v2.0", layout="wide", initial_sidebar_state="collapsed")
 
-# Optional override khusus app_model_only agar model tahap-2 bisa diuji
-# tanpa mengubah model default yang dipakai app.py.
+# Legacy override khusus app_model_only (kompatibilitas lama).
+# UI utama tetap pakai pilihan model v1/v2 langsung di halaman.
 MODEL_ONLY_PATH = os.getenv("RAFAY_MODEL_ONLY_PATH", "").strip()
+MODEL_V1_PATH = ROOT_DIR / "models" / "indobert_finetuned" / "final_model"
+MODEL_V2_PATH = ROOT_DIR / "models" / "indobert_tahap2" / "final_model"
 
 st.markdown("""
     <style>
@@ -2405,8 +2407,6 @@ def main():
             st.session_state.baris = f"{len(df_saved)} Order"
     
     render_top_ui(st.session_state.waktu, st.session_state.baris, st.session_state.akurasi)
-    if MODEL_ONLY_PATH:
-        st.caption(f"Model Override (app_model_only): `{MODEL_ONLY_PATH}`")
     
     st.markdown("""
     <div class="input-panel input-panel-wide">
@@ -2445,6 +2445,27 @@ def main():
     effective_start = job_start
     preview_format = f"{effective_start:03d}/{job_company.upper()}-RAFAY/{job_month}/{job_year}"
     st.markdown(f"<span class='muted-preview'>Preview: <code>{preview_format}</code></span>", unsafe_allow_html=True)
+
+    model_options = ["Model v1 (Tahap 1)", "Model v2 (Tahap 2)"]
+    default_model_choice = "Model v2 (Tahap 2)" if MODEL_V2_PATH.exists() else "Model v1 (Tahap 1)"
+    current_choice = st.session_state.get("model_version_choice", default_model_choice)
+    if current_choice not in model_options:
+        current_choice = default_model_choice
+    model_choice_index = model_options.index(current_choice)
+
+    model_choice = st.radio(
+        "Pilih Versi Model (Mode Mentah)",
+        model_options,
+        index=model_choice_index,
+        horizontal=True,
+        key="model_version_choice",
+    )
+
+    selected_model_path = MODEL_V1_PATH if model_choice.startswith("Model v1") else MODEL_V2_PATH
+    selected_model_ready = selected_model_path.exists()
+    st.caption(f"Model aktif: `{selected_model_path}`")
+    if not selected_model_ready:
+        st.warning("Model yang dipilih belum ada di folder tersebut. Ganti versi model atau train modelnya dulu.")
 
     chat_input = st.text_area(
         "Input", height=260, label_visibility="collapsed",
@@ -2504,7 +2525,9 @@ def main():
         """, unsafe_allow_html=True)
         
     if btn:
-        if not chat_input.strip():
+        if not selected_model_ready:
+            st.error(f"Model tidak ditemukan: `{selected_model_path}`")
+        elif not chat_input.strip():
             st.error("Input kosong. Silakan paste data dokumen terlebih dahulu.")
         else:
             processing_container = st.empty()
@@ -2543,7 +2566,10 @@ def main():
             with open(temp_path, "w", encoding="utf-8") as f: 
                 f.write(formatted_input)
             
-            df_raw = get_processor(model_path_override=MODEL_ONLY_PATH).process_file(temp_path)
+            df_raw = get_processor(
+                split_version=f"split_v3_multi_unit::{model_choice}",
+                model_path_override=str(selected_model_path),
+            ).process_file(temp_path)
 
             if df_raw is not None and not df_raw.empty:
                 df_final = df_raw.copy()

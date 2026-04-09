@@ -1,0 +1,259 @@
+﻿[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call 04 FEBUARI 2026
+
+RAFAY
+1 UNIT TWB 50 Cbm
+Lokasi : ARGOPANTES
+Waktu loading : segera
+Rute/tujuan : CGK- PDG
+driver  : SUTRISNO
+Nopol  : BM 8364 AU
+No hp  :0853-5388-6066
+
+[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 04 FEBRUARI 2026:
+
+RAFAY
+3 unit Cddl 24 Cbm
+Lokasi : Megahub
+Waktu loading : 07:00 05/02/2026
+Rute/tujuan : CGK - JATENG
+driver  : KARYADI
+Nopol  : AD 8517 BA
+No hp  :085865762797
+
+[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ULANG ONCALL 09 MARET 2026
+
+5 UNIT TWB 50 CBM
+Lokasi : ARGOPANTES 
+Waktu loading : SEGERA
+Rute/tujuan : CGK - SUB
+driver  :
+Nopol  :
+No hp  :
+
+Waktu loading : 18:00
+Rute/tujuan : CGK - SUB
+driver  : m syaichoni
+Nopol  : N 8872 Rk
+No hp  : +62 812-3189-5971
+
+Waktu loading : 21:00
+Rute/tujuan : CGK - SUB
+driver  :
+Nopol  :
+No hp  :
+
+Waktu loading : 00:00
+Rute/tujuan : CGK - SUB
+driver  :
+Nopol  :
+No hp  :
+
+Waktu loading : 03:00 05/02/2026
+Rute/tujuan : CGK -SUB
+driver  : Lailan
+Nopol  : S 9272 UP
+No hp  : +62 878-8686-1780
+
+[05.31, 7/3/2026] Akbar Rafay: REQUEST TAMBAHAN ORDER ONCALL 04 FEBRUARI 2026:
+
+RAFAY
+2 UNIT TWB 50 CBM
+Lokasi : CIKOKOL
+Waktu loading : SEGERA
+Rute/tujuan : CGK - SUB
+driver  : AGUS
+Nopol  : D 9667 AF
+No hp  :08817021866
+
+[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 04 FEBRUARI 2026:
+RAFAY
+1 unit Cddl 24 Cbm
+Lokasi : Megahub
+Waktu loading : segera
+Rute/tujuan : CGK - DPS
+driver 1 : Edi setiawan
+No hp  :0881023544597 
+Driver2 : Jatmiyanta
+No hp  :082118558105
+Nopol : F 9647 FH
+
+[05.31, 7/3/2026] Akbar Rafay: REQUEST ULANG ORDER ONCALL 05 FEBRUARI 2026:
+
+2 UNIT TWB 50 CBM
+Lokasi : CIKOKOL
+Waktu loading : SEGERA
+Rute/tujuan : CGK - TKG
+driver  :
+Nopol  :
+No hp  :
+
+2 UNIT TWB 50 CBM
+Lokasi : CIKOKOL
+Waktu loading : SEGERA
+Rute/tujuan : CGK - PLM
+driver  :
+Nopol  :
+No hp  :
+
+2 UNIT TWB 50 CBM
+Lokasi : CIKOKOL
+Waktu loading : SEGERA
+Rute/tujuan : CGK - PKU
+driver  : Siswanto
+Nopol  : B 9120 WXR
+No hp  : 081943564062
+
+Lokasi : CIKOKOL
+Waktu loading : SEGERA
+Rute/tujuan : CGK - PKU
+driver  : 
+Nopol  : 
+No hp  : 
+
+2 UNIT TWB 50 CBM
+Lokasi : CIKOKOL
+Waktu loading : SEGERA
+Rute/tujuan : CGK - MES
+driver  : feri irawan
+Nopol  : BK 8516 VV
+No hp  : 085219216210
+
+[05.31, 7/3/2026] Akbar Rafay: REQUEST ULANG ORDER ONCALL 05 FEBRUARI 2026:
+RAFAY
+2 UNIT TWB 50 CBM
+Lokasi : CIKOKOL
+Waktu loading : SEGERA
+Rute/tujuan : CGK - MES
+driver  : HADI
+Nopol  :B 9446 MV
+No hp  :+62 831-9621-8655
+
+[05.31, 7/3/2026] Akbar Rafay: REQUEST ULANG ORDER ONCALL 05 FEBRUARI 2026:
+RAFAY
+2 UNIT TWB 50 CBM
+Lokasi : CIKOKOL
+Waktu loading : SEGERA
+Rute/tujuan : CGK - MES
+driver  : A. Sukur 
+Nopol  :B 9477 KEU
+No hp  : 083169525183
+
+[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ULANG ONCALL
+
+5 UNIT TWB 50 CBM
+Lokasi : ARGOPANTES 
+Waktu loading : SEGERA
+Rute/tujuan : CGK - SUB
+RAFAY
+driver  : AKIYAT
+Nopol  : L 9722 UE
+No hp  :081281122738
+
+[05.31, 7/3/2026] Akbar Rafay: REQUEST ULANG ORDER ONCALL 05 FEBRUARI 2025
+RAFAY
+2 UNIT TWB 50 CBM
+Lokasi : CIKOKOL
+Waktu loading : SEGERA
+Rute/tujuan : CGK - PKU
+driver  : RYAN
+Nopol  : B 9084 VEH
+No hp  : 087837496810
+
+[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ULANG ONCALL
+
+5 UNIT TWB 50 CBM
+Lokasi : ARGOPANTES 
+Waktu loading : SEGERA
+Rute/tujuan : CGK - SUB
+driver  : HENDRA S.P
+Nopol  : D 9044 AG
+No hp  : +62 877-8667-6177
+
+Waktu loading : 18:00
+Rute/tujuan : CGK - SUB
+driver  :
+Nopol  :
+No hp  :
+
+Waktu loading : 21:00
+Rute/tujuan : CGK - SUB
+driver  :
+Nopol  :
+No hp  :
+
+Waktu loading : 00:00
+Rute/tujuan : CGK - SUB
+driver  :
+Nopol  :
+No hp  :
+
+Waktu loading : 03:00 06/02/2026
+Rute/tujuan : CGK -SUB
+driver  :
+Nopol  :
+No hp  :
+
+[05.31, 7/3/2026] Akbar Rafay: REQUEST ULANG ORDER ONCALL 05 FEBRUARI 2026:
+
+2 UNIT TWB 50 CBM
+Lokasi : CIKOKOL
+Waktu loading : SEGERA
+Rute/tujuan : CGK - PLM
+driver  : SANDRI
+Nopol  : BE 9636 BU
+No hp  :+62 889-0702-0037
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 05 Feb 26
+
+2 Unit  Cddl / 24 Cbm
+Lokasi : Cikarang
+Waktu loading : 06:00/ 06-02-26
+Rute/tujuan : CKR-Jateng Tentative
+Driver   : 
+Nopol  : 
+No Hp  :
+
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 05 Feb 26
+
+1 Unit  Cddl / 24 Cbm
+Lokasi : Cikarang
+Waktu loading : 03:00/ 06-02-26
+Rute/tujuan : CKR-Jateng Tentative
+Nama : Apar Rahmat 
+Nopol : E9406HB 
+NO TLP : 085971812879
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 06 febuary 2026
+
+RAFAY
+3 unit twb 50 CBM
+Lokasi : ARGOPANTES 
+Waktu loading : SEGERA 
+Rute/tujuan : CGK- SUB
+driver  : M. iBNU
+Nopol  : L 9511 AL
+No hp  :082191633212
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 06 febuary 2026
+
+
+2 unit twb 50 CBM
+Lokasi : JNE SUB
+Waktu loading : SEGERA 
+Rute/tujuan : SUB-CGK
+driver  : WAHYUDI
+Nopol  : N 9549 UA
+No hp  :085784422398
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 06 febuary 2026
+
+
+2 unit twb 50 CBM
+Lokasi : JNE SUB
+Waktu loading : SEGERA 
+Rute/tujuan : SUB-CGK
+driver  : SOFYAN
+Nopol  : B 9679 WT
+No hp  : 082231837381
+

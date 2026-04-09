@@ -33,8 +33,58 @@ BERT_OUTPUT_DIR = Path(
     os.getenv("BERT_OUTPUT_DIR_PATH", str(MODEL_DIR / "indobert_finetuned"))
 )
 
+# EVENT CLASSIFIER PATHS
+EVENT_RAW_LABEL_STUDIO = Path(
+    os.getenv(
+        "EVENT_RAW_LABEL_STUDIO_PATH",
+        str(CHAT_RAW_DIR / "tahap2" / "export_label_studio_tahap.2.json"),
+    )
+)
+EVENT_TRAIN_DATA = Path(
+    os.getenv(
+        "EVENT_TRAIN_DATA_PATH",
+        str(CHAT_PROCESSED_DIR / "tahap2" / "intent_event_dataset.json"),
+    )
+)
+EVENT_OUTPUT_DIR = Path(
+    os.getenv("EVENT_OUTPUT_DIR_PATH", str(MODEL_DIR / "indobert_event_classifier"))
+)
+EVENT_MODEL_CHECKPOINT = os.getenv(
+    "EVENT_MODEL_CHECKPOINT", "indobenchmark/indobert-base-p2"
+)
+
 # HYPERPARAMETERS 
 BATCH_SIZE = 8
 EPOCHS = 5
 LEARNING_RATE = 2e-5
 MAX_SEQ_LEN = 128
+
+# EVENT CLASSIFIER HYPERPARAMETERS
+EVENT_BATCH_SIZE = int(os.getenv("EVENT_BATCH_SIZE", "8"))
+EVENT_EPOCHS = int(os.getenv("EVENT_EPOCHS", "4"))
+EVENT_LEARNING_RATE = float(os.getenv("EVENT_LEARNING_RATE", "2e-5"))
+EVENT_MAX_SEQ_LEN = int(os.getenv("EVENT_MAX_SEQ_LEN", "256"))
+
+# REVISION MATCHER PATHS
+REVISION_MATCH_TRAIN_DATA = Path(
+    os.getenv(
+        "REVISION_MATCH_TRAIN_DATA_PATH",
+        str(CHAT_PROCESSED_DIR / "tahap2" / "revision_matcher_dataset.json"),
+    )
+)
+REVISION_MATCH_OUTPUT_DIR = Path(
+    os.getenv(
+        "REVISION_MATCH_OUTPUT_DIR_PATH",
+        str(MODEL_DIR / "indobert_revision_matcher"),
+    )
+)
+REVISION_MATCH_MODEL_CHECKPOINT = os.getenv(
+    "REVISION_MATCH_MODEL_CHECKPOINT",
+    "indobenchmark/indobert-base-p2",
+)
+
+# REVISION MATCHER HYPERPARAMETERS
+REVISION_MATCH_BATCH_SIZE = int(os.getenv("REVISION_MATCH_BATCH_SIZE", "8"))
+REVISION_MATCH_EPOCHS = int(os.getenv("REVISION_MATCH_EPOCHS", "4"))
+REVISION_MATCH_LEARNING_RATE = float(os.getenv("REVISION_MATCH_LEARNING_RATE", "2e-5"))
+REVISION_MATCH_MAX_SEQ_LEN = int(os.getenv("REVISION_MATCH_MAX_SEQ_LEN", "256"))

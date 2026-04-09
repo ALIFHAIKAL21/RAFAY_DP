@@ -1,0 +1,55 @@
+﻿UNIT_QTY,UNIT_TYPE,ORIGIN,DESTINATION,DRIVER,PLATE,TIME,EVENT_CLASS,EVENT_SCORE,Original_Text,RO_DATE,PHONE,DATE,BLOCK_ID,status_unit
+3,TWB,ARGOPANTES,"CGK, SUB",M. Ibnu,L 9511 AL,SEGERA,NEW_ORDER,0.9996,"[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 06 febuary 2026
+
+RAFAY
+3 unit twb 50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : SEGERA
+Rute/tujuan : CGK- SUB
+driver  : M. iBNU
+Nopol  : L 9511 AL
+No hp  :082191633212
+
+Driver : Rosyit
+Nopol : B 9562 TEU
+No Hp : 082313572678
+
+Driver : Akiyat
+Nopol : L 9722 UE
+No Hp : 081281122738",7/3/2026,082191633212,7/3/2026,1,ASSIGNED
+1,TWB,ARGOPANTES,"CGK, SUB",Rosyit,B 9562 TEU,SEGERA,NEW_ORDER,0.9996,"[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 06 febuary 2026
+
+RAFAY
+3 unit twb 50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : SEGERA
+Rute/tujuan : CGK- SUB
+driver  : M. iBNU
+Nopol  : L 9511 AL
+No hp  :082191633212
+
+Driver : Rosyit
+Nopol : B 9562 TEU
+No Hp : 082313572678
+
+Driver : Akiyat
+Nopol : L 9722 UE
+No Hp : 081281122738",7/3/2026,082313572678,7/3/2026,1,ASSIGNED
+1,TWB,ARGOPANTES,"CGK, SUB",Akiyat,L 9722 UE,SEGERA,NEW_ORDER,0.9996,"[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 06 febuary 2026
+
+RAFAY
+3 unit twb 50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : SEGERA
+Rute/tujuan : CGK- SUB
+driver  : M. iBNU
+Nopol  : L 9511 AL
+No hp  :082191633212
+
+Driver : Rosyit
+Nopol : B 9562 TEU
+No Hp : 082313572678
+
+Driver : Akiyat
+Nopol : L 9722 UE
+No Hp : 081281122738",7/3/2026,081281122738,7/3/2026,1,ASSIGNED

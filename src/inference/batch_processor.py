@@ -1,5 +1,6 @@
 import re
 import pandas as pd
+import os
 from datetime import datetime
 import sys
 from pathlib import Path
@@ -9,11 +10,30 @@ ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(ROOT_DIR))
 
 from src.inference.pipeline import IndoBERTInference
+from src.inference.event_classifier import EventClassifierInference
 
 class ChatBatchProcessor:
-    def __init__(self, model_path=None):
+    def __init__(self, model_path=None, event_model_path=None, event_threshold=0.75):
         print("[LOADING] Memuat Model IndoBERT untuk Batch Processing...")
         self.pipeline = IndoBERTInference(model_path=model_path)
+        self.event_classifier = None
+
+        env_event_enabled = os.getenv("RAFAY_EVENT_CLASSIFIER_ENABLED", "1").strip().lower()
+        use_event_classifier = env_event_enabled not in {"0", "false", "no"}
+        self.event_threshold = float(os.getenv("RAFAY_EVENT_THRESHOLD", str(event_threshold)))
+
+        if use_event_classifier:
+            default_event_model = ROOT_DIR / "models" / "indobert_event_classifier" / "final_model"
+            chosen_event_model = event_model_path
+            if not chosen_event_model and default_event_model.exists():
+                chosen_event_model = str(default_event_model)
+
+            if chosen_event_model:
+                try:
+                    self.event_classifier = EventClassifierInference(model_path=chosen_event_model)
+                    print(f"[LOADING] Event classifier aktif: {chosen_event_model}")
+                except Exception as e:
+                    print(f"[WARN] Event classifier gagal dimuat ({e}). Lanjut tanpa event classifier.")
         
         # Kata kunci wajib ada (kalau nggak ada ini, dianggap chat sampah/bercanda)
         self.keywords = ["unit", "loading", "tujuan", "kirim", "muat", "driver", "nopol", "request"]
@@ -172,12 +192,28 @@ class ChatBatchProcessor:
             # Pre-processing No HP (Fix bug +62 jadi 0)
             text_clean = text.replace("+62", "0").replace("-", "")
 
+            event_label = ""
+            event_score = 0.0
+            if self.event_classifier is not None:
+                try:
+                    event_pred = self.event_classifier.predict(text)
+                    event_label = str(event_pred.get("label", "")).upper()
+                    event_score = float(event_pred.get("score", 0.0))
+                    if event_label == "NON_ORDER" and event_score >= self.event_threshold:
+                        print(f"Skip NON_ORDER (score={event_score:.2f}): {text[:50]}...")
+                        continue
+                except Exception as e:
+                    print(f"[WARN] Event classifier error: {e}")
+
             # Ekstraksi IndoBERT
             result = self.pipeline.predict(text_clean)
 
             if result:
                 # Tambahkan teks asli buat validasi manual admin
                 result['Original_Text'] = text
+                if event_label:
+                    result['EVENT_CLASS'] = event_label
+                    result['EVENT_SCORE'] = round(event_score, 4)
                 valid_orders.append(result)
                 print(f"[OK] Order #{len(valid_orders)} Terdeteksi!")
             
@@ -186,7 +222,7 @@ class ChatBatchProcessor:
             df = pd.DataFrame(valid_orders)
             
             # Rapikan urutan kolom (biar enak dibaca admin)
-            cols = ['DATE', 'UNIT_QTY', 'UNIT_TYPE', 'ORIGIN', 'DESTINATION', 'DRIVER', 'PLATE', 'TIME', 'Original_Text']
+            cols = ['DATE', 'UNIT_QTY', 'UNIT_TYPE', 'ORIGIN', 'DESTINATION', 'DRIVER', 'PLATE', 'TIME', 'EVENT_CLASS', 'EVENT_SCORE', 'Original_Text']
             # Ambil kolom yg ada aja + sisanya
             final_cols = [c for c in cols if c in df.columns] + [c for c in df.columns if c not in cols]
             df = df[final_cols]

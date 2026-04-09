@@ -1,0 +1,118 @@
+﻿[08.01, 10/3/2026] Akbar Rafay: Request Unit On Call Tgl 12 MARET 2026
+
+RAFAY
+3 UNIT TWB 50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : SEGERA
+Rute/tujuan : CGK - SUB
+driver  : SUTRISNO
+Nopol  : BM 8364 AU
+No hp  : 085353886066
+
+
+[08.02, 10/3/2026] Akbar Rafay: Request Unit On Call Tgl 12 MARET 2026
+
+RAFAY
+3 UNIT TWB 50 CBM
+Lokasi : CIKOKOL
+Waktu loading : SEGERA
+Rute/tujuan : CGK - PKU
+driver  : SISWANTO
+Nopol  : B 9120 WXR
+No hp  : 081943564062
+
+
+[08.03, 10/3/2026] Akbar Rafay: Request Unit On Call Tgl 12 MARET 2026
+
+RAFAY
+3 UNIT CDDL 24 CBM
+Lokasi : MEGAHUB
+Waktu loading : 07:00 13/03/2026
+Rute/tujuan : CGK - JATENG
+driver  : KARYADI
+Nopol  : AD 8517 BA
+No hp  : 085865762797
+
+
+[08.04, 10/3/2026] Akbar Rafay: Request Unit On Call Tgl 12 MARET 2026
+
+RAFAY
+3 UNIT TWB 50 CBM
+Lokasi : JNE SUB
+Waktu loading : SEGERA
+Rute/tujuan : SUB - CGK
+driver  : WAHYUDI
+Nopol  : N 9549 UA
+No hp  : 085784422398
+
+
+[08.05, 10/3/2026] Akbar Rafay: Request Unit On Call Tgl 12 MARET 2026
+
+RAFAY
+3 UNIT CDDL 24 CBM
+Lokasi : CIKARANG
+Waktu loading : 06:00/13-03-26
+Rute/tujuan : CKR - JATIM TENTATIVE
+driver  : JATMIYANTA
+Nopol  : F 9648 TH
+No hp  : 082118558105
+
+
+[08.06, 10/3/2026] Akbar Rafay: Request Unit On Call Tgl 12 MARET 2026
+
+RAFAY
+3 UNIT TWB 50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : 21:00
+Rute/tujuan : CGK - DPS
+driver  : M SYAICHONI
+Nopol  : N 8872 RK
+No hp  : 081231895971
+
+
+[08.07, 10/3/2026] Akbar Rafay: Request Unit On Call Tgl 12 MARET 2026
+
+RAFAY
+3 UNIT TWB 50 CBM
+Lokasi : CIKOKOL
+Waktu loading : SEGERA
+Rute/tujuan : CGK - PLM
+driver  : FERI IRAWAN
+Nopol  : BK 8516 VV
+No hp  : 085219216210
+
+
+[08.08, 10/3/2026] Akbar Rafay: Request Unit On Call Tgl 12 MARET 2026
+
+RAFAY
+3 UNIT TWB 50 CBM
+Lokasi : CIKOKOL
+Waktu loading : SEGERA
+Rute/tujuan : CGK - MES
+driver  : HENDRA SP
+Nopol  : D 9044 AG
+No hp  : 087786676177
+
+
+[08.09, 10/3/2026] Akbar Rafay: Request Unit On Call Tgl 12 MARET 2026
+
+RAFAY
+3 UNIT CDDL 24 CBM
+Lokasi : MEGAHUB
+Waktu loading : 18:00
+Rute/tujuan : CGK - BDG
+driver  : MANULANG
+Nopol  : B 9019 UEX
+No hp  : 082234567801
+
+
+[08.10, 10/3/2026] Akbar Rafay: Request Unit On Call Tgl 12 MARET 2026
+
+RAFAY
+3 UNIT TWB 50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : 00:00 13/03/2026
+Rute/tujuan : CGK - JEPARA
+driver  : ARIANSYAH
+Nopol  : BE 8775 DY
+No hp  : 081317708658
