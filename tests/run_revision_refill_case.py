@@ -102,7 +102,7 @@ def run_case(input_path, model_path, event_model_path, event_threshold, out_csv)
 def main():
     parser = argparse.ArgumentParser(description="Runner test case revisi + refill partial.")
     parser.add_argument("--input", required=True, help="Path file txt test case")
-    parser.add_argument("--model", default="models/indobert_tahap2/final_model", help="Path model NER")
+    parser.add_argument("--model", default="models/indobert_NER/final_model", help="Path model NER")
     parser.add_argument(
         "--event-model",
         default="models/indobert_event_classifier/final_model",

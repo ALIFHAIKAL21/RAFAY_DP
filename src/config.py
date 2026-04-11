@@ -30,7 +30,7 @@ RAW_LABEL_STUDIO = Path(
 # MODEL PATHS
 MODEL_DIR = BASE_DIR / "models"
 BERT_OUTPUT_DIR = Path(
-    os.getenv("BERT_OUTPUT_DIR_PATH", str(MODEL_DIR / "indobert_finetuned"))
+    os.getenv("BERT_OUTPUT_DIR_PATH", str(MODEL_DIR / "indobert_NER"))
 )
 
 # EVENT CLASSIFIER PATHS

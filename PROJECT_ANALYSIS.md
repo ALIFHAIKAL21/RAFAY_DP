@@ -156,7 +156,7 @@ The system uses **3 fine-tuned BERT-based models** for different NLP tasks:
 
 ### 1. **Entity Recognition Model (IndoBERT Token Classification)**
 
-#### Model: `indobert_finetuned/final_model`
+#### Model: `indobert_NER/final_model`
 - **Base Model:** `indolem/indobert-base-uncased`
 - **Task:** Named Entity Recognition (Token Classification)
 - **Architecture:**
@@ -579,7 +579,7 @@ class ChatBatchProcessor:
 
 ##### **a. train_bert.py** - Entity Recognition
 - **Input:** `data/chat/processed/data_augmented.json` (text + BIO tags)
-- **Output:** `models/indobert_finetuned/final_model/`
+- **Output:** `models/indobert_NER/final_model/`
 - **Process:**
   1. Load dataset
   2. Build label maps (21 entity types)

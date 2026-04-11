@@ -33,20 +33,22 @@ except Exception:
     DB_PERSISTENCE_ENABLED = False
 
 # Optional override khusus app.py untuk A/B test model.
-# Default diarahkan ke model tahap2 jika tersedia.
+# Default diarahkan ke model NER utama (indobert_NER), lalu fallback ke legacy tahap2.
 _env_app_model_path = os.getenv("RAFAY_APP_MODEL_PATH", "").strip()
-_default_tahap2_model = ROOT_DIR / "models" / "indobert_tahap2" / "final_model"
+_default_ner_model = ROOT_DIR / "models" / "indobert_NER" / "final_model"
+_legacy_tahap2_model = ROOT_DIR / "models" / "indobert_tahap2" / "final_model"
+_resolved_default_ner_model = _default_ner_model if _default_ner_model.exists() else _legacy_tahap2_model
 if _env_app_model_path:
     _env_path = Path(_env_app_model_path)
     if _env_path.exists():
         APP_MODEL_PATH = str(_env_path)
-    elif _default_tahap2_model.exists():
-        print(f"[WARN] RAFAY_APP_MODEL_PATH tidak ditemukan: {_env_app_model_path}. Fallback ke model tahap2.")
-        APP_MODEL_PATH = str(_default_tahap2_model)
+    elif _resolved_default_ner_model.exists():
+        print(f"[WARN] RAFAY_APP_MODEL_PATH tidak ditemukan: {_env_app_model_path}. Fallback ke model default NER.")
+        APP_MODEL_PATH = str(_resolved_default_ner_model)
     else:
         APP_MODEL_PATH = ""
-elif _default_tahap2_model.exists():
-    APP_MODEL_PATH = str(_default_tahap2_model)
+elif _resolved_default_ner_model.exists():
+    APP_MODEL_PATH = str(_resolved_default_ner_model)
 else:
     APP_MODEL_PATH = ""
 

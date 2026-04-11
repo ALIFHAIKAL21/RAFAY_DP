@@ -2185,8 +2185,12 @@ st.set_page_config(page_title="Rafay Logistics IDP v2.0", layout="wide", initial
 # Legacy override khusus app_model_only (kompatibilitas lama).
 # UI utama tetap pakai pilihan model v1/v2 langsung di halaman.
 MODEL_ONLY_PATH = os.getenv("RAFAY_MODEL_ONLY_PATH", "").strip()
+MODEL_NER_PATH = ROOT_DIR / "models" / "indobert_NER" / "final_model"
+MODEL_LEGACY_TAHAP2_PATH = ROOT_DIR / "models" / "indobert_tahap2" / "final_model"
+MODEL_V2_PATH = MODEL_NER_PATH if MODEL_NER_PATH.exists() else MODEL_LEGACY_TAHAP2_PATH
 MODEL_V1_PATH = ROOT_DIR / "models" / "indobert_finetuned" / "final_model"
-MODEL_V2_PATH = ROOT_DIR / "models" / "indobert_tahap2" / "final_model"
+if not MODEL_V1_PATH.exists():
+    MODEL_V1_PATH = MODEL_V2_PATH
 
 st.markdown("""
     <style>
@@ -2446,8 +2450,8 @@ def main():
     preview_format = f"{effective_start:03d}/{job_company.upper()}-RAFAY/{job_month}/{job_year}"
     st.markdown(f"<span class='muted-preview'>Preview: <code>{preview_format}</code></span>", unsafe_allow_html=True)
 
-    model_options = ["Model v1 (Tahap 1)", "Model v2 (Tahap 2)"]
-    default_model_choice = "Model v2 (Tahap 2)" if MODEL_V2_PATH.exists() else "Model v1 (Tahap 1)"
+    model_options = ["Model NER (Detail)", "Model v1 (Legacy)"]
+    default_model_choice = "Model NER (Detail)" if MODEL_V2_PATH.exists() else "Model v1 (Legacy)"
     current_choice = st.session_state.get("model_version_choice", default_model_choice)
     if current_choice not in model_options:
         current_choice = default_model_choice

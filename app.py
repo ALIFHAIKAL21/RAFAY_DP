@@ -14,6 +14,8 @@ sys.path.append(str(ROOT_DIR))
 
 
 from src.inference.batch_processor import ChatBatchProcessor
+from src.inference.event_classifier import EventClassifierInference
+from src.inference.revision_matcher import RevisionMatcherInference
 
 try:
     from db.persistence import load_all_order_rows as db_load_all_order_rows
@@ -31,20 +33,22 @@ except Exception:
     DB_PERSISTENCE_ENABLED = False
 
 # Optional override khusus app.py untuk A/B test model.
-# Default diarahkan ke model tahap2 jika tersedia.
+# Default diarahkan ke model NER utama (indobert_NER), lalu fallback ke legacy tahap2.
 _env_app_model_path = os.getenv("RAFAY_APP_MODEL_PATH", "").strip()
-_default_tahap2_model = ROOT_DIR / "models" / "indobert_tahap2" / "final_model"
+_default_ner_model = ROOT_DIR / "models" / "indobert_NER" / "final_model"
+_legacy_tahap2_model = ROOT_DIR / "models" / "indobert_tahap2" / "final_model"
+_resolved_default_ner_model = _default_ner_model if _default_ner_model.exists() else _legacy_tahap2_model
 if _env_app_model_path:
     _env_path = Path(_env_app_model_path)
     if _env_path.exists():
         APP_MODEL_PATH = str(_env_path)
-    elif _default_tahap2_model.exists():
-        print(f"[WARN] RAFAY_APP_MODEL_PATH tidak ditemukan: {_env_app_model_path}. Fallback ke model tahap2.")
-        APP_MODEL_PATH = str(_default_tahap2_model)
+    elif _resolved_default_ner_model.exists():
+        print(f"[WARN] RAFAY_APP_MODEL_PATH tidak ditemukan: {_env_app_model_path}. Fallback ke model default NER.")
+        APP_MODEL_PATH = str(_resolved_default_ner_model)
     else:
         APP_MODEL_PATH = ""
-elif _default_tahap2_model.exists():
-    APP_MODEL_PATH = str(_default_tahap2_model)
+elif _resolved_default_ner_model.exists():
+    APP_MODEL_PATH = str(_resolved_default_ner_model)
 else:
     APP_MODEL_PATH = ""
 
@@ -63,8 +67,35 @@ try:
 except ValueError:
     APP_EVENT_THRESHOLD = 0.75
 
+_env_revision_matcher_path = os.getenv("RAFAY_REVISION_MATCHER_MODEL_PATH", "").strip()
+_default_revision_matcher = ROOT_DIR / "models" / "indobert_revision_matcher" / "final_model"
+if _env_revision_matcher_path:
+    _rev_env_path = Path(_env_revision_matcher_path)
+    APP_REVISION_MATCHER_MODEL_PATH = str(_rev_env_path) if _rev_env_path.exists() else _env_revision_matcher_path
+elif _default_revision_matcher.exists():
+    APP_REVISION_MATCHER_MODEL_PATH = str(_default_revision_matcher)
+else:
+    APP_REVISION_MATCHER_MODEL_PATH = ""
+
+try:
+    APP_REVISION_MATCH_THRESHOLD = float(os.getenv("RAFAY_REVISION_MATCH_THRESHOLD", "0.58"))
+except ValueError:
+    APP_REVISION_MATCH_THRESHOLD = 0.58
+
+try:
+    APP_REVISION_MATCH_MIN_GAP = float(os.getenv("RAFAY_REVISION_MATCH_MIN_GAP", "0.05"))
+except ValueError:
+    APP_REVISION_MATCH_MIN_GAP = 0.05
+
+APP_REVISION_ML_ENABLED = os.getenv("RAFAY_REVISION_ML_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
+APP_REVISION_RULE_FALLBACK_ENABLED = os.getenv("RAFAY_REVISION_RULE_FALLBACK_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
+
 # --- KONFIGURASI RAFAY IDP v2.0 ---
 DRIVER_BLACKLIST = ["RAFAY","AKBAR","ADMIN","JNE","LOGISTIK","EXPEDISI","PENGIRIM","ONCALL","REQUEST"]
+_REVISION_MATCHER_INSTANCE = None
+_REVISION_MATCHER_LOAD_FAILED = False
+_EVENT_CLASSIFIER_INSTANCE = None
+_EVENT_CLASSIFIER_LOAD_FAILED = False
 
 # --- 0. HELPER FUNCTIONS ---
 _FIELD_LABEL_ALIASES = {
@@ -1835,11 +1866,11 @@ def enforce_block_quota(df):
                 final_rows.append(clean_slot)
     return pd.DataFrame(final_rows).reset_index(drop=True)
 
-# --- [FITUR BARU] REVISI PINTAR BERBASIS MEMORI ---
-def apply_revisions_from_chat(chat_text, df_final):
+# --- [FALLBACK] REVISI BERBASIS RULE ENGINE LAMA ---
+def _apply_revisions_from_chat_rule_engine(chat_text, df_final):
     """
-    Menangkap pesan revisi langsung dari teks asli chat WhatsApp dan
-    menerapkannya ke order eksisting tanpa membuat baris baru.
+    Fallback engine untuk menjaga kompatibilitas kualitas ketika
+    confidence ML rendah / ambigu.
     """
     if df_final is None or df_final.empty or not chat_text:
         return df_final
@@ -1881,22 +1912,18 @@ def apply_revisions_from_chat(chat_text, df_final):
             'updates': {}
         }
 
-        # Context target: waktu loading / jam
         time_match = re.search(r'(?i)(?:jam|pukul|waktu(?:\s+loading)?)\s*:?\s*(\d{1,2}(?:[:.]\d{2})?)', msg_text)
         if time_match:
             payload['target_time'] = normalize_time(time_match.group(1))
 
-        # Context target: lokasi
         lokasi_match = re.search(r'(?im)^\s*Lokasi\s*:\s*([^\n\r]+)', msg_text)
         if lokasi_match:
             payload['target_origin'] = normalize_token(lokasi_match.group(1))
 
-        # Context target: rute
         route_match = re.search(r'(?im)^\s*Rute(?:\s*/\s*|\s+)tujuan\s*:\s*([^\n\r]+)', msg_text)
         if route_match:
             payload['target_route'] = normalize_route(route_match.group(1))
 
-        # Context target: unit type (optional)
         unit_match = re.search(r'(?im)^\s*(?:jenis\s+unit|type\s+truck)\s*:\s*([^\n\r]+)', msg_text)
         if unit_match:
             payload['target_unit'] = normalize_unit_type(unit_match.group(1))
@@ -1907,7 +1934,6 @@ def apply_revisions_from_chat(chat_text, df_final):
                 if not re.match(r'(?i)^(?:jam|pukul|waktu)\b', unit_candidate):
                     payload['target_unit'] = normalize_unit_type(unit_candidate)
 
-        # Revised fields: driver / nopol / phone
         for line in str(msg_text).split('\n'):
             line = line.strip()
             if not line:
@@ -1964,32 +1990,28 @@ def apply_revisions_from_chat(chat_text, df_final):
             scored.append((score, idx))
         max_score = max(s for s, _ in scored)
         best = [idx for s, idx in scored if s == max_score]
-        return max(best)  # paling recent
+        return max(best)
 
     def find_best_match(payload):
         candidate_indices = [idx for idx in df.index if not bool(revision_mask.loc[idx])]
         if not candidate_indices:
             return None
 
-        # Priority a) waktu_loading
         if payload['target_time']:
             by_time = [idx for idx in candidate_indices if row_time(idx) == payload['target_time']]
             if by_time:
                 return pick_best(by_time, payload)
 
-        # Priority b) lokasi
         if payload['target_origin']:
             by_origin = [idx for idx in candidate_indices if row_origin(idx) == payload['target_origin']]
             if by_origin:
                 return pick_best(by_origin, payload)
 
-        # Priority c) rute
         if payload['target_route']:
             by_route = [idx for idx in candidate_indices if row_route(idx) == payload['target_route']]
             if by_route:
                 return pick_best(by_route, payload)
 
-        # Priority d) order paling recent sebelum revisi
         return max(candidate_indices)
 
     for msg in messages:
@@ -2005,6 +2027,446 @@ def apply_revisions_from_chat(chat_text, df_final):
         for field, value in payload['updates'].items():
             if field in df.columns:
                 df.at[target_idx, field] = value
+
+    return df
+
+
+def _get_revision_matcher():
+    global _REVISION_MATCHER_INSTANCE, _REVISION_MATCHER_LOAD_FAILED
+    if not APP_REVISION_ML_ENABLED:
+        return None
+    if _REVISION_MATCHER_INSTANCE is not None:
+        return _REVISION_MATCHER_INSTANCE
+    if _REVISION_MATCHER_LOAD_FAILED:
+        return None
+    if not APP_REVISION_MATCHER_MODEL_PATH:
+        _REVISION_MATCHER_LOAD_FAILED = True
+        print("[WARN] Model revision matcher belum tersedia.")
+        return None
+    try:
+        _REVISION_MATCHER_INSTANCE = RevisionMatcherInference(APP_REVISION_MATCHER_MODEL_PATH)
+    except Exception as e:
+        _REVISION_MATCHER_LOAD_FAILED = True
+        print(f"[WARN] Gagal memuat revision matcher: {e}")
+        return None
+    return _REVISION_MATCHER_INSTANCE
+
+
+def _get_event_classifier():
+    global _EVENT_CLASSIFIER_INSTANCE, _EVENT_CLASSIFIER_LOAD_FAILED
+    if _EVENT_CLASSIFIER_INSTANCE is not None:
+        return _EVENT_CLASSIFIER_INSTANCE
+    if _EVENT_CLASSIFIER_LOAD_FAILED:
+        return None
+    if not APP_EVENT_MODEL_PATH:
+        _EVENT_CLASSIFIER_LOAD_FAILED = True
+        return None
+    try:
+        _EVENT_CLASSIFIER_INSTANCE = EventClassifierInference(APP_EVENT_MODEL_PATH)
+    except Exception as e:
+        _EVENT_CLASSIFIER_LOAD_FAILED = True
+        print(f"[WARN] Gagal memuat event classifier (optional): {e}")
+        return None
+    return _EVENT_CLASSIFIER_INSTANCE
+
+
+def _revml_normalize_time(value):
+    if value is None:
+        return ""
+    s = str(value).strip().replace(".", ":")
+    if not s:
+        return ""
+    if "SEGERA" in s.upper():
+        return "SEGERA"
+    m = re.search(r"(\d{1,2})(?::(\d{2}))?", s)
+    if not m:
+        return ""
+    hour = int(m.group(1))
+    minute = m.group(2) if m.group(2) else "00"
+    return f"{hour:02d}:{minute}"
+
+
+def _normalize_message_text(value):
+    if value is None:
+        return ""
+    return re.sub(r"\s+", " ", str(value)).strip().upper()
+
+
+def _split_wa_messages(chat_text):
+    wa_pattern = r"(?=\[\d{2}[.,:]\d{2}[, ]+\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\]\s*[^:]+:)"
+    messages = [m for m in re.split(wa_pattern, str(chat_text)) if str(m).strip()]
+    return messages if messages else [str(chat_text)]
+
+
+def _build_match_candidate_text(row):
+    def _v(key):
+        return str(row.get(key, "") or "").strip()
+
+    ro_date = _v("RO_DATE") or _v("DATE")
+    load_date = _v("DATE")
+    structured = "\n".join(
+        [
+            f"RO_DATE: {ro_date or '-'}",
+            f"LOAD_DATE: {load_date or '-'}",
+            f"TIME: {_revml_normalize_time(_v('TIME')) or '-'}",
+            f"ORIGIN: {normalize_origin(_v('ORIGIN')) or '-'}",
+            f"DESTINATION: {normalize_route(_v('DESTINATION')) or '-'}",
+            f"UNIT_TYPE: {normalize_unit_type(_v('UNIT_TYPE')) or '-'}",
+            f"DRIVER: {clean_driver_name(_v('DRIVER')) or '-'}",
+            f"PLATE: {clean_plate_value(_v('PLATE')) or '-'}",
+            f"PHONE: {normalize_phone_number(_v('PHONE')) or '-'}",
+        ]
+    )
+    original = _v("Original_Text")
+    return f"{original}\n{structured}".strip() if original else structured
+
+
+def _build_match_query_text(payload):
+    updates = payload.get("updates", {}) or {}
+    ro_date = payload.get("target_ro_date", "") or updates.get("RO_DATE", "")
+    load_date = payload.get("target_load_date", "") or updates.get("DATE", "")
+    time_val = payload.get("target_time", "") or updates.get("TIME", "")
+    origin = payload.get("target_origin", "") or updates.get("ORIGIN", "")
+    destination = payload.get("target_route", "") or updates.get("DESTINATION", "")
+    unit_type = payload.get("target_unit", "") or updates.get("UNIT_TYPE", "")
+    driver = updates.get("DRIVER", "")
+    plate = updates.get("PLATE", "")
+    phone = updates.get("PHONE", "")
+    return "\n".join(
+        [
+            "REQUEST ULANG ORDER ONCALL",
+            f"RO_DATE: {ro_date or '-'}",
+            f"LOAD_DATE: {load_date or '-'}",
+            f"TIME: {_revml_normalize_time(time_val) or '-'}",
+            f"ORIGIN: {normalize_origin(origin) or '-'}",
+            f"DESTINATION: {normalize_route(destination) or '-'}",
+            f"UNIT_TYPE: {normalize_unit_type(unit_type) or '-'}",
+            f"DRIVER: {clean_driver_name(driver) or '-'}",
+            f"PLATE: {clean_plate_value(plate) or '-'}",
+            f"PHONE: {normalize_phone_number(phone) or '-'}",
+        ]
+    )
+
+
+def _row_needs_refill(row):
+    driver_blank = not clean_driver_name(row.get("DRIVER", ""))
+    plate_blank = not clean_plate_value(row.get("PLATE", ""))
+    phone_blank = not normalize_phone_number(row.get("PHONE", ""))
+    return driver_blank or plate_blank or phone_blank
+
+
+def _extract_update_payloads(message_text):
+    txt = normalize_field_labels_in_text(message_text or "")
+    txt_lower = txt.lower()
+    is_revision = bool(re.search(r"\b(?:rev|revisi|update|ubah|ganti)\b", txt_lower))
+    common_origin = normalize_origin(extract_origin_from_text(txt))
+    common_route = normalize_route(extract_route_from_text(txt))
+    common_unit = normalize_unit_type(extract_unit_type_from_text(txt))
+    common_ro_date = extract_ro_date_from_text(txt).strip()
+
+    payloads = []
+    loading_details = extract_loading_details(txt)
+    for det in loading_details:
+        updates = {}
+        det_driver = clean_driver_name(det.get("driver", ""))
+        det_plate = clean_plate_value(det.get("plate", ""))
+        det_phone = normalize_phone_number(det.get("phone", ""))
+        det_time = _revml_normalize_time(det.get("time", ""))
+        det_date = str(det.get("date", "") or "").strip()
+
+        if det_driver:
+            updates["DRIVER"] = det_driver
+        if det_plate:
+            updates["PLATE"] = det_plate
+        if det_phone:
+            updates["PHONE"] = det_phone
+        if det_time:
+            updates["TIME"] = det_time
+        if det_date:
+            updates["DATE"] = det_date
+        if common_origin:
+            updates["ORIGIN"] = common_origin
+        if common_route:
+            updates["DESTINATION"] = common_route
+        if common_unit:
+            updates["UNIT_TYPE"] = common_unit
+        if common_ro_date:
+            updates["RO_DATE"] = common_ro_date
+
+        if updates:
+            payloads.append(
+                {
+                    "target_time": det_time,
+                    "target_origin": common_origin,
+                    "target_route": common_route,
+                    "target_unit": common_unit,
+                    "target_ro_date": common_ro_date,
+                    "target_load_date": det_date,
+                    "updates": updates,
+                    "is_revision": is_revision,
+                }
+            )
+
+    if payloads:
+        return payloads
+
+    fallback_updates = {}
+    driver_match = re.search(r"(?im)^\s*(?:driver|pengemudi)(?:\s*\d+)?\s*[:.]?\s*([^\n\r]+)", txt)
+    if driver_match:
+        driver_val = clean_driver_name(driver_match.group(1))
+        if driver_val:
+            fallback_updates["DRIVER"] = driver_val
+
+    plate_match = re.search(r"(?im)^\s*(?:nopol|no\.?\s*pol(?:isi)?|no\.?\s*plat|plat)\s*[:.]?\s*([^\n\r]+)", txt)
+    if plate_match:
+        plate_val = clean_plate_value(plate_match.group(1))
+        if plate_val:
+            fallback_updates["PLATE"] = plate_val
+
+    phone_match = re.search(r"(?im)^\s*(?:no\.?\s*hp|hp|no\.?\s*telp|no\.?\s*tlp|kontak)\s*[:.]?\s*([^\n\r]+)", txt)
+    if phone_match:
+        phone_val = normalize_phone_number(phone_match.group(1))
+        if phone_val:
+            fallback_updates["PHONE"] = phone_val
+
+    time_match = re.search(r"(?i)(?:jam|pukul|waktu(?:\s+loading)?)\s*:?\s*([^\n\r]+)", txt)
+    target_time = ""
+    target_load_date = ""
+    if time_match:
+        time_raw = time_match.group(1).strip()
+        inline_time = re.search(r"(?i)^\s*(\d{1,2}[:.]\d{2})\s*(?:/|\s+)?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}\s+[a-zA-Z]{3,}\s+\d{2,4})?", time_raw)
+        if inline_time:
+            target_time = _revml_normalize_time(inline_time.group(1))
+            target_load_date = str(inline_time.group(2) or "").strip()
+        else:
+            target_time = _revml_normalize_time(time_raw)
+
+    if target_time:
+        fallback_updates["TIME"] = target_time
+    if target_load_date:
+        fallback_updates["DATE"] = target_load_date
+    if common_origin:
+        fallback_updates["ORIGIN"] = common_origin
+    if common_route:
+        fallback_updates["DESTINATION"] = common_route
+    if common_unit:
+        fallback_updates["UNIT_TYPE"] = common_unit
+    if common_ro_date:
+        fallback_updates["RO_DATE"] = common_ro_date
+
+    if fallback_updates:
+        return [
+            {
+                "target_time": target_time,
+                "target_origin": common_origin,
+                "target_route": common_route,
+                "target_unit": common_unit,
+                "target_ro_date": common_ro_date,
+                "target_load_date": target_load_date,
+                "updates": fallback_updates,
+                "is_revision": is_revision,
+            }
+        ]
+
+    return []
+
+
+# --- [ML DOMINANT] REVISION + REFILL PARTIAL ---
+def apply_revisions_from_chat(chat_text, df_final):
+    if df_final is None or df_final.empty or not chat_text:
+        return df_final
+
+    matcher = _get_revision_matcher()
+    if matcher is None:
+        if APP_REVISION_RULE_FALLBACK_ENABLED:
+            return _apply_revisions_from_chat_rule_engine(chat_text, df_final)
+        return df_final
+
+    event_classifier = _get_event_classifier()
+    df = df_final.copy().reset_index(drop=True)
+    messages = _split_wa_messages(chat_text)
+    fallback_messages = []
+    revision_mask = pd.Series(False, index=df.index)
+    if "Original_Text" in df.columns:
+        revision_mask = df["Original_Text"].apply(
+            lambda x: bool(re.search(r"(?i)\b(?:rev|revisi|update)\b", str(x)))
+        )
+
+    def _predict_event(message_text):
+        if event_classifier is None:
+            return "", 0.0
+        try:
+            pred = event_classifier.predict(message_text)
+            return str(pred.get("label", "")).upper(), float(pred.get("score", 0.0))
+        except Exception:
+            return "", 0.0
+
+    def _context_compatible(payload, row_data):
+        target_origin = payload.get("target_origin", "")
+        target_route = payload.get("target_route", "")
+        target_unit = payload.get("target_unit", "")
+        target_time = payload.get("target_time", "")
+
+        row_origin = normalize_origin(row_data.get("ORIGIN", ""))
+        row_route = normalize_route(row_data.get("DESTINATION", ""))
+        row_unit = normalize_unit_type(row_data.get("UNIT_TYPE", ""))
+        row_time = _revml_normalize_time(row_data.get("TIME", ""))
+
+        if target_origin and row_origin and target_origin != row_origin:
+            return False
+        if target_route and row_route and target_route != row_route:
+            return False
+        if target_unit and row_unit and target_unit != row_unit:
+            return False
+        if target_time and row_time and target_time != row_time:
+            return False
+        return True
+
+    for message in messages:
+        message_str = str(message or "").strip()
+        if not message_str:
+            continue
+
+        event_label, event_score = _predict_event(message_str)
+        has_update_keyword = bool(
+            re.search(
+                r"(?i)\b(?:rev|revisi|update|ubah|ganti|ulang|tambahan|perbaikan|refill)\b",
+                message_str,
+            )
+        )
+        is_update_event = (event_label == "UPDATE" and event_score >= APP_EVENT_THRESHOLD) or has_update_keyword
+        if not is_update_event:
+            continue
+
+        payloads = _extract_update_payloads(message_str)
+        if not payloads:
+            if APP_REVISION_RULE_FALLBACK_ENABLED:
+                fallback_messages.append(message_str)
+            continue
+
+        source_indices = []
+        if "Original_Text" in df.columns:
+            msg_norm = _normalize_message_text(message_str)
+            source_indices = [
+                idx
+                for idx in df.index
+                if _normalize_message_text(df.at[idx, "Original_Text"]) == msg_norm
+            ]
+        source_index_set = set(source_indices)
+        reserved_targets = set()
+        message_applied = False
+
+        for payload in payloads:
+            updates = payload.get("updates", {}) or {}
+            if not updates:
+                continue
+
+            is_revision = bool(payload.get("is_revision", False))
+            mode = "REVISION" if is_revision else "REFILL"
+            query_text = f"{message_str}\n{_build_match_query_text(payload)}".strip()
+            if not query_text:
+                continue
+
+            strict_candidates = []
+            broad_candidates = []
+            for idx in df.index:
+                if bool(revision_mask.loc[idx]):
+                    continue
+                if idx in source_index_set or idx in reserved_targets:
+                    continue
+                row = df.loc[idx]
+                if mode == "REFILL" and not _row_needs_refill(row):
+                    continue
+                candidate_item = {
+                    "candidate_index": int(idx),
+                    "candidate_text": _build_match_candidate_text(row),
+                }
+                broad_candidates.append(candidate_item)
+                if _context_compatible(payload, row):
+                    strict_candidates.append(candidate_item)
+
+            candidates = strict_candidates if strict_candidates else broad_candidates
+            if not candidates:
+                continue
+
+            top_k = min(10, len(candidates))
+            ranked = matcher.rank_candidates(query_text, candidates, top_k=top_k)
+            if not ranked:
+                continue
+
+            best = ranked[0]
+            best_prob = float(best.get("match_probability", 0.0))
+            second_prob = float(ranked[1].get("match_probability", 0.0)) if len(ranked) > 1 else 0.0
+            prob_gap = best_prob - second_prob
+            has_strict = bool(strict_candidates)
+
+            passes_threshold = (
+                best_prob >= APP_REVISION_MATCH_THRESHOLD
+                or (has_strict and best_prob >= max(0.0, APP_REVISION_MATCH_THRESHOLD - 0.08))
+            )
+            passes_gap = (len(ranked) == 1) or (prob_gap >= APP_REVISION_MATCH_MIN_GAP) or has_strict
+            if not (passes_threshold and passes_gap):
+                continue
+
+            target_idx = int(best.get("candidate_index", -1))
+            if target_idx not in df.index:
+                continue
+            if has_strict and not _context_compatible(payload, df.loc[target_idx]):
+                continue
+
+            changed = False
+            handled = False
+            for field, raw_value in updates.items():
+                if field not in df.columns:
+                    continue
+                value = str(raw_value or "").strip()
+                if not value:
+                    continue
+
+                if field == "DRIVER":
+                    value = clean_driver_name(value)
+                elif field == "PLATE":
+                    value = clean_plate_value(value)
+                elif field == "PHONE":
+                    value = normalize_phone_number(value)
+                elif field == "ORIGIN":
+                    value = normalize_origin(value)
+                elif field == "DESTINATION":
+                    value = normalize_route(value)
+                elif field == "UNIT_TYPE":
+                    value = normalize_unit_type(value)
+                elif field == "TIME":
+                    value = _revml_normalize_time(value)
+                elif field in {"DATE", "RO_DATE"}:
+                    value = value.strip()
+
+                if not value:
+                    continue
+
+                current = str(df.at[target_idx, field] or "").strip()
+                if mode == "REVISION":
+                    handled = True
+                    if current != value:
+                        df.at[target_idx, field] = value
+                        changed = True
+                else:
+                    if not current:
+                        df.at[target_idx, field] = value
+                        changed = True
+                        handled = True
+                    elif current == value:
+                        handled = True
+
+            if handled:
+                message_applied = True
+                reserved_targets.add(target_idx)
+
+        if not message_applied and APP_REVISION_RULE_FALLBACK_ENABLED:
+            fallback_messages.append(message_str)
+
+    if fallback_messages and APP_REVISION_RULE_FALLBACK_ENABLED:
+        fallback_chat = "\n".join(fallback_messages)
+        df = _apply_revisions_from_chat_rule_engine(fallback_chat, df)
 
     return df
 
@@ -2208,6 +2670,528 @@ def calculate_extraction_accuracy(df_raw, df_final):
             filled_fields += df_final[field].notna().sum()
     accuracy = round((filled_fields / total_fields) * 100, 1) if total_fields > 0 else 0.0
     return min(accuracy, 100.0)
+
+
+def _safe_div(a, b):
+    return (float(a) / float(b)) if b else 0.0
+
+
+def _normalize_time_metric(value):
+    if value is None:
+        return ""
+    s = str(value).strip().upper().replace(".", ":")
+    if not s:
+        return ""
+    if "SEGERA" in s:
+        return "SEGERA"
+    m = re.search(r'(\d{1,2})(?::(\d{2}))?', s)
+    if not m:
+        return ""
+    hh = int(m.group(1))
+    mm = m.group(2) if m.group(2) else "00"
+    return f"{hh:02d}:{mm}"
+
+
+def _normalize_date_metric(value):
+    if value is None:
+        return ""
+    s = str(value).strip()
+    if not s:
+        return ""
+    parsed = parse_date_custom(s)
+    if pd.notna(parsed):
+        return str(parsed.date())
+    return re.sub(r'[^A-Z0-9]+', '', s.upper())
+
+
+def _normalize_plate_metric(value):
+    plate = clean_plate_value(value)
+    return re.sub(r'[^A-Z0-9]+', '', str(plate).upper())
+
+
+def _normalize_route_metric(value):
+    return normalize_route(value)
+
+
+def _normalize_origin_metric(value):
+    return normalize_origin(value)
+
+
+def _normalize_unit_metric(value):
+    return normalize_unit_type(value)
+
+
+def _normalize_driver_metric(value):
+    return clean_driver_name(value).upper()
+
+
+def _extract_phone_candidates(value):
+    if value is None:
+        return []
+    raw = str(value)
+    seqs = re.findall(r'\+?\d[\d\-\s]{6,}', raw)
+    nums = [normalize_phone_number(x) for x in seqs]
+    nums = [n for n in nums if n]
+    if not nums:
+        one = normalize_phone_number(raw)
+        if one:
+            nums = [one]
+    unique = []
+    seen = set()
+    for n in nums:
+        if n in seen:
+            continue
+        seen.add(n)
+        unique.append(n)
+    return unique
+
+
+def _extract_driver_candidates(value):
+    if value is None:
+        return []
+    raw = str(value)
+    parts = [x.strip() for x in re.split(r'\s*&\s*|,|/|;', raw) if x.strip()]
+    names = [_normalize_driver_metric(x) for x in parts]
+    names = [n for n in names if n]
+    if not names:
+        single = _normalize_driver_metric(raw)
+        if single:
+            names = [single]
+    unique = []
+    seen = set()
+    for n in names:
+        if n in seen:
+            continue
+        seen.add(n)
+        unique.append(n)
+    return unique
+
+
+def _field_match(field, pred_value, exp_value):
+    if not str(exp_value or "").strip():
+        return False
+
+    if field == "PHONE":
+        pred_nums = _extract_phone_candidates(pred_value)
+        exp_num = normalize_phone_number(exp_value)
+        return bool(exp_num and exp_num in pred_nums)
+
+    if field == "DRIVER":
+        pred_names = _extract_driver_candidates(pred_value)
+        exp_name = _normalize_driver_metric(exp_value)
+        return bool(exp_name and exp_name in pred_names)
+
+    if field == "PLATE":
+        exp_norm = _normalize_plate_metric(exp_value)
+        if not exp_norm:
+            return False
+        pred_text = str(pred_value or "")
+        pred_parts = [x.strip() for x in re.split(r'\s*&\s*|,|/|;', pred_text) if x.strip()]
+        pred_norms = [_normalize_plate_metric(x) for x in pred_parts]
+        if not pred_norms:
+            pred_norms = [_normalize_plate_metric(pred_text)]
+        return exp_norm in [p for p in pred_norms if p]
+
+    if field == "TIME":
+        return _normalize_time_metric(pred_value) == _normalize_time_metric(exp_value)
+
+    if field == "DATE":
+        return _normalize_date_metric(pred_value) == _normalize_date_metric(exp_value)
+
+    if field == "ORIGIN":
+        return _normalize_origin_metric(pred_value) == _normalize_origin_metric(exp_value)
+
+    if field == "DESTINATION":
+        return _normalize_route_metric(pred_value) == _normalize_route_metric(exp_value)
+
+    if field == "UNIT_TYPE":
+        return _normalize_unit_metric(pred_value) == _normalize_unit_metric(exp_value)
+
+    return str(pred_value or "").strip().upper() == str(exp_value or "").strip().upper()
+
+
+def _field_equal(field, left_value, right_value):
+    if field == "PHONE":
+        left = sorted(_extract_phone_candidates(left_value))
+        right = sorted(_extract_phone_candidates(right_value))
+        return left == right
+
+    if field == "DRIVER":
+        left = sorted(_extract_driver_candidates(left_value))
+        right = sorted(_extract_driver_candidates(right_value))
+        return left == right
+
+    if field == "PLATE":
+        left = _normalize_plate_metric(left_value)
+        right = _normalize_plate_metric(right_value)
+        return left == right
+
+    if field == "TIME":
+        return _normalize_time_metric(left_value) == _normalize_time_metric(right_value)
+
+    if field == "DATE":
+        return _normalize_date_metric(left_value) == _normalize_date_metric(right_value)
+
+    if field == "ORIGIN":
+        return _normalize_origin_metric(left_value) == _normalize_origin_metric(right_value)
+
+    if field == "DESTINATION":
+        return _normalize_route_metric(left_value) == _normalize_route_metric(right_value)
+
+    if field == "UNIT_TYPE":
+        return _normalize_unit_metric(left_value) == _normalize_unit_metric(right_value)
+
+    return str(left_value or "").strip().upper() == str(right_value or "").strip().upper()
+
+
+def _extract_expected_from_original_text(original_text):
+    text = normalize_field_labels_in_text(original_text or "")
+
+    expected = {
+        "ORIGIN": _normalize_origin_metric(extract_origin_from_text(text)),
+        "DESTINATION": _normalize_route_metric(extract_route_from_text(text)),
+        "UNIT_TYPE": _normalize_unit_metric(extract_unit_type_from_text(text)),
+        "TIME": "",
+        "DATE": "",
+        "DRIVER": "",
+        "PLATE": "",
+        "PHONE": "",
+    }
+
+    loading_details = extract_loading_details(text)
+    if loading_details:
+        first = loading_details[0]
+        expected["TIME"] = _normalize_time_metric(first.get("time", ""))
+        expected["DATE"] = str(first.get("date", "")).strip()
+        expected["DRIVER"] = clean_driver_name(first.get("driver", ""))
+        expected["PLATE"] = clean_plate_value(first.get("plate", ""))
+        expected["PHONE"] = normalize_phone_number(first.get("phone", ""))
+
+    if not expected["TIME"] or not expected["DATE"]:
+        loading_candidates = extract_loading_candidates(text)
+        if loading_candidates:
+            first_c = loading_candidates[0]
+            if not expected["TIME"]:
+                expected["TIME"] = _normalize_time_metric(first_c.get("time", ""))
+            if not expected["DATE"]:
+                expected["DATE"] = str(first_c.get("date", "")).strip()
+
+    if not expected["DRIVER"]:
+        driver_match = re.search(
+            r'(?im)^\s*(?:driver|pengemudi)(?:\s*\d+)?\s*[:.]?\s*([^\n\r]*)',
+            text,
+        )
+        if driver_match:
+            expected["DRIVER"] = clean_driver_name(driver_match.group(1))
+
+    if not expected["PLATE"]:
+        plate_match = re.search(
+            r'(?im)^\s*(?:nopol|no\.?\s*pol(?:isi)?|no\.?\s*plat|plat)\s*[:.]?\s*([^\n\r]*)',
+            text,
+        )
+        if plate_match:
+            expected["PLATE"] = clean_plate_value(plate_match.group(1))
+        else:
+            expected["PLATE"] = clean_plate_value(extract_plate_aggressive(text))
+
+    if not expected["PHONE"]:
+        phones = extract_phone_numbers_from_text(text)
+        if phones:
+            expected["PHONE"] = phones[0]
+
+    if expected["DATE"]:
+        expected["DATE"] = _normalize_date_metric(expected["DATE"])
+
+    return expected
+
+
+def _score_from_counts(tp, fp, fn):
+    precision = _safe_div(tp, tp + fp)
+    recall = _safe_div(tp, tp + fn)
+    f1 = _safe_div(2 * precision * recall, precision + recall) if (precision + recall) else 0.0
+    accuracy = _safe_div(tp, tp + fp + fn)
+    return {
+        "tp": int(tp),
+        "fp": int(fp),
+        "fn": int(fn),
+        "precision": precision,
+        "recall": recall,
+        "f1": f1,
+        "accuracy": accuracy,
+    }
+
+
+def compute_ner_business_scores(df_final):
+    fields = ["ORIGIN", "DESTINATION", "UNIT_TYPE", "TIME", "DATE", "DRIVER", "PLATE", "PHONE"]
+    if df_final is None or df_final.empty:
+        return {
+            "summary": {**_score_from_counts(0, 0, 0), "rows": 0, "evaluable_cells": 0},
+            "field_metrics": [],
+        }
+
+    stats = {
+        f: {"tp": 0, "fp": 0, "fn": 0, "support": 0}
+        for f in fields
+    }
+
+    for _, row in df_final.iterrows():
+        expected = _extract_expected_from_original_text(str(row.get("Original_Text", "") or ""))
+        for f in fields:
+            exp = expected.get(f, "")
+            if not str(exp or "").strip():
+                continue
+
+            stats[f]["support"] += 1
+            pred = row.get(f, "")
+            matched = _field_match(f, pred, exp)
+            if matched:
+                stats[f]["tp"] += 1
+            else:
+                if str(pred or "").strip():
+                    stats[f]["fp"] += 1
+                stats[f]["fn"] += 1
+
+    rows = []
+    total_tp = total_fp = total_fn = total_support = 0
+    for f in fields:
+        st_f = stats[f]
+        met = _score_from_counts(st_f["tp"], st_f["fp"], st_f["fn"])
+        total_tp += st_f["tp"]
+        total_fp += st_f["fp"]
+        total_fn += st_f["fn"]
+        total_support += st_f["support"]
+        rows.append(
+            {
+                "field": f,
+                "support": int(st_f["support"]),
+                "tp": met["tp"],
+                "fp": met["fp"],
+                "fn": met["fn"],
+                "accuracy": met["accuracy"],
+                "precision": met["precision"],
+                "recall": met["recall"],
+                "f1": met["f1"],
+            }
+        )
+
+    summary = _score_from_counts(total_tp, total_fp, total_fn)
+    summary["rows"] = int(len(df_final))
+    summary["evaluable_cells"] = int(total_support)
+    return {
+        "summary": summary,
+        "field_metrics": rows,
+    }
+
+
+def _extract_revision_payload_for_metrics(msg_text):
+    msg_text = normalize_field_labels_in_text(msg_text or "")
+    payload = {
+        "target_time": None,
+        "target_origin": "",
+        "target_route": "",
+        "target_unit": "",
+        "updates": {},
+    }
+
+    time_match = re.search(r'(?i)(?:jam|pukul|waktu(?:\s+loading)?)\s*:?\s*(\d{1,2}(?:[:.]\d{2})?)', msg_text)
+    if time_match:
+        payload["target_time"] = _normalize_time_metric(time_match.group(1))
+
+    lokasi_match = re.search(r'(?im)^\s*Lokasi\s*:\s*([^\n\r]+)', msg_text)
+    if lokasi_match:
+        payload["target_origin"] = str(lokasi_match.group(1)).strip().upper()
+
+    route_match = re.search(r'(?im)^\s*Rute(?:\s*/\s*|\s+)tujuan\s*:\s*([^\n\r]+)', msg_text)
+    if route_match:
+        payload["target_route"] = normalize_route(route_match.group(1))
+
+    unit_match = re.search(r'(?im)^\s*(?:jenis\s+unit|type\s+truck)\s*:\s*([^\n\r]+)', msg_text)
+    if unit_match:
+        payload["target_unit"] = normalize_unit_type(unit_match.group(1))
+
+    for line in str(msg_text).split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+
+        plate_match = re.search(
+            r'(?:nopol|no\.?\s*pol(?:isi)?|no\.?\s*plat|plat)\s*:?\s*([A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3})',
+            line,
+            re.IGNORECASE,
+        )
+        if plate_match:
+            payload["updates"]["PLATE"] = plate_match.group(1).strip().upper()
+
+        driver_match = re.search(r'(?:driver|pengemudi)\s*:?\s*([a-zA-Z.\s]+)', line, re.IGNORECASE)
+        if driver_match:
+            d_name = clean_driver_name(driver_match.group(1).strip())
+            if d_name and not re.search(r'(?i)\b(?:rev|revisi|update)\b', d_name):
+                payload["updates"]["DRIVER"] = d_name
+
+        phone_match = re.search(r'(?:no\.?\s*hp|hp|no\.?\s*telp|kontak)\s*:?\s*([0-9+\-\s]+)', line, re.IGNORECASE)
+        if phone_match:
+            payload["updates"]["PHONE"] = normalize_phone_number(phone_match.group(1).strip())
+
+    return payload
+
+
+def compute_revision_business_scores(chat_text, df_before, df_after):
+    base_summary = {
+        "total_revision_messages": 0,
+        "messages_with_updates": 0,
+        "resolved_targets": 0,
+        "target_hit": 0,
+        "unintended_overwrites": 0,
+    }
+    empty = {
+        "summary": {**base_summary, **_score_from_counts(0, 0, 0), "target_accuracy": 0.0},
+        "field_metrics": [],
+    }
+    if df_before is None or df_before.empty or df_after is None or df_after.empty or not chat_text:
+        return empty
+
+    wa_pattern = r"(?=\[\d{2}[.,:]\d{2}[, ]+\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\]\s*[^:]+:)"
+    messages = [m for m in re.split(wa_pattern, str(chat_text)) if str(m).strip()]
+    revision_msgs = [m for m in messages if re.search(r'(?i)\b(?:rev|revisi|update)\b', str(m))]
+    base_summary["total_revision_messages"] = len(revision_msgs)
+
+    fields = ["DRIVER", "PLATE", "PHONE"]
+    field_stats = {f: {"tp": 0, "fp": 0, "fn": 0, "support": 0} for f in fields}
+    total_tp = total_fp = total_fn = 0
+
+    revision_mask = pd.Series(False, index=df_before.index)
+    if "Original_Text" in df_before.columns:
+        revision_mask = df_before["Original_Text"].apply(lambda x: bool(re.search(r'(?i)\b(?:rev|revisi|update)\b', str(x))))
+
+    def row_time(idx):
+        return _normalize_time_metric(df_before.at[idx, "TIME"]) if "TIME" in df_before.columns else None
+
+    def row_origin(idx):
+        return str(df_before.at[idx, "ORIGIN"]).strip().upper() if "ORIGIN" in df_before.columns else ""
+
+    def row_route(idx):
+        return normalize_route(df_before.at[idx, "DESTINATION"]) if "DESTINATION" in df_before.columns else ""
+
+    def row_unit(idx):
+        return normalize_unit_type(df_before.at[idx, "UNIT_TYPE"]) if "UNIT_TYPE" in df_before.columns else ""
+
+    def pick_best(candidates, payload):
+        if not candidates:
+            return None
+        scored = []
+        for idx in candidates:
+            score = 0
+            if payload["target_origin"] and row_origin(idx) == payload["target_origin"]:
+                score += 1
+            if payload["target_route"] and row_route(idx) == payload["target_route"]:
+                score += 1
+            if payload["target_unit"] and row_unit(idx) == payload["target_unit"]:
+                score += 1
+            scored.append((score, idx))
+        max_score = max(s for s, _ in scored)
+        best = [idx for s, idx in scored if s == max_score]
+        return max(best)
+
+    def find_target(payload):
+        candidate_indices = [idx for idx in df_before.index if not bool(revision_mask.loc[idx])]
+        if not candidate_indices:
+            return None
+
+        if payload["target_time"]:
+            by_time = [idx for idx in candidate_indices if row_time(idx) == payload["target_time"]]
+            if by_time:
+                return pick_best(by_time, payload)
+
+        if payload["target_origin"]:
+            by_origin = [idx for idx in candidate_indices if row_origin(idx) == payload["target_origin"]]
+            if by_origin:
+                return pick_best(by_origin, payload)
+
+        if payload["target_route"]:
+            by_route = [idx for idx in candidate_indices if row_route(idx) == payload["target_route"]]
+            if by_route:
+                return pick_best(by_route, payload)
+
+        return max(candidate_indices)
+
+    for msg in revision_msgs:
+        payload = _extract_revision_payload_for_metrics(msg)
+        updates = payload.get("updates", {})
+        if not updates:
+            continue
+
+        base_summary["messages_with_updates"] += 1
+        target_idx = find_target(payload)
+        if target_idx is None:
+            for field, _ in updates.items():
+                if field not in field_stats:
+                    continue
+                field_stats[field]["support"] += 1
+                field_stats[field]["fn"] += 1
+                total_fn += 1
+            continue
+
+        base_summary["resolved_targets"] += 1
+        msg_hit = False
+
+        for field, expected_val in updates.items():
+            if field not in field_stats:
+                continue
+            field_stats[field]["support"] += 1
+
+            before_val = df_before.at[target_idx, field] if field in df_before.columns else ""
+            after_val = df_after.at[target_idx, field] if field in df_after.columns else ""
+            changed = not _field_equal(field, before_val, after_val)
+            matched = _field_match(field, after_val, expected_val)
+
+            if matched:
+                field_stats[field]["tp"] += 1
+                total_tp += 1
+                msg_hit = True
+            else:
+                field_stats[field]["fn"] += 1
+                total_fn += 1
+                if changed:
+                    field_stats[field]["fp"] += 1
+                    total_fp += 1
+
+        if msg_hit:
+            base_summary["target_hit"] += 1
+
+        for side_field in fields:
+            if side_field in updates:
+                continue
+            before_side = df_before.at[target_idx, side_field] if side_field in df_before.columns else ""
+            after_side = df_after.at[target_idx, side_field] if side_field in df_after.columns else ""
+            if not _field_equal(side_field, before_side, after_side):
+                base_summary["unintended_overwrites"] += 1
+
+    summary_scores = _score_from_counts(total_tp, total_fp, total_fn)
+    target_accuracy = _safe_div(base_summary["target_hit"], base_summary["messages_with_updates"])
+    summary = {
+        **base_summary,
+        **summary_scores,
+        "target_accuracy": target_accuracy,
+    }
+
+    field_rows = []
+    for f in fields:
+        met = _score_from_counts(field_stats[f]["tp"], field_stats[f]["fp"], field_stats[f]["fn"])
+        field_rows.append(
+            {
+                "field": f,
+                "support": int(field_stats[f]["support"]),
+                "tp": met["tp"],
+                "fp": met["fp"],
+                "fn": met["fn"],
+                "accuracy": met["accuracy"],
+                "precision": met["precision"],
+                "recall": met["recall"],
+                "f1": met["f1"],
+            }
+        )
+
+    return {"summary": summary, "field_metrics": field_rows}
 
 # =================================================================================
 # --- FRONTEND UI: WHITE THEME - PROFESSIONAL EDITION ---
@@ -2498,6 +3482,7 @@ def main():
 
     if btn_clear:
         st.session_state.pop('df_office', None)
+        st.session_state.pop('thesis_scores', None)
         st.session_state.waktu = "--"
         st.session_state.baris = "--"
         st.session_state.akurasi = "--"
@@ -2507,6 +3492,7 @@ def main():
 
     if btn_reset_db:
         st.session_state.pop('df_office', None)
+        st.session_state.pop('thesis_scores', None)
         st.session_state.waktu = "--"
         st.session_state.baris = "--"
         st.session_state.akurasi = "--"
@@ -2544,6 +3530,7 @@ def main():
         if not chat_input.strip():
             st.error("Input kosong. Silakan paste data dokumen terlebih dahulu.")
         else:
+            st.session_state.pop('thesis_scores', None)
             processing_container = st.empty()
             start_time = time.time()
             
@@ -2570,6 +3557,7 @@ def main():
                     st.session_state.baris = f"{len(df_saved)} Order"
                     st.session_state.akurasi = st.session_state.get('akurasi', '--')
                     st.session_state.processing_time = 0.0
+                st.session_state.pop('thesis_scores', None)
                 st.info("Chat ini sudah pernah diupload. Data lama dipertahankan (tidak diproses ulang).")
                 st.rerun()
 
@@ -2586,16 +3574,19 @@ def main():
 
             if df_raw is not None and not df_raw.empty:
                 df_proc = preprocess_context(df_raw)
-                df_final = enforce_block_quota(df_proc)
+                df_before_revision = enforce_block_quota(df_proc)
                 
                 # Terapkan fungsi revisi yang sudah DIPERBAIKI
-                df_final = apply_revisions_from_chat(chat_input, df_final)
+                df_after_revision = apply_revisions_from_chat(chat_input, df_before_revision.copy())
+                df_final = df_after_revision.copy()
                 df_final = apply_driver_pair_from_text(df_final)
                 df_final = apply_phone_pair_from_text(df_final)
                 if 'PLATE' in df_final.columns:
                     df_final['PLATE'] = df_final['PLATE'].apply(clean_plate_value)
 
                 accuracy = calculate_extraction_accuracy(df_raw, df_final)
+                ner_scores = compute_ner_business_scores(df_final)
+                revision_scores = compute_revision_business_scores(chat_input, df_before_revision, df_after_revision)
                 
                 df_office = pd.DataFrame()
                 df_office['No.'] = range(1, len(df_final) + 1)
@@ -2680,6 +3671,10 @@ def main():
 
                 processing_container.empty()
                 st.session_state['df_office'] = df_office
+                st.session_state['thesis_scores'] = {
+                    "ner": ner_scores,
+                    "revision": revision_scores,
+                }
                 st.session_state.waktu = f"{processing_time}s"
                 st.session_state.baris = f"{len(df_office)} Order"
                 st.session_state.akurasi = f"{accuracy}%"
@@ -2841,6 +3836,86 @@ def main():
             df_view.style.apply(_status_row_style, axis=1),
             use_container_width=True
         )
+
+        thesis_scores = st.session_state.get("thesis_scores")
+        st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
+        st.markdown("### Metrik Skripsi: NER & Revision (Business Process)")
+
+        if not thesis_scores:
+            st.info("Metrik NER/Revision belum tersedia untuk tampilan ini. Jalankan ekstraksi baru agar skor terhitung.")
+        else:
+            ner_scores = thesis_scores.get("ner", {}) or {}
+            rev_scores = thesis_scores.get("revision", {}) or {}
+            ner_sum = ner_scores.get("summary", {}) or {}
+            rev_sum = rev_scores.get("summary", {}) or {}
+
+            def _pct(v):
+                return f"{float(v or 0.0) * 100:.2f}%"
+
+            st.caption(
+                "Definisi evaluasi mengikuti proses bisnis pipeline: "
+                "NER dihitung berbasis evidence field pada chat asli; "
+                "Revision dihitung dari update field pada row target (before vs after revisi)."
+            )
+
+            st.markdown("#### Ringkasan NER")
+            ner_c1, ner_c2, ner_c3, ner_c4 = st.columns(4, gap="small")
+            with ner_c1:
+                st.metric("Accuracy", _pct(ner_sum.get("accuracy", 0.0)))
+            with ner_c2:
+                st.metric("Precision", _pct(ner_sum.get("precision", 0.0)))
+            with ner_c3:
+                st.metric("Recall", _pct(ner_sum.get("recall", 0.0)))
+            with ner_c4:
+                st.metric("F1", _pct(ner_sum.get("f1", 0.0)))
+
+            ner_meta_1, ner_meta_2, ner_meta_3 = st.columns(3, gap="small")
+            with ner_meta_1:
+                st.metric("Rows", int(ner_sum.get("rows", 0)))
+            with ner_meta_2:
+                st.metric("Evaluable Cells", int(ner_sum.get("evaluable_cells", 0)))
+            with ner_meta_3:
+                st.metric("TP / FP / FN", f"{int(ner_sum.get('tp', 0))} / {int(ner_sum.get('fp', 0))} / {int(ner_sum.get('fn', 0))}")
+
+            ner_field_df = pd.DataFrame(ner_scores.get("field_metrics", []))
+            if not ner_field_df.empty:
+                for c in ["accuracy", "precision", "recall", "f1"]:
+                    ner_field_df[c] = ner_field_df[c].apply(_pct)
+                st.dataframe(ner_field_df, use_container_width=True)
+
+            st.markdown("#### Ringkasan Revision")
+            rev_c1, rev_c2, rev_c3, rev_c4, rev_c5 = st.columns(5, gap="small")
+            with rev_c1:
+                st.metric("Accuracy", _pct(rev_sum.get("accuracy", 0.0)))
+            with rev_c2:
+                st.metric("Precision", _pct(rev_sum.get("precision", 0.0)))
+            with rev_c3:
+                st.metric("Recall", _pct(rev_sum.get("recall", 0.0)))
+            with rev_c4:
+                st.metric("F1", _pct(rev_sum.get("f1", 0.0)))
+            with rev_c5:
+                st.metric("Target Accuracy", _pct(rev_sum.get("target_accuracy", 0.0)))
+
+            rev_meta_1, rev_meta_2, rev_meta_3, rev_meta_4 = st.columns(4, gap="small")
+            with rev_meta_1:
+                st.metric("Rev Msg", int(rev_sum.get("total_revision_messages", 0)))
+            with rev_meta_2:
+                st.metric("Msg dgn Update", int(rev_sum.get("messages_with_updates", 0)))
+            with rev_meta_3:
+                st.metric("Resolved Target", int(rev_sum.get("resolved_targets", 0)))
+            with rev_meta_4:
+                st.metric("Unintended Overwrite", int(rev_sum.get("unintended_overwrites", 0)))
+
+            rev_meta_5, = st.columns(1)
+            with rev_meta_5:
+                st.metric("TP / FP / FN", f"{int(rev_sum.get('tp', 0))} / {int(rev_sum.get('fp', 0))} / {int(rev_sum.get('fn', 0))}")
+
+            rev_field_df = pd.DataFrame(rev_scores.get("field_metrics", []))
+            if not rev_field_df.empty:
+                for c in ["accuracy", "precision", "recall", "f1"]:
+                    rev_field_df[c] = rev_field_df[c].apply(_pct)
+                st.dataframe(rev_field_df, use_container_width=True)
+
         st.markdown("</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
