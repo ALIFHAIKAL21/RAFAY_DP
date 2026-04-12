@@ -2749,12 +2749,39 @@ def load_df_office_from_db():
 def calculate_extraction_accuracy(df_raw, df_final):
     if df_final is None or df_final.empty:
         return 0.0
-    critical_fields = ['DRIVER', 'PLATE', 'DATE', 'TIME', 'ORIGIN', 'DESTINATION', 'UNIT_TYPE']
-    total_fields = len(critical_fields) * len(df_final)
+
+    def _has_value(val):
+        if val is None:
+            return False
+        s = str(val).strip()
+        if not s:
+            return False
+        if s.lower() in {"-", "none", "null", "nan", "nat", "undefined"}:
+            return False
+        return True
+
+    total_fields = 8 * len(df_final)
     filled_fields = 0
-    for field in critical_fields:
-        if field in df_final.columns:
-            filled_fields += df_final[field].notna().sum()
+
+    for _, row in df_final.iterrows():
+        ro_date = str(row.get("RO_DATE", "")).strip() or str(row.get("DATE", "")).strip()
+        load_date = (
+            str(row.get("DATE", "")).strip()
+            or str(row.get("LOAD_DATE", "")).strip()
+            or str(row.get("RO_DATE", "")).strip()
+        )
+        eval_values = [
+            ro_date,                         # TGL_RO
+            load_date,                       # TGL_MUAT
+            row.get("ORIGIN", ""),         # PICKUP
+            row.get("DESTINATION", ""),    # TUJUAN
+            row.get("PLATE", ""),          # NO.PLAT
+            row.get("UNIT_TYPE", ""),      # TYPE TRUCK
+            row.get("DRIVER", ""),         # DRIVER
+            row.get("PHONE", ""),          # KONTAK_DRIVER
+        ]
+        filled_fields += sum(1 for v in eval_values if _has_value(v))
+
     accuracy = round((filled_fields / total_fields) * 100, 1) if total_fields > 0 else 0.0
     return min(accuracy, 100.0)
 
@@ -2935,6 +2962,8 @@ def _extract_expected_from_original_text(original_text):
     text = normalize_field_labels_in_text(original_text or "")
 
     expected = {
+        "RO_DATE": "",
+        "LOAD_DATE": "",
         "ORIGIN": _normalize_origin_metric(extract_origin_from_text(text)),
         "DESTINATION": _normalize_route_metric(extract_route_from_text(text)),
         "UNIT_TYPE": _normalize_unit_metric(extract_unit_type_from_text(text)),
@@ -2944,6 +2973,11 @@ def _extract_expected_from_original_text(original_text):
         "PLATE": "",
         "PHONE": "",
     }
+
+    ro_date = extract_ro_date_from_text(text)
+    if ro_date:
+        expected["RO_DATE"] = _normalize_date_metric(ro_date)
+        expected["LOAD_DATE"] = expected["RO_DATE"]
 
     loading_details = extract_loading_details(text)
     if loading_details:
@@ -2988,6 +3022,7 @@ def _extract_expected_from_original_text(original_text):
 
     if expected["DATE"]:
         expected["DATE"] = _normalize_date_metric(expected["DATE"])
+        expected["LOAD_DATE"] = expected["DATE"]
 
     return expected
 
@@ -3009,39 +3044,59 @@ def _score_from_counts(tp, fp, fn):
 
 
 def compute_ner_business_scores(df_final):
-    fields = ["ORIGIN", "DESTINATION", "UNIT_TYPE", "TIME", "DATE", "DRIVER", "PLATE", "PHONE"]
+    field_specs = [
+        {"label": "TGL_RO", "pred_cols": ["RO_DATE", "DATE"], "exp_key": "RO_DATE", "match_key": "DATE"},
+        {"label": "TGL_MUAT", "pred_cols": ["DATE", "LOAD_DATE", "RO_DATE"], "exp_key": "LOAD_DATE", "match_key": "DATE"},
+        {"label": "PICKUP", "pred_cols": ["ORIGIN"], "exp_key": "ORIGIN", "match_key": "ORIGIN"},
+        {"label": "TUJUAN", "pred_cols": ["DESTINATION"], "exp_key": "DESTINATION", "match_key": "DESTINATION"},
+        {"label": "NO.PLAT", "pred_cols": ["PLATE"], "exp_key": "PLATE", "match_key": "PLATE"},
+        {"label": "TYPE TRUCK", "pred_cols": ["UNIT_TYPE"], "exp_key": "UNIT_TYPE", "match_key": "UNIT_TYPE"},
+        {"label": "DRIVER", "pred_cols": ["DRIVER"], "exp_key": "DRIVER", "match_key": "DRIVER"},
+        {"label": "KONTAK_DRIVER", "pred_cols": ["PHONE"], "exp_key": "PHONE", "match_key": "PHONE"},
+    ]
+
     if df_final is None or df_final.empty:
         return {
             "summary": {**_score_from_counts(0, 0, 0), "rows": 0, "evaluable_cells": 0},
             "field_metrics": [],
         }
 
+    labels = [spec["label"] for spec in field_specs]
     stats = {
         f: {"tp": 0, "fp": 0, "fn": 0, "support": 0}
-        for f in fields
+        for f in labels
     }
+
+    def _pick_first_non_empty(row, cols):
+        for c in cols:
+            v = row.get(c, "")
+            if str(v or "").strip():
+                return v
+        return ""
 
     for _, row in df_final.iterrows():
         expected = _extract_expected_from_original_text(str(row.get("Original_Text", "") or ""))
-        for f in fields:
-            exp = expected.get(f, "")
+        for spec in field_specs:
+            label = spec["label"]
+            exp = expected.get(spec["exp_key"], "")
             if not str(exp or "").strip():
                 continue
 
-            stats[f]["support"] += 1
-            pred = row.get(f, "")
-            matched = _field_match(f, pred, exp)
+            stats[label]["support"] += 1
+            pred = _pick_first_non_empty(row, spec["pred_cols"])
+            matched = _field_match(spec["match_key"], pred, exp)
             if matched:
-                stats[f]["tp"] += 1
+                stats[label]["tp"] += 1
             else:
                 if str(pred or "").strip():
-                    stats[f]["fp"] += 1
-                stats[f]["fn"] += 1
+                    stats[label]["fp"] += 1
+                stats[label]["fn"] += 1
 
     rows = []
     total_tp = total_fp = total_fn = total_support = 0
-    for f in fields:
-        st_f = stats[f]
+    for spec in field_specs:
+        label = spec["label"]
+        st_f = stats[label]
         met = _score_from_counts(st_f["tp"], st_f["fp"], st_f["fn"])
         total_tp += st_f["tp"]
         total_fp += st_f["fp"]
@@ -3049,7 +3104,7 @@ def compute_ner_business_scores(df_final):
         total_support += st_f["support"]
         rows.append(
             {
-                "field": f,
+                "field": label,
                 "support": int(st_f["support"]),
                 "tp": met["tp"],
                 "fp": met["fp"],
