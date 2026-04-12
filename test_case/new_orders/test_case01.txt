@@ -1,0 +1,610 @@
+﻿[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 01 Feb 26
+
+2 Unit TWB / 50 Cbm
+Lokasi : ARGOPANTES
+Waktu loading : SEGERA
+Rute/tujuan : CGK - MES
+Driver : Samosir
+Nopol : B 9727 UEX
+No Hp : 082274296236
+
+
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 02 Feb 26
+
+5 Unit  CDDL
+Lokasi : ARGOPANTES
+Waktu loading : SEGERA
+Rute/tujuan : CGK - MES
+Nama : Supriadi
+Nopol : BK 8994 XH
+NO TLP : 082391500247
+
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 03 Feb 26
+
+6 Unit TWB 50 Cbm
+Lokasi : ARGOPANTES
+Waktu loading : SEGERA
+Rute/tujuan : CGK - MES
+Driver : Suhendi
+Nopol : L 8845 UT
+No Hp : 082127937145
+
+Lokasi : ARGOPANTES
+Waktu loading : 23:00
+Rute/tujuan : CGK - PKU
+Driver : M. Rizki
+Nopol : BM 9156 RU
+No Hp : 083894294040
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call 04 FEBUARI 2026
+
+RAFAY
+4 UNIT CDDL/TWB
+Lokasi : ARGOPANTES
+Waktu loading : segera
+Rute/tujuan : CGK - PDG
+driver  : Sutrisno
+Nopol  : BM 8364 AU
+No hp  :085353886066
+
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 05 Feb 26
+
+4 Unit TWB 50 Cbm
+Lokasi : ARGOPANTES
+Waktu loading : SEGERA
+Rute/tujuan : CGK - MES
+Driver   : Feri Irawan
+Nopol  : BK 8516 VV
+No Hp  : 085219216210
+
+Waktu loading : 20:00
+Rute/tujuan : CGK - PKU
+Driver   : Ryan
+Nopol  : B 9083 VEH
+No Hp  : 087837496810
+
+Waktu loading : 22:00
+Rute/tujuan : CGK - UPX (PERAK)
+Driver   : M. Ibnu
+Nopol  : L 9511 AL
+No Hp  : 082191633212
+
+Waktu loading : 23:00
+Rute/tujuan : CGK - SUB
+Driver   : Akiyat
+Nopol  : L 9722 UE
+No Hp  : 081281122738
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 06 febuary 2026
+
+2 unit twb 50 CBM
+Lokasi : JNE SUB
+Waktu loading : SEGERA
+Rute/tujuan : SUB-CGK
+driver  : WAHYUDI
+Nopol  : N 9549 UA
+No hp  :085784422398
+
+Waktu loading : 02:00 07/02/2026
+Rute/tujuan : CGX-CGK
+driver  : SOFYAN
+Nopol  : B 9679 WT
+No hp  : 082231837381
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 06 febuary 2026
+
+RAFAY
+5 unit TWB 50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : 07:00 07-02-2026
+Rute/tujuan : CGK - SUX
+driver  : Chandra
+Nopol  : L 8601 UH
+No hp  : 085231681470
+
+Waktu loading : segera
+Rute/tujuan : CGK - UPX (PERAK)
+driver  : Didik
+Nopol  : B 9687 JM
+No hp  :085385220743
+
+Waktu loading : segera
+Rute/tujuan : CGK - SUX
+driver  : Hermanto
+Nopol  : S 8635 NJ
+No hp  :085194592825
+
+Waktu loading : segera
+Rute/tujuan : CGK - PKU
+driver  :
+Nopol  : 
+No hp  : 
+
+Waktu loading : segera
+Rute/tujuan : CGK - UPX (PERAK)
+driver  : 
+Nopol  : 
+No hp  :
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 08 Feb 26
+
+4 UNIT TWB 50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : SEGERA
+Rute/tujuan : CGK - MES
+driver  : Sentot
+Nopol  : B 9231 CEU
+No hp  :081287147789
+
+Waktu loading : 17:00
+Rute/tujuan : CGK - MES
+driver  : 
+Nopol  : 
+No hp  :
+
+Lokasi : CGK
+Waktu loading : SEGERA
+Rute/tujuan : CGK - PROBOLINGGO
+driver  : 
+Nopol  : 
+No hp  :
+
+Waktu loading : 23:00
+Rute/tujuan : CGK - PKU
+driver  : 
+Nopol  : 
+No hp  :
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 09 Feb 26
+
+5 UNIT cddl
+Lokasi : JNE SRG
+Waktu loading : 22.00
+Rute/tujuan : SRG-CGK
+Driver : Arif R
+Nopol : B 9787 XX
+No hp :089690885555
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 11 Feb 26
+
+4 UNIT WB / CDDL
+Lokasi : MEGAHUB
+Waktu loading : SEGERA
+Rute/tujuan : CGK - NEGARA, MENGWI, TABANAN, DENPASAR (DPS), DENPASAR (AMI)
+driver  : Nizar
+Nopol  : B 9172 SCP
+No hp  : 082111994263
+
+Lokasi : ARGOPANTES
+Waktu loading : 23:00
+Rute/tujuan : CGK - MES
+driver  : Samosir
+Nopol  : B 9727 UEX
+No hp  : 082274296236
+
+Waktu loading : 01:00 12/02/2026
+Rute/tujuan : CGK - MES
+driver  : Joni
+Nopol  : B 9169 UEX
+No hp  : 082276385077
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 12 Feb 26
+
+5 UNIT CDDL
+Lokasi : ARGOPANTES
+Waktu loading : segera
+Rute/tujuan : CGK - PKU
+driver  : Nasip K
+Nopol  : BH 8165 QI
+No hp  : 081272463920
+
+Waktu loading : segera
+Rute/tujuan : CGK - MES
+driver  : Sri Mardono
+Nopol  : BK 8678 VE
+No hp  :085218843366
+
+Lokasi : Cikokol + Cikarang
+Waktu loading : 03:00/ 13-02-26
+Rute/tujuan : CKR-JBR
+Driver   : Jatmiyanta
+Nopol  : F 9647 FH
+No Hp  : 082118558105
+
+Lokasi : Cikokol
+Waktu loading : segera
+Rute/tujuan : CGK - UPX (PERAK)
+driver  : AGENG
+Nopol  : B 9654 YU
+No hp  : +62 857-0738-0584
+
+Lokasi : ARGOPANTES
+Waktu loading : 22:00
+Rute/tujuan : CGK - SUB
+driver  : Rosyit
+Nopol  : B 9562 TEU
+No hp  : 082313572678
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 13 Feb 26
+
+9 UNIT CDDL
+Lokasi : ARGOPANTES
+Waktu loading : 15:00
+Rute/tujuan : CGK - PKU
+driver  : HERMAN
+Nopol  : B 9718 TJ
+No hp  :087844510846
+
+Waktu loading : 18:00
+Rute/tujuan : CGK - PKU
+driver  : FAJRI
+Nopol  : B 9241 FXS
+No hp  :081382418508
+
+Waktu loading : 23:00
+Rute/tujuan : CGK - PKU
+driver  : ANDI
+Nopol  : BE 8794 AMB
+No hp  :082183783385
+
+Waktu loading : 02:00 14-02-2026
+Rute/tujuan : CGK - PKU
+driver  : NOPRIANTO
+Nopol  : BE 8251 FOA
+No hp  :085758955627
+
+Waktu loading : 02.00 14-02-2026
+Rute/tujuan : CGK - PKU
+driver  : MENGRI
+Nopol : BM 8279 AU
+No hp : 085364056583
+
+Waktu loading : 03:00
+Rute/tujuan : CGK - DEMAK - PURWODADI
+driver  : Dimas
+Nopol : H 9263 OV
+No hp : 082217785226
+
+Waktu loading : segera
+Rute/tujuan : CGK - MES
+driver  : SIMARE
+Nopol  : BK 8639 FJ
+No hp  :081269345748
+
+Waktu loading : 22.00
+Rute/tujuan : CGK - DENPASAR
+driver  : Nanang
+Nopol  : AB 8053 KA
+No hp  :08889693664
+
+Waktu loading : 23:30
+Rute/tujuan : CGK - PDG
+driver  : Agung
+Nopol  : BK 8208 VY
+No hp  : 082385989323
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 16 Feb 26
+
+1 Unit  Cddl / 24 Cbm
+Lokasi : Cikokol + Cikarang
+Waktu loading : 03:00/ 17-02-26
+Rute/tujuan : CGK-JBR
+Driver   : Arif
+Nopol  :  B 9209 NCK
+No Hp :081328851819
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 17 Feb 26
+
+5 UNIT TWB / CDDL
+Lokasi : ARGOPANTES
+Waktu loading : SEGERA
+Rute/tujuan : CGK - PKU
+Driver : Siswanto
+Nopol : B 9120 WXR
+No Hp : 081943564062
+
+Waktu loading : 07:00
+Rute/tujuan : CGK - MES
+Driver : Anto
+Nopol : B 9285 UEX
+No Hp : 082377225563
+
+Waktu loading : 08:00
+Rute/tujuan : CGK - MES
+Driver : Kudir
+Nopol : B 9380 UEX
+No Hp : 081262189242
+
+Waktu loading : 09:00
+Rute/tujuan : CGK - PKU
+Driver : Amri Suardi
+Nopol : BK 8209 VY
+No Hp : 082137700645
+
+Lokasi : MEGAHUB
+Waktu loading : 10:00
+Rute/tujuan : CGK - MALANG
+Driver : Sandjiwo
+Nopol : B 9147 SCJ
+No Hp : 082119995004
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 19 Feb 26
+
+6 UNIT TWB/50 CM
+Lokasi : ARGOPANTES
+Waktu loading : 17:00
+Rute/tujuan : CGK - MOJOKERTO
+driver  : Agus
+Nopol  : B 9546 KXX
+No hp  :082128909001
+
+Waktu loading : segera
+Rute/tujuan : CGK - MES
+driver  : Feriandi
+Nopol  : BK 8215 HB
+No hp  :082397112740
+
+Waktu loading : 18:00
+Rute/tujuan : CGK - PKU
+driver  : Syahrial
+Nopol  : BM 8486 AU
+No hp  :081317708658
+
+Waktu loading : 19:00
+Rute/tujuan : CGK - SUX
+driver  : Yuda
+Nopol  : W 8973 UQ
+No hp  :089507296985
+
+Waktu loading : 20:00
+Rute/tujuan : CGK - SUX
+driver  : Wahyudi
+Nopol  : N 9549 UA
+No hp  :085784422398
+
+Lokasi : CIKARANG
+Waktu loading : 22:00
+Rute/tujuan : SUX - PROBOLINGGO
+driver  : Nana Hermawan & Rizky
+Nopol  : B 9658 TCP
+No hp  :082261270165
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 21 Feb 26
+
+7 UNIT WB 50 CBM
+Lokasi : ANGKEPOGLAR + ARGOPANTES
+Waktu loading : SEGERA
+Rute/tujuan : CGK - PKU
+driver  : Alpinasri
+Nopol  : BM 8743 AU
+No hp  : 082171880402
+
+Waktu loading : SEGERA
+Rute/tujuan : CGK - MES
+driver  : Suyoto
+Nopol  : A 8579 ZY
+No hp  : 081314527908
+
+Lokasi : ARGOPANTES
+Waktu loading : 20:00
+Rute/tujuan : CGK - MES
+driver  : Rio Irvan
+Nopol  : BE 8019 HI
+No hp  :082151440733
+
+Waktu loading : 21:00
+Rute/tujuan : CGK - MES
+driver  : Aritonang
+Nopol  : B 9756 UEU
+No hp  :082285091664
+
+Waktu loading : 23:00
+Rute/tujuan : CGK - MES
+driver  : Manulang
+Nopol  : BK 8965 XJ
+No hp  :081370769496
+
+Waktu loading : 01:00 22/02/2026
+Rute/tujuan : CGK - MES
+driver  : Ambar
+Nopol  : B 9023 UEX
+No hp  :082139009145
+
+Waktu loading : 03:00 22/02/2026
+Rute/tujuan : CGK - MES
+driver  : Didik Permadi
+Nopol  : BE 8235 UQ
+No hp  :082299440556
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 23 Feb 26
+
+4 Unit  Cddl / 24 Cbm
+Lokasi : Cikokol + Cikarang
+Waktu loading : 03:00/ 24-02-26
+Rute/tujuan : CKR-JBR
+Driver   : Nana Hermawan
+Nopol  : B 9658 TCP
+No Hp  : 082261270165
+
+Lokasi : MEGAHUB
+Waktu loading : 05:00
+Rute/tujuan : CGK - NEGARA, MENGWI, TABANAN, DENPASAR (DPS), DENPASAR (AMI)
+Driver   : Nanah H
+Nopol  : B 9658 TCP
+No Hp  : 083180623289
+
+Lokasi : ARGOPANTES
+Waktu loading : 09:00
+Rute/tujuan : CGK - MALANG
+Driver   : Tumilan, Jatmiyanta
+Nopol  : F 9647 FH
+No Hp  : 082118558105
+
+Waktu loading : 11:00
+Rute/tujuan : CGK - MADIUN, JEMBER
+Driver   : Agus
+Nopol  : B 9546 KXX
+No Hp  : 082128909001
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 25 Feb 26
+
+4 UNIT TWB / CDDL
+Lokasi : ARGOPANTES
+Waktu loading : SEGERA
+Rute/tujuan : CGK - PKU
+Driver : Endra
+Nopol : L 8791 UK
+No Hp : 081330790438
+
+Waktu loading : 17:00
+Rute/tujuan : CGK - MES
+Driver : Manalu
+Nopol : B 9732 UEX
+No Hp : 082228606115
+
+Lokasi : MEGAHUB
+Waktu loading : 19:00
+Rute/tujuan : CGK - NEGARA, MENGWI, TABANAN, DENPASAR (DPS), DENPASAR (AMI)
+Driver : Arizal
+Nopol : B 9895 UXX
+No Hp : 081229080317
+
+Lokasi : ARGOPANTES
+Waktu loading : 22:00
+Rute/tujuan : CGK - SUB
+Driver : Wahyudi
+Nopol : N 9549 UA
+No Hp : 085784422398
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 26 Feb 26
+
+6 UNIT TWB / CDDL
+Lokasi : CIKARANG
+Waktu loading : 06:00/ 27-02-26
+Rute/tujuan : CKR-JBR
+Driver : Davit
+Nopol : B 9726 SXW
+No Hp :082117275166
+
+Lokasi : CIKARANG
+Waktu loading : SEGERA
+Rute/tujuan : CKR-SUB
+Driver : Bahrul Khilmi
+Nopol : B 9608 EP
+No Hp :081273004114
+
+Lokasi : ARGOPANTES
+Waktu loading : 15:00
+Rute/tujuan : CGK - SUX
+Driver : Rosyit
+Nopol : B 9562 TEU
+No Hp :082313572678
+
+Lokasi : MEGAHUB
+Waktu loading : 18:00
+Rute/tujuan : CGK - MALANG
+Driver : Tumilan, Jatmiyanta
+Nopol : F 9647 FH
+No Hp :082118558105
+
+Lokasi : ARGOPANTES
+Waktu loading : 20:00
+Rute/tujuan : CGK - PKU
+Driver : Siswanto
+Nopol : B 9120 WXR
+No Hp :081943564062
+
+Waktu loading : 23:00
+Rute/tujuan : CGK - MES
+Driver : Hendra Setiawan
+Nopol : BE 8023 WY
+No Hp :081280483919
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 27 Feb 26
+
+9 UNIT WB
+Lokasi : SUX
+Waktu loading : SEGERA
+Rute/tujuan : CGX + CGK
+NAMA : HABIB
+NOPOL : L 8336 UV
+NO HP :081231540625
+
+Waktu loading : SEGERA
+Rute/tujuan : CGX, CGK
+NAMA : AKIYAT
+NOPOL : L 9722 UE
+NO HP :081281122738
+
+Lokasi : ARGOPANTES
+Waktu loading : 15:00
+Rute/tujuan : CGK - SUB
+NAMA : ARIS
+NOPOL : B 9139 SYT
+NO HP :081936963942
+
+Waktu loading : 18:00
+Rute/tujuan : CGK - SUX
+NAMA : MUATIM
+NOPOL : H 9224 MA
+NO HP :08121615206
+
+Waktu loading : 19:00
+Rute/tujuan : CGK - SUB
+NAMA : JAMAADI
+NOPOL : L 8786 BN
+NO HP :082229973792
+
+Waktu loading : 20:00
+Rute/tujuan : CGK - SDA
+NAMA : IBNU
+NOPOL : L 9511 AL
+NO HP :082191633212
+
+Lokasi : WANGONGATEWAY
+Waktu loading : 12.00
+Rute/tujuan : WGX-MGL-JOG
+Nama : Agung Prasetyo
+Nopol : B 9739 SEU
+No.hp : 085726344824
+
+Lokasi : ARGOPANTES
+Waktu loading : 23:00
+Rute/tujuan : CGK - MES
+NAMA : Dian Saputra
+NOPOL : BE 8334 GBA
+NO HP : 08218218481
+
+[05.31, 7/3/2026] Akbar Rafay: Request Unit On Call Tgl 28 Feb 26
+
+4 UNIT CDDL / WB
+Lokasi : MEGAHUB
+Waktu loading : SEGERA
+Rute/tujuan : CGK - PASURUAN, PROBOLINGGO, JEMBER
+Driver : Agus Supriatna
+Nopol : B 9546 KXX
+No hp :082128909001
+
+Lokasi : MEGAHUB
+Waktu loading : 02:00 01/03/2026
+Rute/tujuan : CGK - MALANG
+Driver : Rizky / Ariss
+Nopol : B 9091 SCJ
+No hp :082229441113
+
+Lokasi : ARGOPANTES
+Waktu loading : 07:00 02/03/2026
+Rute/tujuan : CGK - CGK
+Driver : Rosyit
+Nopol : B 9562 TEU
+No hp :082313572678
+
+Lokasi : ARGOPANTES
+Waktu loading : 08:00 02/03/2026
+Rute/tujuan : CGK - PML, PKL
+Driver : Dedeng
+Nopol : E 9426 AA
+No hp :0895393659401

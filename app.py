@@ -88,7 +88,7 @@ except ValueError:
     APP_REVISION_MATCH_MIN_GAP = 0.05
 
 APP_REVISION_ML_ENABLED = os.getenv("RAFAY_REVISION_ML_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
-APP_REVISION_RULE_FALLBACK_ENABLED = os.getenv("RAFAY_REVISION_RULE_FALLBACK_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
+APP_REVISION_RULE_FALLBACK_ENABLED = os.getenv("RAFAY_REVISION_RULE_FALLBACK_ENABLED", "0").strip().lower() not in {"0", "false", "no"}
 
 # --- KONFIGURASI RAFAY IDP v2.0 ---
 DRIVER_BLACKLIST = ["RAFAY","AKBAR","ADMIN","JNE","LOGISTIK","EXPEDISI","PENGIRIM","ONCALL","REQUEST"]
@@ -2155,6 +2155,123 @@ def _row_needs_refill(row):
     return driver_blank or plate_blank or phone_blank
 
 
+def _predict_update_event(message_text, event_classifier):
+    if event_classifier is None:
+        return "", 0.0
+    try:
+        pred = event_classifier.predict(message_text)
+        return str(pred.get("label", "")).upper(), float(pred.get("score", 0.0))
+    except Exception:
+        return "", 0.0
+
+
+def _is_update_event_message(message_text, event_classifier):
+    event_label, event_score = _predict_update_event(message_text, event_classifier)
+    has_update_keyword = bool(
+        re.search(
+            r"(?i)\b(?:rev|revisi|update|ubah|ganti|ulang|tambahan|perbaikan|refill)\b",
+            str(message_text or ""),
+        )
+    )
+    is_update_event = (event_label == "UPDATE" and event_score >= APP_EVENT_THRESHOLD) or has_update_keyword
+    return is_update_event, event_label, event_score, has_update_keyword
+
+
+def _revision_payload_context_compatible(payload, row_data):
+    target_origin = payload.get("target_origin", "")
+    target_route = payload.get("target_route", "")
+    target_unit = payload.get("target_unit", "")
+    target_time = payload.get("target_time", "")
+
+    row_origin = normalize_origin(row_data.get("ORIGIN", ""))
+    row_route = normalize_route(row_data.get("DESTINATION", ""))
+    row_unit = normalize_unit_type(row_data.get("UNIT_TYPE", ""))
+    row_time = _revml_normalize_time(row_data.get("TIME", ""))
+
+    if target_origin and row_origin and target_origin != row_origin:
+        return False
+    if target_route and row_route and target_route != row_route:
+        return False
+    if target_unit and row_unit and target_unit != row_unit:
+        return False
+    if target_time and row_time and target_time != row_time:
+        return False
+    return True
+
+
+def _build_match_candidates_for_payload(df, payload, mode, revision_mask, source_index_set, reserved_targets):
+    strict_candidates = []
+    broad_candidates = []
+    for idx in df.index:
+        if bool(revision_mask.loc[idx]):
+            continue
+        if idx in source_index_set or idx in reserved_targets:
+            continue
+        row = df.loc[idx]
+        if mode == "REFILL" and not _row_needs_refill(row):
+            continue
+
+        candidate_item = {
+            "candidate_index": int(idx),
+            "candidate_text": _build_match_candidate_text(row),
+        }
+        broad_candidates.append(candidate_item)
+        if _revision_payload_context_compatible(payload, row):
+            strict_candidates.append(candidate_item)
+
+    return strict_candidates, broad_candidates
+
+
+def _select_target_with_matcher(matcher, query_text, strict_candidates, broad_candidates):
+    result = {
+        "attempted": False,
+        "resolved": False,
+        "target_idx": None,
+        "ranked": [],
+        "best_probability": 0.0,
+        "second_probability": 0.0,
+        "probability_gap": 0.0,
+        "candidate_count": 0,
+        "has_strict_context": bool(strict_candidates),
+    }
+    if matcher is None:
+        return result
+
+    candidates = strict_candidates if strict_candidates else broad_candidates
+    if not candidates:
+        return result
+
+    result["candidate_count"] = int(len(candidates))
+    top_k = min(10, len(candidates))
+    ranked = matcher.rank_candidates(query_text, candidates, top_k=top_k)
+    if not ranked:
+        return result
+
+    result["attempted"] = True
+    result["ranked"] = ranked
+    best = ranked[0]
+    best_prob = float(best.get("match_probability", 0.0))
+    second_prob = float(ranked[1].get("match_probability", 0.0)) if len(ranked) > 1 else 0.0
+    prob_gap = best_prob - second_prob
+    has_strict = bool(strict_candidates)
+
+    result["best_probability"] = best_prob
+    result["second_probability"] = second_prob
+    result["probability_gap"] = prob_gap
+
+    passes_threshold = (
+        best_prob >= APP_REVISION_MATCH_THRESHOLD
+        or (has_strict and best_prob >= max(0.0, APP_REVISION_MATCH_THRESHOLD - 0.08))
+    )
+    passes_gap = (len(ranked) == 1) or (prob_gap >= APP_REVISION_MATCH_MIN_GAP) or has_strict
+    if not (passes_threshold and passes_gap):
+        return result
+
+    result["resolved"] = True
+    result["target_idx"] = int(best.get("candidate_index", -1))
+    return result
+
+
 def _extract_update_payloads(message_text):
     txt = normalize_field_labels_in_text(message_text or "")
     txt_lower = txt.lower()
@@ -2292,42 +2409,12 @@ def apply_revisions_from_chat(chat_text, df_final):
             lambda x: bool(re.search(r"(?i)\b(?:rev|revisi|update)\b", str(x)))
         )
 
-    def _predict_event(message_text):
-        if event_classifier is None:
-            return "", 0.0
-        try:
-            pred = event_classifier.predict(message_text)
-            return str(pred.get("label", "")).upper(), float(pred.get("score", 0.0))
-        except Exception:
-            return "", 0.0
-
-    def _context_compatible(payload, row_data):
-        target_origin = payload.get("target_origin", "")
-        target_route = payload.get("target_route", "")
-        target_unit = payload.get("target_unit", "")
-        target_time = payload.get("target_time", "")
-
-        row_origin = normalize_origin(row_data.get("ORIGIN", ""))
-        row_route = normalize_route(row_data.get("DESTINATION", ""))
-        row_unit = normalize_unit_type(row_data.get("UNIT_TYPE", ""))
-        row_time = _revml_normalize_time(row_data.get("TIME", ""))
-
-        if target_origin and row_origin and target_origin != row_origin:
-            return False
-        if target_route and row_route and target_route != row_route:
-            return False
-        if target_unit and row_unit and target_unit != row_unit:
-            return False
-        if target_time and row_time and target_time != row_time:
-            return False
-        return True
-
     for message in messages:
         message_str = str(message or "").strip()
         if not message_str:
             continue
 
-        event_label, event_score = _predict_event(message_str)
+        event_label, event_score = _predict_update_event(message_str, event_classifier)
         has_update_keyword = bool(
             re.search(
                 r"(?i)\b(?:rev|revisi|update|ubah|ganti|ulang|tambahan|perbaikan|refill)\b",
@@ -2382,7 +2469,7 @@ def apply_revisions_from_chat(chat_text, df_final):
                     "candidate_text": _build_match_candidate_text(row),
                 }
                 broad_candidates.append(candidate_item)
-                if _context_compatible(payload, row):
+                if _revision_payload_context_compatible(payload, row):
                     strict_candidates.append(candidate_item)
 
             candidates = strict_candidates if strict_candidates else broad_candidates
@@ -2411,7 +2498,7 @@ def apply_revisions_from_chat(chat_text, df_final):
             target_idx = int(best.get("candidate_index", -1))
             if target_idx not in df.index:
                 continue
-            if has_strict and not _context_compatible(payload, df.loc[target_idx]):
+            if has_strict and not _revision_payload_context_compatible(payload, df.loc[target_idx]):
                 continue
 
             changed = False
@@ -3038,23 +3125,39 @@ def _extract_revision_payload_for_metrics(msg_text):
 def compute_revision_business_scores(chat_text, df_before, df_after):
     base_summary = {
         "total_revision_messages": 0,
+        "total_refill_messages": 0,
+        "total_update_messages": 0,
         "messages_with_updates": 0,
+        "total_payloads": 0,
+        "total_revision_payloads": 0,
+        "total_refill_payloads": 0,
+        "matched_payloads": 0,
+        "matched_revision_payloads": 0,
+        "matched_refill_payloads": 0,
         "resolved_targets": 0,
         "target_hit": 0,
         "unintended_overwrites": 0,
+        "ml_model_available": False,
+        "ml_attempted_matches": 0,
+        "ml_resolved_matches": 0,
+        "ml_avg_best_probability": 0.0,
+        "ml_avg_resolved_probability": 0.0,
+        "ml_match_rate": 0.0,
+        "revision_match_rate": 0.0,
+        "refill_match_rate": 0.0,
     }
-    empty = {
-        "summary": {**base_summary, **_score_from_counts(0, 0, 0), "target_accuracy": 0.0},
-        "field_metrics": [],
-    }
+    empty_summary = {**base_summary, **_score_from_counts(0, 0, 0), "target_accuracy": 0.0}
+    empty = {"summary": empty_summary, "field_metrics": []}
     if df_before is None or df_before.empty or df_after is None or df_after.empty or not chat_text:
         return empty
 
-    wa_pattern = r"(?=\[\d{2}[.,:]\d{2}[, ]+\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\]\s*[^:]+:)"
-    messages = [m for m in re.split(wa_pattern, str(chat_text)) if str(m).strip()]
-    revision_msgs = [m for m in messages if re.search(r'(?i)\b(?:rev|revisi|update)\b', str(m))]
-    base_summary["total_revision_messages"] = len(revision_msgs)
+    matcher = _get_revision_matcher()
+    base_summary["ml_model_available"] = bool(matcher is not None)
+    if matcher is None:
+        return {"summary": {**base_summary, **_score_from_counts(0, 0, 0), "target_accuracy": 0.0}, "field_metrics": []}
 
+    event_classifier = _get_event_classifier()
+    messages = _split_wa_messages(chat_text)
     fields = ["DRIVER", "PLATE", "PHONE"]
     field_stats = {f: {"tp": 0, "fp": 0, "fn": 0, "support": 0} for f in fields}
     total_tp = total_fp = total_fn = 0
@@ -3063,111 +3166,178 @@ def compute_revision_business_scores(chat_text, df_before, df_after):
     if "Original_Text" in df_before.columns:
         revision_mask = df_before["Original_Text"].apply(lambda x: bool(re.search(r'(?i)\b(?:rev|revisi|update)\b', str(x))))
 
-    def row_time(idx):
-        return _normalize_time_metric(df_before.at[idx, "TIME"]) if "TIME" in df_before.columns else None
+    ml_best_prob_sum = 0.0
+    ml_resolved_prob_sum = 0.0
 
-    def row_origin(idx):
-        return str(df_before.at[idx, "ORIGIN"]).strip().upper() if "ORIGIN" in df_before.columns else ""
-
-    def row_route(idx):
-        return normalize_route(df_before.at[idx, "DESTINATION"]) if "DESTINATION" in df_before.columns else ""
-
-    def row_unit(idx):
-        return normalize_unit_type(df_before.at[idx, "UNIT_TYPE"]) if "UNIT_TYPE" in df_before.columns else ""
-
-    def pick_best(candidates, payload):
-        if not candidates:
-            return None
-        scored = []
-        for idx in candidates:
-            score = 0
-            if payload["target_origin"] and row_origin(idx) == payload["target_origin"]:
-                score += 1
-            if payload["target_route"] and row_route(idx) == payload["target_route"]:
-                score += 1
-            if payload["target_unit"] and row_unit(idx) == payload["target_unit"]:
-                score += 1
-            scored.append((score, idx))
-        max_score = max(s for s, _ in scored)
-        best = [idx for s, idx in scored if s == max_score]
-        return max(best)
-
-    def find_target(payload):
-        candidate_indices = [idx for idx in df_before.index if not bool(revision_mask.loc[idx])]
-        if not candidate_indices:
-            return None
-
-        if payload["target_time"]:
-            by_time = [idx for idx in candidate_indices if row_time(idx) == payload["target_time"]]
-            if by_time:
-                return pick_best(by_time, payload)
-
-        if payload["target_origin"]:
-            by_origin = [idx for idx in candidate_indices if row_origin(idx) == payload["target_origin"]]
-            if by_origin:
-                return pick_best(by_origin, payload)
-
-        if payload["target_route"]:
-            by_route = [idx for idx in candidate_indices if row_route(idx) == payload["target_route"]]
-            if by_route:
-                return pick_best(by_route, payload)
-
-        return max(candidate_indices)
-
-    for msg in revision_msgs:
-        payload = _extract_revision_payload_for_metrics(msg)
-        updates = payload.get("updates", {})
-        if not updates:
-            continue
-
-        base_summary["messages_with_updates"] += 1
-        target_idx = find_target(payload)
-        if target_idx is None:
-            for field, _ in updates.items():
-                if field not in field_stats:
-                    continue
-                field_stats[field]["support"] += 1
-                field_stats[field]["fn"] += 1
-                total_fn += 1
-            continue
-
-        base_summary["resolved_targets"] += 1
-        msg_hit = False
-
-        for field, expected_val in updates.items():
+    def _count_unresolved_field_penalties(updates):
+        nonlocal total_fn
+        for field, _ in updates.items():
             if field not in field_stats:
                 continue
             field_stats[field]["support"] += 1
+            field_stats[field]["fn"] += 1
+            total_fn += 1
 
-            before_val = df_before.at[target_idx, field] if field in df_before.columns else ""
-            after_val = df_after.at[target_idx, field] if field in df_after.columns else ""
-            changed = not _field_equal(field, before_val, after_val)
-            matched = _field_match(field, after_val, expected_val)
+    for msg in messages:
+        message_str = str(msg or "").strip()
+        if not message_str:
+            continue
 
-            if matched:
-                field_stats[field]["tp"] += 1
-                total_tp += 1
-                msg_hit = True
+        is_update_event, _, _, _ = _is_update_event_message(message_str, event_classifier)
+        if not is_update_event:
+            continue
+
+        payloads = _extract_update_payloads(message_str)
+        payloads = [p for p in payloads if (p.get("updates") or {})]
+        if not payloads:
+            continue
+
+        base_summary["total_update_messages"] += 1
+        has_revision_payload = any(bool(p.get("is_revision", False)) for p in payloads)
+        has_refill_payload = any(not bool(p.get("is_revision", False)) for p in payloads)
+        if has_revision_payload:
+            base_summary["total_revision_messages"] += 1
+        if has_refill_payload:
+            base_summary["total_refill_messages"] += 1
+
+        base_summary["messages_with_updates"] += 1
+        source_indices = []
+        if "Original_Text" in df_before.columns:
+            msg_norm = _normalize_message_text(message_str)
+            source_indices = [
+                idx
+                for idx in df_before.index
+                if _normalize_message_text(df_before.at[idx, "Original_Text"]) == msg_norm
+            ]
+        source_index_set = set(source_indices)
+        reserved_targets = set()
+        msg_hit = False
+
+        for payload in payloads:
+            updates = payload.get("updates", {}) or {}
+            if not updates:
+                continue
+
+            mode = "REVISION" if bool(payload.get("is_revision", False)) else "REFILL"
+            base_summary["total_payloads"] += 1
+            if mode == "REVISION":
+                base_summary["total_revision_payloads"] += 1
             else:
-                field_stats[field]["fn"] += 1
-                total_fn += 1
-                if changed:
-                    field_stats[field]["fp"] += 1
-                    total_fp += 1
+                base_summary["total_refill_payloads"] += 1
+
+            query_text = f"{message_str}\n{_build_match_query_text(payload)}".strip()
+            if not query_text:
+                _count_unresolved_field_penalties(updates)
+                continue
+
+            strict_candidates, broad_candidates = _build_match_candidates_for_payload(
+                df=df_before,
+                payload=payload,
+                mode=mode,
+                revision_mask=revision_mask,
+                source_index_set=source_index_set,
+                reserved_targets=reserved_targets,
+            )
+            selection = _select_target_with_matcher(
+                matcher=matcher,
+                query_text=query_text,
+                strict_candidates=strict_candidates,
+                broad_candidates=broad_candidates,
+            )
+            if selection.get("attempted", False):
+                base_summary["ml_attempted_matches"] += 1
+                ml_best_prob_sum += float(selection.get("best_probability", 0.0))
+
+            if not selection.get("resolved", False):
+                _count_unresolved_field_penalties(updates)
+                continue
+
+            target_idx = int(selection.get("target_idx", -1))
+            if target_idx not in df_before.index:
+                _count_unresolved_field_penalties(updates)
+                continue
+            if selection.get("has_strict_context", False) and not _revision_payload_context_compatible(payload, df_before.loc[target_idx]):
+                _count_unresolved_field_penalties(updates)
+                continue
+
+            base_summary["resolved_targets"] += 1
+            base_summary["ml_resolved_matches"] += 1
+            base_summary["matched_payloads"] += 1
+            ml_resolved_prob_sum += float(selection.get("best_probability", 0.0))
+            if mode == "REVISION":
+                base_summary["matched_revision_payloads"] += 1
+            else:
+                base_summary["matched_refill_payloads"] += 1
+            reserved_targets.add(target_idx)
+            payload_hit = False
+            updated_fields_effective = set()
+
+            for field, expected_val in updates.items():
+                if field not in field_stats:
+                    continue
+
+                expected_val = str(expected_val or "").strip()
+                if not expected_val:
+                    continue
+
+                before_val = df_before.at[target_idx, field] if field in df_before.columns else ""
+                after_val = df_after.at[target_idx, field] if field in df_after.columns else ""
+
+                # REFILL hanya valid jika field memang kosong sebelumnya, atau sudah sama
+                # (idempotent). Kalau berbeda tapi terubah, hitung sebagai overwrite.
+                if mode == "REFILL":
+                    before_blank = not str(before_val or "").strip()
+                    before_same = _field_match(field, before_val, expected_val)
+                    if not (before_blank or before_same):
+                        if not _field_equal(field, before_val, after_val):
+                            base_summary["unintended_overwrites"] += 1
+                        continue
+
+                field_stats[field]["support"] += 1
+                changed = not _field_equal(field, before_val, after_val)
+                matched = _field_match(field, after_val, expected_val)
+                updated_fields_effective.add(field)
+
+                if matched:
+                    field_stats[field]["tp"] += 1
+                    total_tp += 1
+                    payload_hit = True
+                else:
+                    field_stats[field]["fn"] += 1
+                    total_fn += 1
+                    if changed:
+                        field_stats[field]["fp"] += 1
+                        total_fp += 1
+
+            if payload_hit:
+                msg_hit = True
+
+            for side_field in fields:
+                if side_field in updates:
+                    continue
+                if side_field in updated_fields_effective:
+                    continue
+                before_side = df_before.at[target_idx, side_field] if side_field in df_before.columns else ""
+                after_side = df_after.at[target_idx, side_field] if side_field in df_after.columns else ""
+                if not _field_equal(side_field, before_side, after_side):
+                    base_summary["unintended_overwrites"] += 1
 
         if msg_hit:
             base_summary["target_hit"] += 1
 
-        for side_field in fields:
-            if side_field in updates:
-                continue
-            before_side = df_before.at[target_idx, side_field] if side_field in df_before.columns else ""
-            after_side = df_after.at[target_idx, side_field] if side_field in df_after.columns else ""
-            if not _field_equal(side_field, before_side, after_side):
-                base_summary["unintended_overwrites"] += 1
-
     summary_scores = _score_from_counts(total_tp, total_fp, total_fn)
     target_accuracy = _safe_div(base_summary["target_hit"], base_summary["messages_with_updates"])
+    base_summary["ml_avg_best_probability"] = _safe_div(ml_best_prob_sum, base_summary["ml_attempted_matches"])
+    base_summary["ml_avg_resolved_probability"] = _safe_div(ml_resolved_prob_sum, base_summary["ml_resolved_matches"])
+    base_summary["ml_match_rate"] = _safe_div(base_summary["ml_resolved_matches"], base_summary["ml_attempted_matches"])
+    base_summary["revision_match_rate"] = _safe_div(
+        base_summary["matched_revision_payloads"],
+        base_summary["total_revision_payloads"],
+    )
+    base_summary["refill_match_rate"] = _safe_div(
+        base_summary["matched_refill_payloads"],
+        base_summary["total_refill_payloads"],
+    )
     summary = {
         **base_summary,
         **summary_scores,
@@ -3586,7 +3756,6 @@ def main():
 
                 accuracy = calculate_extraction_accuracy(df_raw, df_final)
                 ner_scores = compute_ner_business_scores(df_final)
-                revision_scores = compute_revision_business_scores(chat_input, df_before_revision, df_after_revision)
                 
                 df_office = pd.DataFrame()
                 df_office['No.'] = range(1, len(df_final) + 1)
@@ -3673,7 +3842,6 @@ def main():
                 st.session_state['df_office'] = df_office
                 st.session_state['thesis_scores'] = {
                     "ner": ner_scores,
-                    "revision": revision_scores,
                 }
                 st.session_state.waktu = f"{processing_time}s"
                 st.session_state.baris = f"{len(df_office)} Order"
@@ -3839,23 +4007,21 @@ def main():
 
         thesis_scores = st.session_state.get("thesis_scores")
         st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
-        st.markdown("### Metrik Skripsi: NER & Revision (Business Process)")
+        st.markdown("### Metrik Skripsi: NER (Business Process)")
 
         if not thesis_scores:
-            st.info("Metrik NER/Revision belum tersedia untuk tampilan ini. Jalankan ekstraksi baru agar skor terhitung.")
+            st.info("Metrik NER belum tersedia untuk tampilan ini. Jalankan ekstraksi baru agar skor terhitung.")
         else:
             ner_scores = thesis_scores.get("ner", {}) or {}
-            rev_scores = thesis_scores.get("revision", {}) or {}
             ner_sum = ner_scores.get("summary", {}) or {}
-            rev_sum = rev_scores.get("summary", {}) or {}
 
             def _pct(v):
                 return f"{float(v or 0.0) * 100:.2f}%"
 
             st.caption(
                 "Definisi evaluasi mengikuti proses bisnis pipeline: "
-                "NER dihitung berbasis evidence field pada chat asli; "
-                "Revision dihitung dari update field pada row target (before vs after revisi)."
+                "NER dihitung berbasis evidence field pada chat asli. "
+                "Metrik Revision/Refill sementara dinonaktifkan untuk fokus evaluasi NER."
             )
 
             st.markdown("#### Ringkasan NER")
@@ -3882,39 +4048,7 @@ def main():
                 for c in ["accuracy", "precision", "recall", "f1"]:
                     ner_field_df[c] = ner_field_df[c].apply(_pct)
                 st.dataframe(ner_field_df, use_container_width=True)
-
-            st.markdown("#### Ringkasan Revision")
-            rev_c1, rev_c2, rev_c3, rev_c4, rev_c5 = st.columns(5, gap="small")
-            with rev_c1:
-                st.metric("Accuracy", _pct(rev_sum.get("accuracy", 0.0)))
-            with rev_c2:
-                st.metric("Precision", _pct(rev_sum.get("precision", 0.0)))
-            with rev_c3:
-                st.metric("Recall", _pct(rev_sum.get("recall", 0.0)))
-            with rev_c4:
-                st.metric("F1", _pct(rev_sum.get("f1", 0.0)))
-            with rev_c5:
-                st.metric("Target Accuracy", _pct(rev_sum.get("target_accuracy", 0.0)))
-
-            rev_meta_1, rev_meta_2, rev_meta_3, rev_meta_4 = st.columns(4, gap="small")
-            with rev_meta_1:
-                st.metric("Rev Msg", int(rev_sum.get("total_revision_messages", 0)))
-            with rev_meta_2:
-                st.metric("Msg dgn Update", int(rev_sum.get("messages_with_updates", 0)))
-            with rev_meta_3:
-                st.metric("Resolved Target", int(rev_sum.get("resolved_targets", 0)))
-            with rev_meta_4:
-                st.metric("Unintended Overwrite", int(rev_sum.get("unintended_overwrites", 0)))
-
-            rev_meta_5, = st.columns(1)
-            with rev_meta_5:
-                st.metric("TP / FP / FN", f"{int(rev_sum.get('tp', 0))} / {int(rev_sum.get('fp', 0))} / {int(rev_sum.get('fn', 0))}")
-
-            rev_field_df = pd.DataFrame(rev_scores.get("field_metrics", []))
-            if not rev_field_df.empty:
-                for c in ["accuracy", "precision", "recall", "f1"]:
-                    rev_field_df[c] = rev_field_df[c].apply(_pct)
-                st.dataframe(rev_field_df, use_container_width=True)
+            st.info("Metrik Revision/Refill sementara dinonaktifkan.")
 
         st.markdown("</div>", unsafe_allow_html=True)
 
