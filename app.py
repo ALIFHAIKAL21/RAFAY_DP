@@ -2712,12 +2712,9 @@ def parser_rows_to_office_df(rows):
     df_office = df_office.rename(columns=rename_map)
 
     required_cols = [
-        "Job Number", "Tgl RO", "Tgl Muat", "Vendor", "Pickup", "Tujuan",
+        "Job Number", "Tgl RO", "Tgl Muat", "Pickup", "Tujuan",
         "No. Plat", "Type Truck", "Driver", "Kontak Driver", "status_unit"
     ]
-
-    if "Vendor" not in df_office.columns:
-        df_office["Vendor"] = ""
 
     for col in required_cols:
         if col not in df_office.columns:
@@ -3422,7 +3419,7 @@ def compute_revision_business_scores(chat_text, df_before, df_after):
 # --- FRONTEND UI: WHITE THEME - PROFESSIONAL EDITION ---
 # =================================================================================
 
-st.set_page_config(page_title="Rafay Logistics IDP v2.0", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="", layout="wide", initial_sidebar_state="collapsed")
 
 st.markdown("""
     <style>
@@ -3608,30 +3605,6 @@ def get_processor(
         event_threshold=event_threshold,
     )
 
-def render_top_ui(proses_waktu="--", baris="--", akurasi="--"):
-    st.markdown(f"""
-        <div class="top-navbar">
-            <div class="nav-logo">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20z"></path><path d="M12 6v6l4 2"></path></svg>
-                <div>
-                    <h1 class="nav-title">Rafay Logistics <span class="nav-accent">IDP</span></h1>
-                    <p class="nav-subtitle">Intelligent Document Processing v1.0 (LayoutLMv3)</p>
-                </div>
-            </div>
-            <div class="nav-status">
-                <div class="status-badge">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 20 9 4 6 12 2 12"></polyline></svg>
-                    Model Engine <span class="status-dot"></span> Ready
-                </div>
-                <div class="status-badge">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    {datetime.now().strftime("%H:%M:%S")}
-                </div>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-
 def main():
     if 'waktu' not in st.session_state: st.session_state.waktu = "--"
     if 'baris' not in st.session_state: st.session_state.baris = "--"
@@ -3652,19 +3625,9 @@ def main():
             st.session_state['df_office'] = df_saved
             st.session_state.baris = f"{len(df_saved)} Order"
     
-    render_top_ui(st.session_state.waktu, st.session_state.baris, st.session_state.akurasi)
     
     st.markdown("""
-    <div class="input-panel input-panel-wide">
-        <div class="panel-header">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            Input Dokumen <span class="badge-ml">VISION + NLP</span>
-        </div>
-        <div class="tab-mockup">
-            <div class="tab-btn">WhatsApp Chat</div>
-            <div class="tab-btn tab-inactive">Dokumen PDF</div>
-        </div>
-    </div>
+    
     """, unsafe_allow_html=True)
 
     st.markdown("**Konfigurasi Job Number**")
@@ -3700,20 +3663,9 @@ def main():
     btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1], gap="small")
     with btn_col1:
         btn = st.button("Mulai Ekstraksi Data")
-    with btn_col2:
-        btn_clear = st.button("Hapus Output")
     with btn_col3:
         btn_reset_db = st.button("Reset DB ke 0")
 
-    if btn_clear:
-        st.session_state.pop('df_office', None)
-        st.session_state.pop('thesis_scores', None)
-        st.session_state.waktu = "--"
-        st.session_state.baris = "--"
-        st.session_state.akurasi = "--"
-        st.session_state.processing_time = 0.0
-        st.success("Output sudah dihapus.")
-        st.rerun()
 
     if btn_reset_db:
         st.session_state.pop('df_office', None)
@@ -3747,7 +3699,6 @@ def main():
                 <div class="out-badge">AI</div>
             </div>
             <div class="out-title">Siap Memproses Data</div>
-            <div class="out-desc">Input dokumen logistik Rafay pada panel input, lalu klik Mulai Ekstraksi.</div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -3760,7 +3711,7 @@ def main():
             start_time = time.time()
             
             with processing_container.container():
-                st.markdown("""<div class='processing-box'><div class='processing-title'>Mengekstraksi data dengan AI...</div>""", unsafe_allow_html=True)
+                st.markdown("""<div class='processing-box'><div class='processing-title'>Mengekstraksi data dengan indoBERT...</div>""", unsafe_allow_html=True)
                 st.progress(0.45)
                 st.markdown("</div>", unsafe_allow_html=True)
             
@@ -3838,7 +3789,6 @@ def main():
 
                 df_office['Tgl RO'] = df_final[ro_col].apply(format_date_custom) if ro_col else ""
                 df_office['Tgl Muat'] = df_final[muat_col].apply(format_date_custom) if muat_col else ""
-                df_office['Vendor'] = ""
                 df_office['Pickup'] = df_final['ORIGIN'].apply(normalize_origin)
                 df_office['Tujuan'] = df_final['DESTINATION'].apply(clean_destination_format)
                 df_office['No. Plat'] = df_final['PLATE'].str.upper()
@@ -3979,6 +3929,9 @@ def main():
             return out
 
         df_all = st.session_state['df_office']
+        if 'Vendor' in df_all.columns:
+            df_all = df_all.drop(columns=['Vendor'])
+            st.session_state['df_office'] = df_all
         assigned_count = int((df_all['status_unit'].str.upper() == "ASSIGNED").sum()) if 'status_unit' in df_all.columns else 0
         partial_count = int((df_all['status_unit'].str.upper() == "PARTIAL").sum()) if 'status_unit' in df_all.columns else 0
         with assigned_col:
@@ -4033,18 +3986,7 @@ def main():
                         ws.write(r+1, c, "" if pd.isna(val) else val, b_fmt)
             return buffer.getvalue()
 
-        with dl_col1:
-            st.download_button(
-                label="Download All",
-                data=_to_excel_bytes(df_all_view),
-                file_name="orders_all.xlsx"
-            )
-        with dl_col2:
-            st.download_button(
-                label="Download Assigned",
-                data=_to_excel_bytes(df_assigned_view),
-                file_name="orders_assigned.xlsx"
-            )
+       
 
         def _status_row_style(row):
             status = str(row.get('status_unit', '')).strip().upper()

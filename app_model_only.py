@@ -13,20 +13,16 @@ ROOT_DIR = Path(__file__).resolve().parent
 sys.path.append(str(ROOT_DIR))
 
 
-from src.inference.batch_processor import ChatBatchProcessor
+from src.inference.pipeline import IndoBERTInference
 
 try:
     from db.persistence import load_all_order_rows as db_load_all_order_rows
-    from db.persistence import prepare_chat_for_parsing as db_prepare_chat_for_parsing
     from db.persistence import reset_all_data as db_reset_all_data
-    from db.persistence import save_parsed_rows as db_save_parsed_rows
     from db.session import init_db as db_init_db
     DB_PERSISTENCE_ENABLED = True
 except Exception:
     db_load_all_order_rows = None
-    db_prepare_chat_for_parsing = None
     db_reset_all_data = None
-    db_save_parsed_rows = None
     db_init_db = None
     DB_PERSISTENCE_ENABLED = False
 
@@ -2361,10 +2357,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 @st.cache_resource
-def get_processor(split_version="split_v3_multi_unit", model_path_override=""):
-    # Argumen versi dipakai untuk memastikan cache ter-refresh saat logika split berubah.
+def get_ner_model(model_path_override=""):
     model_path = Path(model_path_override) if model_path_override else None
-    return ChatBatchProcessor(model_path=model_path)
+    return IndoBERTInference(model_path=model_path)
 
 def render_top_ui(proses_waktu="--", baris="--", akurasi="--"):
     st.markdown(f"""
@@ -2538,42 +2533,15 @@ def main():
             start_time = time.time()
             
             with processing_container.container():
-                st.markdown("""<div class='processing-box'><div class='processing-title'>Mengekstraksi data dengan AI...</div>""", unsafe_allow_html=True)
+                st.markdown("""<div class='processing-box'><div class='processing-title'>Mengekstraksi data dengan indoBERT...</div>""", unsafe_allow_html=True)
                 st.progress(0.45)
                 st.markdown("</div>", unsafe_allow_html=True)
             
-            db_should_parse = True
-            db_raw_chat_id = None
-            if DB_PERSISTENCE_ENABLED and db_prepare_chat_for_parsing is not None:
-                try:
-                    db_should_parse, db_raw_chat_id = db_prepare_chat_for_parsing(chat_input)
-                except Exception:
-                    db_should_parse = True
-                    db_raw_chat_id = None
-
-            if not db_should_parse:
-                processing_container.empty()
-                df_saved = load_df_office_from_db()
-                if df_saved is not None and not df_saved.empty:
-                    st.session_state['df_office'] = df_saved
-                    st.session_state.waktu = "0.0s"
-                    st.session_state.baris = f"{len(df_saved)} Order"
-                    st.session_state.akurasi = st.session_state.get('akurasi', '--')
-                    st.session_state.processing_time = 0.0
-                st.info("Chat ini sudah pernah diupload. Data lama dipertahankan (tidak diproses ulang).")
-                st.rerun()
-
-            # Mode model-only: kirim input mentah langsung ke model tanpa
-            # post-processing rule-based di level aplikasi.
-            formatted_input = str(chat_input)
-            temp_path = "temp.txt"
-            with open(temp_path, "w", encoding="utf-8") as f: 
-                f.write(formatted_input)
-            
-            df_raw = get_processor(
-                split_version=f"split_v3_multi_unit::{model_choice}",
+            # Mode model-only murni: input mentah langsung diprediksi model NER.
+            model_result = get_ner_model(
                 model_path_override=str(selected_model_path),
-            ).process_file(temp_path)
+            ).predict(str(chat_input))
+            df_raw = pd.DataFrame([model_result]) if model_result else pd.DataFrame()
 
             if df_raw is not None and not df_raw.empty:
                 df_final = df_raw.copy()
@@ -2596,20 +2564,8 @@ def main():
                 effective_start = job_start
 
                 df_office['Job Number'] = [f"{effective_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_final))]
-                ro_col = None
-                muat_col = None
-                if 'RO_DATE' in df_final.columns and df_final['RO_DATE'].astype(str).str.strip().any():
-                    ro_col = 'RO_DATE'
-                elif 'DATE' in df_final.columns and df_final['DATE'].astype(str).str.strip().any():
-                    ro_col = 'DATE'
-
-                if 'LOAD_DATE' in df_final.columns and df_final['LOAD_DATE'].astype(str).str.strip().any():
-                    muat_col = 'LOAD_DATE'
-                elif 'DATE' in df_final.columns and df_final['DATE'].astype(str).str.strip().any():
-                    muat_col = 'DATE'
-
-                df_office['Tgl RO'] = df_final[ro_col].astype(str) if ro_col else ""
-                df_office['Tgl Muat'] = df_final[muat_col].astype(str) if muat_col else ""
+                df_office['Tgl RO'] = df_final['RO_DATE'].astype(str) if 'RO_DATE' in df_final.columns else ""
+                df_office['Tgl Muat'] = df_final['LOAD_DATE'].astype(str) if 'LOAD_DATE' in df_final.columns else ""
                 df_office['Vendor'] = ""
                 df_office['Pickup'] = df_final['ORIGIN'].astype(str)
                 df_office['Tujuan'] = df_final['DESTINATION'].astype(str)
@@ -2617,38 +2573,10 @@ def main():
                 df_office['Type Truck'] = df_final['UNIT_TYPE'].astype(str)
                 df_office['Driver'] = df_final['DRIVER'].astype(str)
                 df_office['Kontak Driver'] = df_final['PHONE'].astype(str)
-                def _is_filled(val):
-                    if val is None:
-                        return False
-                    s = str(val).strip()
-                    if not s:
-                        return False
-                    if s.lower() in ["-", "null", "none", "nan", "undefined"]:
-                        return False
-                    return True
-                def _classify_status(row):
-                    fields = [
-                        'Job Number', 'Tgl RO', 'Tgl Muat', 'Pickup', 'Tujuan',
-                        'No. Plat', 'Type Truck', 'Driver', 'Kontak Driver'
-                    ]
-                    filled = sum(1 for f in fields if _is_filled(row.get(f)))
-                    if filled == 9:
-                        return "ASSIGNED"
-                    if filled >= 3:
-                        return "PARTIAL"
-                    return "UNASSIGNED"
-                df_office['status_unit'] = df_office.apply(_classify_status, axis=1)
+                df_office['status_unit'] = ""
 
-                if DB_PERSISTENCE_ENABLED and db_save_parsed_rows is not None and db_raw_chat_id:
-                    try:
-                        db_rows = office_df_to_parser_rows(df_office)
-                        db_save_parsed_rows(db_raw_chat_id, db_rows)
-                        df_saved = load_df_office_from_db()
-                        if df_saved is not None and not df_saved.empty:
-                            df_office = df_saved
-                    except Exception as e:
-                        # Jangan ganggu alur parser jika penyimpanan DB gagal.
-                        st.warning(f"Penyimpanan ke DB gagal: {e}")
+                # Disengaja tidak melalui db_save_parsed_rows() agar output
+                # tetap murni hasil ekstraksi model NER tanpa rule-based merge/update.
 
                 end_time = time.time()
                 processing_time = round(end_time - start_time, 2)
@@ -2664,8 +2592,6 @@ def main():
             else:
                 processing_container.empty()
                 st.error("Ekstraksi data gagal. Silakan periksa format input dokumen.")
-                
-            if os.path.exists(temp_path): os.remove(temp_path)
                 
     if 'df_office' in st.session_state:
         dashboard_col1, dashboard_col2 = st.columns(2, gap="medium")
