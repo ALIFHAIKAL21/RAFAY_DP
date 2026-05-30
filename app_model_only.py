@@ -2215,7 +2215,16 @@ st.markdown("""
         }
 
         #MainMenu {visibility: hidden;}
-        header {visibility: hidden;}
+        header[data-testid="stHeader"] {
+            visibility: visible !important;
+            background: transparent !important;
+        }
+        [data-testid="stSidebarCollapsedControl"],
+        [data-testid="stSidebarCollapseButton"] {
+            visibility: visible !important;
+            display: flex !important;
+            opacity: 1 !important;
+        }
         footer {visibility: hidden;}
         .block-container { padding-top: 1.6rem !important; max-width: 1400px; }
 

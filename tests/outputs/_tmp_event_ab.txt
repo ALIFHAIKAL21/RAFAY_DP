@@ -1,0 +1,21 @@
+[08.00, 01/05/2026] Admin:
+INFO jadwal loading hari ini bagaimana ya?
+
+[08.05, 01/05/2026] Admin:
+REQUEST ORDER ONCALL 01 MEI 2026
+1 UNIT CDDL
+Lokasi : ARGOPANTES
+Waktu loading : 10:00
+Rute/tujuan : CGK - SUB
+
+[08.10, 01/05/2026] Admin:
+BATAL request yang tadi, jangan diproses
+
+[08.12, 01/05/2026] Admin:
+Unit loading untuk rapat internal besok, bukan order kirim.
+
+[08.20, 01/05/2026] Admin:
+REQUEST ULANG ORDER ONCALL
+Waktu loading : 10:00
+Rute/tujuan : CGK - SUB
+driver : BUDI

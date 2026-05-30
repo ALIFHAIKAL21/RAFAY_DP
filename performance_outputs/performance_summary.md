@@ -1,0 +1,13 @@
+# Table 1. Model Performance Summary (Deep Learning Evaluation)
+
+| indoBERT model | Epoch | Step | Precision | Recall | F1_Score | Accuracy | TP | FP | FN | TN | Source_File | Source_Lines | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| indolem/indobert-base-uncased | 5.0 | 500 | 0.9945085118066996 | 0.9983461962513782 | 0.9964236588720771 | 0.9980752780153977 | 1811 | 10 | 3 | nan | models/indobert_NER/checkpoint-500/trainer_state.json | 411,412,414,415 | Entity-level seqeval (TN tidak terdefinisi langsung). |
+| indobenchmark/indobert-base-p2 | 4.0 | 1540 | 0.9975 | 0.9975 | 0.9975 | 0.9973992197659298 | 399 | 1 | 1 | 368.0 | models/indobert_revision_matcher/checkpoint-1540/trainer_state.json | 597,599,602,604 |  |
+
+# Table 2. Confusion Matrix Components
+
+| indoBERT model | TP | FP | FN | TN | Confusion_Matrix_Available |
+| --- | --- | --- | --- | --- | --- |
+| indolem/indobert-base-uncased | 1811 | 10 | 3 | nan | PARTIAL |
+| indobenchmark/indobert-base-p2 | 399 | 1 | 1 | 368.0 | YES |

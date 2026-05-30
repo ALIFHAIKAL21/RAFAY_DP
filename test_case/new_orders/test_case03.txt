@@ -1,18 +1,16 @@
-﻿[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 02 JANUARI 2026:
+[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 02 JANUARI 2026:
 
 RAFAY
 2 UNIT WB / 50 CBM
 Lokasi : ARGOPANTES
 Waktu loading : SEGERA
 Rute/tujuan : CGK - BTJ UTARA (ACEH)
-PIC : Oyong
 driver  : SUYOTO
 Nopol  : A 8979 ZY
 No hp  : 081314527908
 
 Waktu loading : 18:00
 Rute/tujuan : CGK - BTJ UTARA (ACEH)
-PIC : Oyong
 driver  : SUWEI
 Nopol  : B 9889 TI
 No hp  : 082262634698
@@ -23,7 +21,6 @@ No hp  : 082262634698
 Lokasi : CIKOKOL + CIKARANG
 Waktu loading : 03:00/ 03-01-26
 Rute/tujuan : CGK-SUX, JEMBER
-PIC : Abdul Gofar
 Driver   : Ridwan
 Nopol  : T 9052 DI
 No Hp  : 089689444644
@@ -34,21 +31,18 @@ No Hp  : 089689444644
 Lokasi : MEGAHUB
 Waktu loading : SEGERA
 Rute/tujuan : CGK - JEPARA, KUDUS, PATI
-PIC : Toty
 driver  : Doni
 Nopol  : D 8671 FT
 No hp  : 08815125233
 
 Waktu loading : 22:00
 Rute/tujuan : CGK - MOJOKERTO, MALANG
-PIC : Abdul Gofar
 driver  : Adin
 Nopol  : B 9581 UXX
 No hp  : 083852157054
 
 Waktu loading : 23:00
 Rute/tujuan : CGK - NEGARA, MENGWI, TABANAN, DENPASAR
-PIC : Abdul Gofar
 driver  : Ari purnama
 Nopol  : B 9383 TXV
 No hp  : 082136689169
@@ -59,7 +53,6 @@ No hp  : 082136689169
 Lokasi : CIKOKOL + CIKARANG
 Waktu loading : 07:00 04/01/2026
 Rute/tujuan : CGK - SUX, JEMBER
-PIC : Abdul Gofar
 driver  : Weli
 Nopol  : B 9631 KXT
 No hp  : 08979444895
@@ -67,7 +60,6 @@ No hp  : 08979444895
 Lokasi : ARGOPANTES
 Waktu loading : 09:00 04/01/2026
 Rute/tujuan : CGK - MALANG
-PIC : Abdul Gofar
 driver  : Septian
 Nopol  : AB 8059 KO
 No hp  : 085797990284
@@ -78,14 +70,12 @@ No hp  : 085797990284
 Lokasi : MEGAHUB
 Waktu loading : 07:00 05/01/2026
 Rute/tujuan : CGK - PEMALANG, PEKALONGAN, BATANG, SEMARANG
-PIC : Veky
 Driver : Sisno
 Nopol : B 9263 FXV
 No Hp : 081221082661
 
 Waktu loading : 21:00
 Rute/tujuan : CGK - MALANG
-PIC : Veky
 Driver : Achmad Badri
 Nopol : N 8751 WX
 No Hp : 0815604958538
@@ -96,7 +86,6 @@ No Hp : 0815604958538
 Lokasi : CIKOKOL + CIKARANG
 Waktu loading : 23:00 06/01/2026
 Rute/tujuan : CGK - MADIUN, SUX, JEMBER
-PIC : Abdul Gofar
 driver  : Arizal
 Nopol  : B 9895 UXC
 No hp  : 081229080317
@@ -107,14 +96,12 @@ No hp  : 081229080317
 Lokasi : ARGOPANTES
 Waktu loading : SEGERA
 Rute/tujuan : CGK - PASURUAN
-PIC : Veky
 driver : Toto Murdianto
 Nopol : B 9079 FXZ
 No hp : 089526086298
 
 Waktu loading : 15:00
 Rute/tujuan : CGK - SIDOARJO
-PIC : Abdul Gofar
 driver : Dede
 Nopol : B 9905 UXX
 No hp : 081313798020
@@ -122,7 +109,6 @@ No hp : 081313798020
 Lokasi : MEGAHUB
 Waktu loading : 18:00
 Rute/tujuan : CGK - PASURUAN, PROBOLINGGO, JEMBER
-PIC : Abdul Gofar
 driver : Rio
 Nopol : L 9012 UT
 No hp : 0881036219154
@@ -130,7 +116,6 @@ No hp : 0881036219154
 Lokasi : CIKOKOL + CIKARANG
 Waktu loading : 22:00 07/01/2026
 Rute/tujuan : CGK - MADIUN, JEMBER
-PIC : Veky
 driver : Agung
 Nopol : B 9293 YM
 No hp : 083187318115
@@ -141,14 +126,12 @@ No hp : 083187318115
 Lokasi : ARGOPANTES
 Waktu loading : 03:00 11/01/2025
 Rute/tujuan : CGK - MES
-PIC : Sukadi
 driver : Sulis
 Nopol : L 9579 UK
 No hp : 085225394209
 
 Waktu loading : CANCEL
 Rute/tujuan : CGK - MES
-PIC : Sukadi
 driver : Sri Mardono
 Nopol : BK 8678 VE
 No hp : 085218843366
@@ -156,7 +139,6 @@ No hp : 085218843366
 Lokasi : MEGAHUB
 Waktu loading : CANCEL
 Rute/tujuan : CGK - NEGARA, MENGWI, TABANAN, DENPASAR (DPS), DENPASAR (AMI)
-PIC : Abdul Gofar
 driver : Ari purnama
 Nopol : B 9383 TXV
 No hp : 082136689169
@@ -167,7 +149,6 @@ No hp : 082136689169
 Lokasi : ARGOPANTES
 Waktu loading : SEGERA
 Rute/tujuan : CGK - PKU
-PIC : Ike
 driver  : Imam
 Nopol  : B 9747 KXS
 No hp  : 085766627340
@@ -178,7 +159,6 @@ No hp  : 085766627340
 Lokasi : ARGOPANTES
 Waktu loading : 23:00 14/01/2026
 Rute/tujuan : CGK - MES
-PIC : William
 driver : Kudir
 Nopol : B 9380 UEX
 No hp : 081262189242
@@ -189,7 +169,6 @@ No hp : 081262189242
 Lokasi : ARGOPANTES
 Waktu loading : 12:00
 Rute/tujuan : CGK - PDG
-PIC : Dodi
 driver : Ikrar Dinata
 Nopol : BM 9184 AU
 No Hp : 081317708658
@@ -200,14 +179,12 @@ No Hp : 081317708658
 Lokasi : ARGOPANTES
 Waktu loading : 07:00
 Rute/tujuan : CGK - PDG
-PIC : Ike
 driver : David/Royan
 Nopol : B 9483 YN
 No hp : 082128531685
 
 Waktu loading : 08:00
 Rute/tujuan : CGK - PKU
-PIC : Ike
 driver : 
 Nopol : 
 No hp : 
@@ -218,7 +195,6 @@ No hp :
 Lokasi : ARGOPANTES
 Waktu loading : SEGERA
 Rute/tujuan : CGK - PKU
-PIC : Dodi
 driver : Presdir Julian
 Nopol : BM 8737 AU
 No hp : 08211021804
@@ -229,7 +205,6 @@ No hp : 08211021804
 Lokasi : ARGOPANTES
 Waktu loading : SEGERA
 Rute/tujuan : CGK - MES (DTB)
-PIC : Oyong
 driver : Suyoto
 Nopol : A 8579 ZY
 No hp : 081314527908
@@ -240,7 +215,6 @@ No hp : 081314527908
 Lokasi : ARGOPANTES
 Waktu loading : 18:00 30/01/2026
 Rute/tujuan : CGK - PKU
-PIC : Dodi
 driver : Yudi
 Nopol : BM 8150 RY
 No hp : 08218158362
@@ -252,7 +226,6 @@ No hp : 08218158362
 Lokasi : MEGAHUB
 Waktu loading : SEGERA
 Rute/tujuan : CGK - JEPARA, KUDUS, PATI
-PIC : Veky
 driver : Yogi
 Nopol : H 8454 SA
 No hp : 085722539854
@@ -263,7 +236,6 @@ No hp : 085722539854
 Lokasi : ARGOPANTES
 Waktu loading : SEGERA
 Rute/tujuan : CGK - PKU
-PIC : Dodi
 driver : Desman
 Nopol : BM 8265 AU
 No hp : 082178606519
@@ -271,28 +243,24 @@ No hp : 082178606519
 
 Waktu loading : 20:00
 Rute/tujuan : CGK - SUB
-PIC : Reva
 driver : Agus Nurhuda
 Nopol : L 9509 UB
 No hp : 081230117920
 
 Waktu loading : 21:00
 Rute/tujuan : CGK - SUB
-PIC : Veky
 driver : Edy
 Nopol : B 9286 S
 No hp : 081230582148
 
 Waktu loading : 23:00 02/02/2026
 Rute/tujuan : CGK - MES
-PIC : Sukadi
 driver : Sulis
 Nopol : L 9579 UK
 No hp : 085225394209
 
 Waktu loading : 03:00 01/02/2026
 Rute/tujuan : CGK - MES
-PIC : Sukadi
 driver : Aep
 Nopol : B 9300 NO
 No hp : 081250778629
@@ -300,7 +268,6 @@ No hp : 081250778629
 Lokasi : ARGOPANTES
 Waktu loading : 08:00
 Rute/tujuan : CGK - PKU
-PIC : Sukadi
 driver : 
 Nopol : 
 No hp : 
@@ -308,7 +275,6 @@ No hp :
 Lokasi : ARGOPANTES
 Waktu loading : 18:00 01/02/2026
 Rute/tujuan : CGK - SUB
-PIC : Nanang
 driver : 
 Nopol : 
 No hp : 

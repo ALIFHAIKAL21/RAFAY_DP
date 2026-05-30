@@ -12,19 +12,35 @@ DATA_DIR = BASE_DIR / "data"
 CHAT_DIR = DATA_DIR / "chat"
 CHAT_RAW_DIR = CHAT_DIR / "raw"
 CHAT_PROCESSED_DIR = CHAT_DIR / "processed"
+CHAT_PROCESSED_NER_DIR = CHAT_PROCESSED_DIR / "NER"
+CHAT_PROCESSED_SPC_DIR = CHAT_PROCESSED_DIR / "SPC"
 
 # Input/Output Files
 # File input untuk cleaner (hasil convert)
 TRAIN_DATA_UNCLEAN = Path(
-    os.getenv("TRAIN_DATA_UNCLEAN_PATH", str(CHAT_PROCESSED_DIR / "data_siap_training.json"))
+    os.getenv(
+        "TRAIN_DATA_UNCLEAN_PATH",
+        str(CHAT_PROCESSED_NER_DIR / "data_siap_training.json"),
+    )
 )
 # File output cleaner (siap training)
 TRAIN_DATA_CLEAN = Path(
-    os.getenv("TRAIN_DATA_CLEAN_PATH", str(CHAT_PROCESSED_DIR / "data_augmented.json"))
+    os.getenv(
+        "TRAIN_DATA_CLEAN_PATH",
+        str(CHAT_PROCESSED_NER_DIR / "data_siap_training_CLEAN.json"),
+    )
 )
 # File Label Studio asli
 RAW_LABEL_STUDIO = Path(
-    os.getenv("RAW_LABEL_STUDIO_PATH", str(CHAT_RAW_DIR / "export_label_studio.json"))
+    os.getenv("RAW_LABEL_STUDIO_PATH", str(CHAT_RAW_DIR / "export_label_studio_NER.json"))
+)
+
+# Auto-labeler input/output (pra-annotasi sebelum Label Studio)
+AUTO_LABEL_INPUT_FILE = Path(
+    os.getenv("AUTO_LABEL_INPUT_PATH", str(CHAT_RAW_DIR / "data_mentah_NER2.json"))
+)
+AUTO_LABEL_OUTPUT_FILE = Path(
+    os.getenv("AUTO_LABEL_OUTPUT_PATH", str(CHAT_RAW_DIR / "data_siap_import_NER2.json"))
 )
 
 # MODEL PATHS
@@ -37,13 +53,13 @@ BERT_OUTPUT_DIR = Path(
 EVENT_RAW_LABEL_STUDIO = Path(
     os.getenv(
         "EVENT_RAW_LABEL_STUDIO_PATH",
-        str(CHAT_RAW_DIR / "tahap2" / "export_label_studio_tahap.2.json"),
+        str(CHAT_RAW_DIR / "export_label_studio_NER.json"),
     )
 )
 EVENT_TRAIN_DATA = Path(
     os.getenv(
         "EVENT_TRAIN_DATA_PATH",
-        str(CHAT_PROCESSED_DIR / "tahap2" / "intent_event_dataset.json"),
+        str(CHAT_PROCESSED_SPC_DIR / "intent_event_dataset.json"),
     )
 )
 EVENT_OUTPUT_DIR = Path(
@@ -69,7 +85,7 @@ EVENT_MAX_SEQ_LEN = int(os.getenv("EVENT_MAX_SEQ_LEN", "256"))
 REVISION_MATCH_TRAIN_DATA = Path(
     os.getenv(
         "REVISION_MATCH_TRAIN_DATA_PATH",
-        str(CHAT_PROCESSED_DIR / "tahap2" / "revision_matcher_dataset.json"),
+        str(CHAT_PROCESSED_SPC_DIR / "revision_matcher_dataset.json"),
     )
 )
 REVISION_MATCH_OUTPUT_DIR = Path(

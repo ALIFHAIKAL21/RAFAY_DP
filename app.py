@@ -113,7 +113,7 @@ _FIELD_LABEL_ALIASES = {
         "route tujuan", "route/tujuan", "tujuan", "rute"
     ],
     "driver": [
-        "driver", "ddriver", "drver", "drivr", "diver", "pengemudi", "sopir"
+        "driver", "ddriver", "drver", "drivr", "diver", "pengemudi", "sopir", "nama"
     ],
     "Nopol": [
         "nopol", "nopool", "nopel", "no pol", "no polisi", "no plat", "plat"
@@ -261,7 +261,7 @@ def auto_format_chat_input(text):
 
     current_global_date = ""
     current_block_date = ""
-    # Fallback tanggal per pesan WhatsApp (dipakai saat header REQUEST/ONCALL tidak punya tanggal detail).
+    # Tanggal pesan WhatsApp hanya dipakai untuk mengenali metadata, bukan sebagai tanggal order.
     current_wa_message_date = ""
     active_request_has_header_date = False
     active_request_wa_date = ""
@@ -346,16 +346,21 @@ def auto_format_chat_input(text):
 
     for line in lines:
         header_timestamp_pattern = r'\[(\d{2}[.,:]\d{2})\s*,\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\]'
-        timestamp_match = re.search(header_timestamp_pattern, line)
+        wa_prefix_pattern = (
+            r'^\s*\[(\d{2}[.,:]\d{2})\s*,\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\]'
+            r'\s*[^:\n\r]*:\s*'
+        )
+        wa_prefix_match = re.search(wa_prefix_pattern, line)
+        timestamp_match = wa_prefix_match or re.search(header_timestamp_pattern, line)
         if timestamp_match:
-            # Simpan tanggal pesan WhatsApp sebagai fallback untuk header tanpa tanggal detail.
             current_wa_message_date = timestamp_match.group(2).strip()
             # Reset konteks tanggal per pesan baru agar tidak carry-over ke pesan berikutnya.
             current_global_date = ""
             current_block_date = ""
-            # Netralisasi tanggal timestamp agar model tidak mengekstraknya langsung sebagai DATE.
-            # Tetap pertahankan bracket token supaya pemecahan chunk tetap stabil.
-            line = re.sub(header_timestamp_pattern, "[WA_TS]", line)
+            if wa_prefix_match:
+                line = re.sub(wa_prefix_pattern, "", line, count=1)
+            else:
+                line = re.sub(header_timestamp_pattern, "", line).strip()
 
         is_request_header = re.search(r"(?i)(?:REQUEST|ONCALL|TAMBAHAN)", line)
         if is_request_header:
@@ -365,11 +370,10 @@ def auto_format_chat_input(text):
                 current_global_date = header_match.group(1)
                 current_block_date = current_global_date
             else:
-                # Header tanpa tanggal detail: fallback ke tanggal timestamp WhatsApp pada pesan yang sama.
-                current_global_date = current_wa_message_date if current_wa_message_date else ""
-                current_block_date = current_global_date
+                current_global_date = ""
+                current_block_date = ""
             active_request_has_header_date = bool(header_match)
-            active_request_wa_date = current_wa_message_date if current_wa_message_date else ""
+            active_request_wa_date = ""
             active_request_fallback_line_indexes = []
             active_request_explicit_dates = []
             formatted_lines.append(line)
@@ -3419,36 +3423,44 @@ def compute_revision_business_scores(chat_text, df_before, df_after):
 # --- FRONTEND UI: WHITE THEME - PROFESSIONAL EDITION ---
 # =================================================================================
 
-st.set_page_config(page_title="", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
         :root {
-            --bg-color: #0f1116;
-            --bg-elev-1: #161b22;
-            --bg-elev-2: #1d2430;
-            --card-bg: #121821;
-            --border-color: #2a3441;
-            --accent-color: #007acc;
-            --accent-strong: #1da1ff;
-            --text-main: #e6edf3;
-            --text-muted: #9fb1c3;
-            --text-dim: #7f8da3;
-            --success-color: #2ea043;
-            --warning-color: #d29922;
+            --bg-color: #ffffff;
+            --bg-elev-1: #ffffff;
+            --bg-elev-2: #f4f4f4;
+            --card-bg: #ffffff;
+            --border-color: #101010;
+            --accent-color: #000000;
+            --accent-strong: #000000;
+            --text-main: #000000;
+            --text-muted: #1f1f1f;
+            --text-dim: #454545;
+            --success-color: #000000;
+            --warning-color: #000000;
         }
         
         .stApp {
-            background: radial-gradient(1200px 400px at 12% -10%, rgba(0, 122, 204, 0.18), transparent 60%),
-                        linear-gradient(180deg, #0f1116 0%, #0b0f14 100%) !important;
+            background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%) !important;
             font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
             color: var(--text-main) !important;
         }
 
         #MainMenu {visibility: hidden;}
-        header {visibility: hidden;}
+        header[data-testid="stHeader"] {
+            visibility: visible !important;
+            background: transparent !important;
+        }
+        [data-testid="stSidebarCollapsedControl"],
+        [data-testid="stSidebarCollapseButton"] {
+            visibility: visible !important;
+            display: flex !important;
+            opacity: 1 !important;
+        }
         footer {visibility: hidden;}
         .block-container { padding-top: 1.6rem !important; max-width: 1400px; }
 
@@ -3465,50 +3477,50 @@ st.markdown("""
             background-color: var(--bg-elev-1); border: 1px solid var(--border-color);
             padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; color: var(--text-muted);
             display: flex; align-items: center; gap: 8px; font-weight: 600;
-            box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset;
+            box-shadow: none;
         }
-        .status-dot { width: 8px; height: 8px; background-color: var(--success-color); border-radius: 50%; box-shadow: 0 0 8px rgba(46, 160, 67, 0.6); }
+        .status-dot { width: 8px; height: 8px; background-color: var(--success-color); border-radius: 50%; box-shadow: none; }
 
         .input-panel {
             background-color: var(--bg-elev-1); border: 1px solid var(--border-color);
             border-radius: 10px; padding: 18px; height: 100%;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+            box-shadow: none;
         }
         .input-panel-wide { padding: 16px 18px 12px 18px; }
         .panel-header { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--text-main); margin-bottom: 12px; }
-        .badge-ml { background-color: rgba(0, 122, 204, 0.12); color: var(--accent-strong); font-size: 0.65rem; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(0, 122, 204, 0.35); font-weight: 600; }
+        .badge-ml { background-color: #f1f1f1; color: var(--accent-strong); font-size: 0.65rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border-color); font-weight: 600; }
         
         .tab-mockup { display: flex; gap: 8px; margin-bottom: 12px; }
         .tab-btn { background-color: var(--bg-elev-2); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; width: 50%; text-align: center; cursor: default; }
         .tab-inactive { background-color: transparent; color: var(--text-dim); border-style: dashed; }
         
         .stTextArea textarea {
-            background-color: #0c121a !important; color: var(--text-main) !important; border: 1px solid var(--border-color) !important;
+            background-color: #ffffff !important; color: var(--text-main) !important; border: 1px solid var(--border-color) !important;
             border-radius: 8px !important; font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace !important;
             font-size: 0.82rem; padding: 14px; line-height: 1.5;
         }
-        .stTextArea textarea:focus { border-color: var(--accent-color) !important; box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.25) !important;}
+        .stTextArea textarea:focus { border-color: var(--accent-color) !important; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.12) !important;}
         
         .stTextInput input, .stSelectbox div[data-baseweb="select"] > div, .stNumberInput input {
-            background-color: #0c121a !important; color: var(--text-main) !important; border: 1px solid var(--border-color) !important;
+            background-color: #ffffff !important; color: var(--text-main) !important; border: 1px solid var(--border-color) !important;
             border-radius: 8px !important;
         }
 
         div.stButton > button {
-            background: linear-gradient(135deg, #007acc 0%, #1da1ff 100%) !important; color: #0b1117 !important; border: none !important;
+            background: #000000 !important; color: #ffffff !important; border: 1px solid #000000 !important;
             border-radius: 8px !important; padding: 11px 16px !important; font-weight: 700 !important; width: 100% !important; margin-top: 12px; transition: 0.2s;
-            box-shadow: 0 6px 18px rgba(0, 122, 204, 0.35);
+            box-shadow: none;
         }
-        div.stButton > button:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 10px 24px rgba(0, 122, 204, 0.4); }
+        div.stButton > button:hover { background: #1a1a1a !important; color: #ffffff !important; transform: translateY(-1px); box-shadow: none; }
 
         .output-panel {
             background-color: var(--bg-elev-1); border: 1px solid var(--border-color);
             border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; min-height: 500px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+            box-shadow: none;
         }
-        .out-icon { background-color: rgba(0, 122, 204, 0.08); padding: 18px; border-radius: 14px; margin-bottom: 18px; position: relative; }
+        .out-icon { background-color: #f3f3f3; padding: 18px; border-radius: 14px; margin-bottom: 18px; position: relative; }
         .out-icon svg { width: 38px; color: var(--accent-color); }
-        .out-badge { position: absolute; bottom: -6px; right: -6px; background: var(--accent-color); color: #0b1117; font-size: 0.6rem; font-weight: 700; padding: 4px 8px; border-radius: 999px; }
+        .out-badge { position: absolute; bottom: -6px; right: -6px; background: #ffffff; color: #000000; border: 1px solid #000000; font-size: 0.6rem; font-weight: 700; padding: 4px 8px; border-radius: 999px; }
         .out-title { color: var(--text-main); font-weight: 700; font-size: 1.15rem; margin-bottom: 8px; }
         .out-desc { color: var(--text-muted); font-size: 0.82rem; text-align: center; max-width: 420px; line-height: 1.6; margin-bottom: 24px; }
         
@@ -3527,7 +3539,7 @@ st.markdown("""
             margin: 0 0 0.3rem 0;
         }
         .stat-chip {
-            background-color: #0c121a;
+            background-color: #ffffff;
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 10px 14px;
@@ -3557,27 +3569,27 @@ st.markdown("""
         [data-testid="stDataFrame"] { background-color: var(--bg-elev-1) !important; }
         .stDataFrame { background-color: var(--bg-elev-1) !important; }
         [data-testid="stDataFrame"] > div { background-color: var(--bg-elev-1) !important; }
-        [data-testid="stDataFrame"] tbody td { color: var(--text-main) !important; background-color: #0f151d !important; border-color: var(--border-color) !important; }
-        [data-testid="stDataFrame"] thead th { background-color: #19212b !important; color: var(--text-main) !important; border-color: var(--border-color) !important; font-weight: 600; }
-        [data-testid="stDataFrame"] tbody tr:nth-child(odd) { background-color: #0f151d !important; }
-        [data-testid="stDataFrame"] tbody tr:nth-child(even) { background-color: #111924 !important; }
+        [data-testid="stDataFrame"] tbody td { color: #000000 !important; background-color: #ffffff; border-color: var(--border-color) !important; }
+        [data-testid="stDataFrame"] thead th { background-color: #efefef !important; color: var(--text-main) !important; border-color: var(--border-color) !important; font-weight: 600; }
+        [data-testid="stDataFrame"] tbody tr:nth-child(odd) { background-color: #ffffff !important; }
+        [data-testid="stDataFrame"] tbody tr:nth-child(even) { background-color: #f8f8f8 !important; }
         [data-testid="stDataFrame"] table { border-color: var(--border-color) !important; border-collapse: collapse; }
         [data-testid="stDataFrame"] th, [data-testid="stDataFrame"] td { border-color: var(--border-color) !important; padding: 10px 12px; }
-        [data-testid="stDataFrame"] tbody tr:hover { background-color: rgba(0, 122, 204, 0.18) !important; }
+        [data-testid="stDataFrame"] tbody tr:hover { background-color: rgba(0, 0, 0, 0.08) !important; }
         
-        div.stDownloadButton > button { background: linear-gradient(135deg, #2ea043 0%, #3fb950 100%) !important; color: #0b1117 !important; border: none !important; border-radius: 8px !important; font-weight: 700 !important; width: 100% !important; margin-top: 12px; box-shadow: 0 6px 18px rgba(46, 160, 67, 0.35); }
-        div.stDownloadButton > button:hover { filter: brightness(1.05); box-shadow: 0 10px 24px rgba(46, 160, 67, 0.4); }
+        div.stDownloadButton > button { background: #ffffff !important; color: #000000 !important; border: 1px solid #000000 !important; border-radius: 8px !important; font-weight: 700 !important; width: 100% !important; margin-top: 12px; box-shadow: none; }
+        div.stDownloadButton > button:hover { background: #efefef !important; box-shadow: none; }
 
-        .result-container { background-color: var(--bg-elev-1); padding: 22px; border-radius: 10px; border: 1px solid var(--border-color); box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+        .result-container { background-color: var(--bg-elev-1); padding: 22px; border-radius: 10px; border: 1px solid var(--border-color); box-shadow: none; }
         .result-header { color: var(--text-main); font-weight: 700; font-size: 1rem; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
 
         .dashboard-container { width: 100%; margin-bottom: 16px; }
-        .metric-box { background-color: var(--bg-elev-2); border: 1px solid var(--border-color); border-radius: 10px; padding: 18px; text-align: center; box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
-        .metric-box-label { font-size: 0.7rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
-        .metric-box-value { font-size: 1.6rem; font-weight: 700; color: var(--accent-strong); line-height: 1.2; }
+        .metric-box { background-color: #000000; border: 1px solid #000000; border-radius: 10px; padding: 18px; text-align: center; box-shadow: none; }
+        .metric-box-label { font-size: 0.7rem; font-weight: 600; color: #ffffff; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+        .metric-box-value { font-size: 1.6rem; font-weight: 700; color: #ffffff; line-height: 1.2; }
 
         .muted-preview { font-size: 0.86rem; color: var(--text-muted); }
-        .processing-box { background-color: var(--bg-elev-1); border: 1px solid var(--border-color); border-radius: 10px; padding: 22px; box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+        .processing-box { background-color: var(--bg-elev-1); border: 1px solid var(--border-color); border-radius: 10px; padding: 22px; box-shadow: none; }
         .processing-title { font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px; }
         .section-spacer { height: 14px; }
         .full-width { width: 100%; }
@@ -3586,6 +3598,52 @@ st.markdown("""
         .stMarkdown small, .stMarkdown .caption { color: var(--text-muted); }
         code, pre { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace !important; }
         .stAlert, .stInfo, .stWarning, .stSuccess { border-radius: 10px; }
+
+        section[data-testid="stSidebar"] {
+            background-color: #ffffff !important;
+            border-right: 1px solid #000000 !important;
+        }
+        section[data-testid="stSidebar"] > div:first-child {
+            background-color: #ffffff !important;
+        }
+        section[data-testid="stSidebar"] .block-container {
+            padding-top: 1rem !important;
+        }
+        section[data-testid="stSidebar"] h3 {
+            font-size: 0.95rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.02em !important;
+            margin-bottom: 0.4rem !important;
+        }
+        section[data-testid="stSidebar"] div[role="radiogroup"] {
+            border: 1px solid #000000;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+        section[data-testid="stSidebar"] label[data-baseweb="radio"] {
+            margin: 0 !important;
+            padding: 0 !important;
+            border-bottom: 1px solid #000000;
+            background: #ffffff;
+        }
+        section[data-testid="stSidebar"] label[data-baseweb="radio"]:last-child {
+            border-bottom: none;
+        }
+        section[data-testid="stSidebar"] label[data-baseweb="radio"] > div:first-child {
+            display: none !important;
+        }
+        section[data-testid="stSidebar"] label[data-baseweb="radio"] > div:last-child {
+            width: 100%;
+            padding: 11px 12px;
+            color: #000000 !important;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        section[data-testid="stSidebar"] label[data-baseweb="radio"][aria-checked="true"] > div:last-child {
+            background: #000000;
+            color: #ffffff !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -3605,11 +3663,66 @@ def get_processor(
         event_threshold=event_threshold,
     )
 
+def _get_query_param_value(param_name, default_value):
+    try:
+        value = st.query_params.get(param_name, default_value)
+    except Exception:
+        legacy_params = st.experimental_get_query_params()
+        value = legacy_params.get(param_name, [default_value])
+
+    if isinstance(value, list):
+        return str(value[0]) if value else str(default_value)
+    return str(value)
+
+def _resolve_page_from_query():
+    raw_page = _get_query_param_value("page", "ekstraksi").strip().lower()
+    if raw_page in {"dashboard", "audit", "audit_dashboard"}:
+        return "dashboard"
+    return "ekstraksi"
+
+def _navigate_to_page(page_name):
+    """Update query params to navigate to the specified page"""
+    try:
+        st.query_params["page"] = page_name
+    except Exception:
+        # Fallback untuk versi Streamlit yang lebih lama
+        st.experimental_set_query_params(page=page_name)
+
+def _render_sidebar_navigation(active_page):
+    current = "Ekstraksi Data" if active_page == "ekstraksi" else "Dashboard Evaluasi"
+    st.sidebar.markdown("### Navigasi Utama")
+    selected = st.sidebar.radio(
+        "Navigasi Utama",
+        options=["Ekstraksi Data", "Dashboard Evaluasi"],
+        index=0 if current == "Ekstraksi Data" else 1,
+        label_visibility="collapsed",
+    )
+
+    target_page = "ekstraksi" if selected == "Ekstraksi Data" else "dashboard"
+    if target_page != active_page:
+        _navigate_to_page(target_page)
+        st.rerun()
+
+def _render_audit_dashboard_page():
+    try:
+        from db.database import engine
+        from audit_dashboard import render_batch_audit_feed
+    except Exception as e:
+        st.error(f"Gagal memuat dashboard audit: {e}")
+        return
+
+    render_batch_audit_feed(engine)
+
 def main():
     if 'waktu' not in st.session_state: st.session_state.waktu = "--"
     if 'baris' not in st.session_state: st.session_state.baris = "--"
-    if 'akurasi' not in st.session_state: st.session_state.akurasi = "--"
     if 'processing_time' not in st.session_state: st.session_state.processing_time = 0.0
+
+    active_page = _resolve_page_from_query()
+    _render_sidebar_navigation(active_page)
+    if active_page == "dashboard":
+        _render_audit_dashboard_page()
+        return
 
     if 'db_bootstrap_done' not in st.session_state:
         st.session_state['db_bootstrap_done'] = True
@@ -3669,10 +3782,8 @@ def main():
 
     if btn_reset_db:
         st.session_state.pop('df_office', None)
-        st.session_state.pop('thesis_scores', None)
         st.session_state.waktu = "--"
         st.session_state.baris = "--"
-        st.session_state.akurasi = "--"
         st.session_state.processing_time = 0.0
 
         if not DB_PERSISTENCE_ENABLED or db_reset_all_data is None:
@@ -3706,7 +3817,6 @@ def main():
         if not chat_input.strip():
             st.error("Input kosong. Silakan paste data dokumen terlebih dahulu.")
         else:
-            st.session_state.pop('thesis_scores', None)
             processing_container = st.empty()
             start_time = time.time()
             
@@ -3731,9 +3841,7 @@ def main():
                     st.session_state['df_office'] = df_saved
                     st.session_state.waktu = "0.0s"
                     st.session_state.baris = f"{len(df_saved)} Order"
-                    st.session_state.akurasi = st.session_state.get('akurasi', '--')
                     st.session_state.processing_time = 0.0
-                st.session_state.pop('thesis_scores', None)
                 st.info("Chat ini sudah pernah diupload. Data lama dipertahankan (tidak diproses ulang).")
                 st.rerun()
 
@@ -3759,9 +3867,6 @@ def main():
                 df_final = apply_phone_pair_from_text(df_final)
                 if 'PLATE' in df_final.columns:
                     df_final['PLATE'] = df_final['PLATE'].apply(clean_plate_value)
-
-                accuracy = calculate_extraction_accuracy(df_raw, df_final)
-                ner_scores = compute_ner_business_scores(df_final)
                 
                 df_office = pd.DataFrame()
                 df_office['No.'] = range(1, len(df_final) + 1)
@@ -3845,12 +3950,8 @@ def main():
 
                 processing_container.empty()
                 st.session_state['df_office'] = df_office
-                st.session_state['thesis_scores'] = {
-                    "ner": ner_scores,
-                }
                 st.session_state.waktu = f"{processing_time}s"
                 st.session_state.baris = f"{len(df_office)} Order"
-                st.session_state.akurasi = f"{accuracy}%"
                 st.session_state.processing_time = processing_time
 
                 st.rerun()
@@ -3861,12 +3962,6 @@ def main():
             if os.path.exists(temp_path): os.remove(temp_path)
                 
     if 'df_office' in st.session_state:
-        dashboard_col1, dashboard_col2 = st.columns(2, gap="medium")
-        with dashboard_col1:
-            st.markdown(f"""<div class="metric-box"><div class="metric-box-label">Processing Time</div><div class="metric-box-value">{st.session_state.get('processing_time', 0.0)}s</div></div>""", unsafe_allow_html=True)
-        with dashboard_col2:
-            st.markdown(f"""<div class="metric-box"><div class="metric-box-label">Total Records</div><div class="metric-box-value">{len(st.session_state['df_office'])}</div></div>""", unsafe_allow_html=True)
-
         st.divider()
         st.markdown("<div class='result-container'>", unsafe_allow_html=True)
         st.markdown("<div class='result-header'><svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='3' width='18' height='18' rx='2' ry='2'></rect><line x1='3' y1='9' x2='21' y2='9'></line><line x1='9' y1='21' x2='9' y2='9'></line></svg>Hasil Ekstraksi</div>", unsafe_allow_html=True)
@@ -3975,7 +4070,7 @@ def main():
                 df_in.to_excel(writer, index=False, sheet_name='Orders')
                 wb = writer.book
                 ws = writer.sheets['Orders']
-                h_fmt = wb.add_format({'bold': True, 'bg_color': '#0F766E', 'font_color': 'white', 'border': 1, 'align': 'center', 'valign': 'vcenter'})
+                h_fmt = wb.add_format({'bold': True, 'bg_color': '#efefef', 'font_color': 'black', 'border': 1, 'align': 'center', 'valign': 'vcenter'})
                 b_fmt = wb.add_format({'border': 1, 'valign': 'vcenter'})
                 for c, val in enumerate(df_in.columns): ws.write(0, c, val, h_fmt)
                 ws.set_column('A:A', 5)
@@ -3991,61 +4086,17 @@ def main():
         def _status_row_style(row):
             status = str(row.get('status_unit', '')).strip().upper()
             if status == "ASSIGNED":
-                return ['background-color: rgba(46, 204, 113, 0.12)'] * len(row)
+                return ['background-color: rgba(34, 197, 94, 0.14); color: #000000;'] * len(row)
             if status == "PARTIAL":
-                return ['background-color: rgba(241, 196, 15, 0.12)'] * len(row)
+                return ['background-color: rgba(250, 204, 21, 0.22); color: #000000;'] * len(row)
             if status == "UNASSIGNED":
-                return ['background-color: rgba(231, 76, 60, 0.12)'] * len(row)
+                return ['background-color: rgba(0, 0, 0, 0.07); color: #000000;'] * len(row)
             return [''] * len(row)
         st.dataframe(
             df_view.style.apply(_status_row_style, axis=1),
-            use_container_width=True
+            use_container_width=True,
+            height=min(1600, max(560, 44 + (len(df_view) * 35)))
         )
-
-        thesis_scores = st.session_state.get("thesis_scores")
-        st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
-        st.markdown("### Metrik Skripsi: NER (Business Process)")
-
-        if not thesis_scores:
-            st.info("Metrik NER belum tersedia untuk tampilan ini. Jalankan ekstraksi baru agar skor terhitung.")
-        else:
-            ner_scores = thesis_scores.get("ner", {}) or {}
-            ner_sum = ner_scores.get("summary", {}) or {}
-
-            def _pct(v):
-                return f"{float(v or 0.0) * 100:.2f}%"
-
-            st.caption(
-                "Definisi evaluasi mengikuti proses bisnis pipeline: "
-                "NER dihitung berbasis evidence field pada chat asli. "
-                "Metrik Revision/Refill sementara dinonaktifkan untuk fokus evaluasi NER."
-            )
-
-            st.markdown("#### Ringkasan NER")
-            ner_c1, ner_c2, ner_c3, ner_c4 = st.columns(4, gap="small")
-            with ner_c1:
-                st.metric("Accuracy", _pct(ner_sum.get("accuracy", 0.0)))
-            with ner_c2:
-                st.metric("Precision", _pct(ner_sum.get("precision", 0.0)))
-            with ner_c3:
-                st.metric("Recall", _pct(ner_sum.get("recall", 0.0)))
-            with ner_c4:
-                st.metric("F1", _pct(ner_sum.get("f1", 0.0)))
-
-            ner_meta_1, ner_meta_2, ner_meta_3 = st.columns(3, gap="small")
-            with ner_meta_1:
-                st.metric("Rows", int(ner_sum.get("rows", 0)))
-            with ner_meta_2:
-                st.metric("Evaluable Cells", int(ner_sum.get("evaluable_cells", 0)))
-            with ner_meta_3:
-                st.metric("TP / FP / FN", f"{int(ner_sum.get('tp', 0))} / {int(ner_sum.get('fp', 0))} / {int(ner_sum.get('fn', 0))}")
-
-            ner_field_df = pd.DataFrame(ner_scores.get("field_metrics", []))
-            if not ner_field_df.empty:
-                for c in ["accuracy", "precision", "recall", "f1"]:
-                    ner_field_df[c] = ner_field_df[c].apply(_pct)
-                st.dataframe(ner_field_df, use_container_width=True)
-            st.info("Metrik Revision/Refill sementara dinonaktifkan.")
 
         st.markdown("</div>", unsafe_allow_html=True)
 

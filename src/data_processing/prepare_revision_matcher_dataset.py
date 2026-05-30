@@ -10,10 +10,10 @@ from typing import Dict, List, Optional
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(ROOT_DIR))
 
-from src.config import CHAT_PROCESSED_DIR, REVISION_MATCH_TRAIN_DATA
+from src.config import REVISION_MATCH_TRAIN_DATA, TRAIN_DATA_CLEAN
 
 
-DEFAULT_SOURCE = CHAT_PROCESSED_DIR / "tahap2" / "data_siap_training_CLEAN.json"
+DEFAULT_SOURCE = TRAIN_DATA_CLEAN
 SOURCE_PATH = Path(
     os.getenv("REVISION_MATCH_SOURCE_DATA_PATH", str(DEFAULT_SOURCE))
 )

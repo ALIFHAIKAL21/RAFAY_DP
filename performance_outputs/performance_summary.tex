@@ -1,0 +1,20 @@
+% Table 1. Model Performance Summary
+\begin{tabular}{lrrrrrrrrrrlll}
+\toprule
+indoBERT model & Epoch & Step & Precision & Recall & F1_Score & Accuracy & TP & FP & FN & TN & Source_File & Source_Lines & Notes \\
+\midrule
+indolem/indobert-base-uncased & 5.000000 & 500 & 0.994509 & 0.998346 & 0.996424 & 0.998075 & 1811 & 10 & 3 & NaN & models/indobert_NER/checkpoint-500/trainer_state.json & 411,412,414,415 & Entity-level seqeval (TN tidak terdefinisi langsung). \\
+indobenchmark/indobert-base-p2 & 4.000000 & 1540 & 0.997500 & 0.997500 & 0.997500 & 0.997399 & 399 & 1 & 1 & 368.000000 & models/indobert_revision_matcher/checkpoint-1540/trainer_state.json & 597,599,602,604 &  \\
+\bottomrule
+\end{tabular}
+
+
+% Table 2. Confusion Matrix Components
+\begin{tabular}{lrrrrl}
+\toprule
+indoBERT model & TP & FP & FN & TN & Confusion_Matrix_Available \\
+\midrule
+indolem/indobert-base-uncased & 1811 & 10 & 3 & NaN & PARTIAL \\
+indobenchmark/indobert-base-p2 & 399 & 1 & 1 & 368.000000 & YES \\
+\bottomrule
+\end{tabular}

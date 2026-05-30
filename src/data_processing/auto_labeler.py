@@ -7,15 +7,15 @@ from pathlib import Path
 # Agar bisa membaca src.config dari dalam folder data_processing
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
-from src.config import CHAT_RAW_DIR
+from src.config import AUTO_LABEL_INPUT_FILE, AUTO_LABEL_OUTPUT_FILE
 
-#KONFIGURASI FILE ---
-# Nama file input/output 
-INPUT_FILENAME = 'data_mentah2.json' 
-OUTPUT_FILENAME = 'data_siap_import_v2.json'
-
-INPUT_FILE = CHAT_RAW_DIR / INPUT_FILENAME
-OUTPUT_FILE = CHAT_RAW_DIR / OUTPUT_FILENAME
+# KONFIGURASI FILE ---
+# Default path mengikuti struktur baru `data/chat/raw/*_NER*.json`
+# Bisa dioverride via env:
+# - AUTO_LABEL_INPUT_PATH
+# - AUTO_LABEL_OUTPUT_PATH
+INPUT_FILE = AUTO_LABEL_INPUT_FILE
+OUTPUT_FILE = AUTO_LABEL_OUTPUT_FILE
 
 def find_offsets(text, pattern, group_index=0):
     """Mencari posisi start dan end dengan dukungan group regex"""

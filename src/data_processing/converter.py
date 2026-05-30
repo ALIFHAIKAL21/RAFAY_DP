@@ -50,7 +50,9 @@ def main():
     # 1. Validasi Input
     if not RAW_LABEL_STUDIO.exists():
         print(f"❌ ERROR: File input tidak ditemukan di: {RAW_LABEL_STUDIO}")
-        print("Pastikan kamu sudah menaruh file 'export_label_studio.json' di folder data/chat/raw/")
+        print(
+            f"Pastikan file '{RAW_LABEL_STUDIO.name}' ada di folder: {RAW_LABEL_STUDIO.parent}"
+        )
         return
 
     # 2. Load Data JSON

@@ -144,7 +144,6 @@ No hp  : 083169525183
 Lokasi : ARGOPANTES 
 Waktu loading : SEGERA
 Rute/tujuan : CGK - SUB
-RAFAY
 driver  : AKIYAT
 Nopol  : L 9722 UE
 No hp  :081281122738
