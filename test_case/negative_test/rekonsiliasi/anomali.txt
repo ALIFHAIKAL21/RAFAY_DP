@@ -1,0 +1,257 @@
+CASE 1 - ANOMALI TIPE UNIT BERUBAH
+
+REQUEST ORDER ULANG ONCALL 06 FEBRUARI 2026
+
+5 UNIT CDDL 40 CBM
+Lokasi : CIKARANG
+Waktu loading : SEGERA
+Rute/tujuan : CGK - SUB
+Driver : HENDRA S.P
+Nopol : D 9044 AG
+No hp : +62 877-8667-6177
+
+Waktu loading : 18:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : reza
+Nopol : D 9033 ZZ
+No hp : 081567895431
+
+Waktu loading : 18:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : DANDI
+Nopol : D 9022 BB
+No hp : 085762895321
+
+Waktu loading : 20:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : RIZAL
+Nopol : B 1045 YK
+No hp : 081234510001
+
+Waktu loading : 22:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : BAYU
+Nopol : L 1046 YA
+No hp : 081234510002
+
+
+CASE 2 - ANOMALI LOKASI PICKUP BERUBAH
+
+REQUEST ORDER ULANG ONCALL 06 FEBRUARI 2026
+
+5 UNIT TWB 50 CBM
+Lokasi : MEGAHUB
+Waktu loading : SEGERA
+Rute/tujuan : CGK - SUB
+Driver : HENDRA S.P
+Nopol : D 9044 AG
+No hp : +62 877-8667-6177
+
+Waktu loading : 18:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : reza
+Nopol : D 9033 ZZ
+No hp : 081567895431
+
+Waktu loading : 18:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : DANDI
+Nopol : D 9022 BB
+No hp : 085762895321
+
+Waktu loading : 20:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : RIZAL
+Nopol : B 1045 YK
+No hp : 081234510001
+
+Waktu loading : 22:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : BAYU
+Nopol : L 1046 YA
+No hp : 081234510002
+
+
+CASE 3 - ANOMALI RUTE TUJUAN BERUBAH
+
+REQUEST ORDER ULANG ONCALL 06 FEBRUARI 2026
+
+5 UNIT TWB 50 CBM
+Lokasi : CIKARANG
+Waktu loading : SEGERA
+Rute/tujuan : CGK - SUX
+Driver : HENDRA S.P
+Nopol : D 9044 AG
+No hp : +62 877-8667-6177
+
+Waktu loading : 18:00 07-02-2026
+Rute/tujuan : CGK - SUX
+Driver : reza
+Nopol : D 9033 ZZ
+No hp : 081567895431
+
+Waktu loading : 18:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : DANDI
+Nopol : D 9022 BB
+No hp : 085762895321
+
+Waktu loading : 20:00 07-02-2026
+Rute/tujuan : CGK - SUX
+Driver : RIZAL
+Nopol : B 1045 YK
+No hp : 081234510001
+
+Waktu loading : 22:00 07-02-2026
+Rute/tujuan : CGK - SUX
+Driver : BAYU
+Nopol : L 1046 YA
+No hp : 081234510002
+
+
+CASE 4 - ANOMALI WAKTU LOADING UNIT LAMA BERUBAH
+
+REQUEST ORDER ULANG ONCALL 06 FEBRUARI 2026
+
+5 UNIT TWB 50 CBM
+Lokasi : CIKARANG
+Waktu loading : 09:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : HENDRA S.P
+Nopol : D 9044 AG
+No hp : +62 877-8667-6177
+
+Waktu loading : 19:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : reza
+Nopol : D 9033 ZZ
+No hp : 081567895431
+
+Waktu loading : 17:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : DANDI
+Nopol : D 9022 BB
+No hp : 085762895321
+
+Waktu loading : 20:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : RIZAL
+Nopol : B 1045 YK
+No hp : 081234510001
+
+Waktu loading : 22:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : BAYU
+Nopol : L 1046 YA
+No hp : 081234510002
+
+
+CASE 5 - ANOMALI NOPOL ATAU NO HP UNIT LAMA BERUBAH
+
+REQUEST ORDER ULANG ONCALL 06 FEBRUARI 2026
+
+5 UNIT TWB 50 CBM
+Lokasi : CIKARANG
+Waktu loading : SEGERA
+Rute/tujuan : CGK - SUB
+Driver : HENDRA S.P
+Nopol : D 9999 AG
+No hp : +62 877-8667-9999
+
+Waktu loading : 18:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : reza
+Nopol : D 9033 ZZ
+No hp : 081567895999
+
+Waktu loading : 18:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : DANDI
+Nopol : D 9022 BB
+No hp : 085762895321
+
+Waktu loading : 20:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : RIZAL
+Nopol : B 1045 YK
+No hp : 081234510001
+
+Waktu loading : 22:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : BAYU
+Nopol : L 1046 YA
+No hp : 081234510002
+
+
+CASE 6 - ANOMALI NAMA DRIVER UNIT LAMA BERUBAH
+
+REQUEST ORDER ULANG ONCALL 06 FEBRUARI 2026
+
+5 UNIT TWB 50 CBM
+Lokasi : CIKARANG
+Waktu loading : SEGERA
+Rute/tujuan : CGK - SUB
+Driver : DIDIN
+Nopol : D 9044 AG
+No hp : +62 877-8667-6177
+
+Waktu loading : 18:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : RETNO
+Nopol : D 9033 ZZ
+No hp : 081567895431
+
+Waktu loading : 18:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : DANDI
+Nopol : D 9022 BB
+No hp : 085762895321
+
+Waktu loading : 20:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : RIZAL
+Nopol : B 1045 YK
+No hp : 081234510001
+
+Waktu loading : 22:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : BAYU
+Nopol : L 1046 YA
+No hp : 081234510002
+
+
+CASE 7 - ANOMALI JUMLAH UNIT BERUBAH
+
+REQUEST ORDER ULANG ONCALL 06 FEBRUARI 2026
+
+5 UNIT TWB 50 CBM
+Lokasi : CIKARANG
+Waktu loading : SEGERA
+Rute/tujuan : CGK - SUB
+Driver : HENDRA S.P
+Nopol : D 9044 AG
+No hp : +62 877-8667-6177
+
+Waktu loading : 18:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : reza
+Nopol : D 9033 ZZ
+No hp : 081567895431
+
+Waktu loading : 18:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : DANDI
+Nopol : D 9022 BB
+No hp : 085762895321
+
+Waktu loading : 20:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : RIZAL
+Nopol : B 1045 YK
+No hp : 081234510001
+
+Waktu loading : 22:00 07-02-2026
+Rute/tujuan : CGK - SUB
+Driver : BAYU
+Nopol : L 1046 YA
+No hp : 081234510002

@@ -1,0 +1,1442 @@
+[
+  {
+    "pair_id": "910000_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 01 FEB 2026\n\n1 UNIT TWB\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nREVISI\nDriver : BUDI\nNopol : L 7493 XR\nNo hp : 081000910777",
+    "text_b": "RO_DATE: 01 feb 2026\nLOAD_DATE: 01 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: dedi\nPLATE: ab 6222 nn\nPHONE: 081000910013",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910000
+  },
+  {
+    "pair_id": "910000_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 01 FEB 2026\n1 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nREVISI\nDriver : BUDI\nNopol : L 7493 XR\nNo hp : 081000910777\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 01 feb 2026\nLOAD_DATE: 01 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: budi\nPLATE: l 7493 xr\nPHONE: 081000910777",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910000
+  },
+  {
+    "pair_id": "910000_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 01 FEB 2026\n\n1 UNIT TWB\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nREVISI\nDriver : BUDI\nNopol : L 7493 XR\nNo hp : 081000910777",
+    "text_b": "RO_DATE: 01 feb 2026\nLOAD_DATE: 01 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: aldi\nPLATE: ad 1816 sc\nPHONE: 081000911221",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910000
+  },
+  {
+    "pair_id": "910000_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 01 FEB 2026\n1 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nREVISI\nDriver : BUDI\nNopol : L 7493 XR\nNo hp : 081000910777\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 01 feb 2026\nLOAD_DATE: 01 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: davit\nPLATE: w 1031 gs\nPHONE: 081000911443",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910000
+  },
+  {
+    "pair_id": "910000_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 01 FEB 2026\n\n1 UNIT TWB\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nREVISI\nDriver : BUDI\nNopol : L 7493 XR\nNo hp : 081000910777",
+    "text_b": "RO_DATE: 01 feb 2026\nLOAD_DATE: 01 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-pku\nUNIT_TYPE: twb\nDRIVER: budi\nPLATE: l 7493 xr\nPHONE: 081000910777",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910000
+  },
+  {
+    "pair_id": "910000_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 01 FEB 2026\n1 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nREVISI\nDriver : BUDI\nNopol : L 7493 XR\nNo hp : 081000910777\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 01 mar 2026\nLOAD_DATE: 02 mar 2026\nTIME: 18:00\nORIGIN: jne sub\nDESTINATION: sub-cgk\nUNIT_TYPE: cddl\nDRIVER: hendra\nPLATE: b 2601 em\nPHONE: 081000910999",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910000
+  },
+  {
+    "pair_id": "910001_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 02 FEB 2026\n\n1 UNIT CDDL\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nRevisi\nDriver : DODI\nNopol : AB 8233 RZ\nNo hp : 081000910797\nMohon diprioritaskan loading malam ini",
+    "text_b": "RO_DATE: 02 feb 2026\nLOAD_DATE: 02 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: sulaiman\nPLATE: bk 6888 fp\nPHONE: 081000910031",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910001
+  },
+  {
+    "pair_id": "910001_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 02 FEB 2026\n1 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nRevisi\nDriver : DODI\nNopol : AB 8233 RZ\nNo hp : 081000910797\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 02 feb 2026\nLOAD_DATE: 02 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: dodi\nPLATE: ab 8233 rz\nPHONE: 081000910797",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910001
+  },
+  {
+    "pair_id": "910001_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 02 FEB 2026\n\n1 UNIT CDDL\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nRevisi\nDriver : DODI\nNopol : AB 8233 RZ\nNo hp : 081000910797\nMohon diprioritaskan loading malam ini",
+    "text_b": "RO_DATE: 02 feb 2026\nLOAD_DATE: 02 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: usman\nPLATE: d 2556 mk\nPHONE: 081000911241",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910001
+  },
+  {
+    "pair_id": "910001_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 02 FEB 2026\n1 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nRevisi\nDriver : DODI\nNopol : AB 8233 RZ\nNo hp : 081000910797\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 02 feb 2026\nLOAD_DATE: 02 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: mulyadi\nPLATE: b 1771 aa\nPHONE: 081000911463",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910001
+  },
+  {
+    "pair_id": "910001_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 02 FEB 2026\n\n1 UNIT CDDL\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nRevisi\nDriver : DODI\nNopol : AB 8233 RZ\nNo hp : 081000910797\nMohon diprioritaskan loading malam ini",
+    "text_b": "RO_DATE: 02 feb 2026\nLOAD_DATE: 02 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: cddl\nDRIVER: dodi\nPLATE: ab 8233 rz\nPHONE: 081000910797",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910001
+  },
+  {
+    "pair_id": "910001_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 02 FEB 2026\n1 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nRevisi\nDriver : DODI\nNopol : AB 8233 RZ\nNo hp : 081000910797\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 02 mar 2026\nLOAD_DATE: 03 mar 2026\nTIME: 06:00\nORIGIN: cikokol\nDESTINATION: cgk-sub\nUNIT_TYPE: wb\nDRIVER: wahyu\nPLATE: w 3341 yu\nPHONE: 081000911019",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910001
+  },
+  {
+    "pair_id": "910002_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 03 FEB 2026 mohon proses\n\n1 UNIT WB\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nrevisi DRIVER\nDriver : UMAR\nNopol : L 8973 LH\nNo hp : 081000910817",
+    "text_b": "RO_DATE: 03 feb 2026\nLOAD_DATE: 03 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: rizki\nPLATE: l 7554 xr\nPHONE: 081000910049",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910002
+  },
+  {
+    "pair_id": "910002_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 03 FEB 2026\n1 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nrevisi DRIVER\nDriver : UMAR\nNopol : L 8973 LH\nNo hp : 081000910817\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 03 feb 2026\nLOAD_DATE: 03 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: umar\nPLATE: l 8973 lh\nPHONE: 081000910817",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910002
+  },
+  {
+    "pair_id": "910002_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 03 FEB 2026 mohon proses\n\n1 UNIT WB\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nrevisi DRIVER\nDriver : UMAR\nNopol : L 8973 LH\nNo hp : 081000910817",
+    "text_b": "RO_DATE: 03 feb 2026\nLOAD_DATE: 03 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: jupri\nPLATE: ad 3296 gs\nPHONE: 081000911261",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910002
+  },
+  {
+    "pair_id": "910002_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 03 FEB 2026\n1 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nrevisi DRIVER\nDriver : UMAR\nNopol : L 8973 LH\nNo hp : 081000910817\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 03 feb 2026\nLOAD_DATE: 03 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: firman\nPLATE: w 2511 ui\nPHONE: 081000911483",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910002
+  },
+  {
+    "pair_id": "910002_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 03 FEB 2026 mohon proses\n\n1 UNIT WB\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nrevisi DRIVER\nDriver : UMAR\nNopol : L 8973 LH\nNo hp : 081000910817",
+    "text_b": "RO_DATE: 03 feb 2026\nLOAD_DATE: 03 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: sub-cgk\nUNIT_TYPE: wb\nDRIVER: umar\nPLATE: l 8973 lh\nPHONE: 081000910817",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910002
+  },
+  {
+    "pair_id": "910002_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 03 FEB 2026\n1 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nrevisi DRIVER\nDriver : UMAR\nNopol : L 8973 LH\nNo hp : 081000910817\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 03 mar 2026\nLOAD_DATE: 04 mar 2026\nTIME: 03:00\nORIGIN: cikarang\nDESTINATION: cgk-mes\nUNIT_TYPE: fuso\nDRIVER: sofyan\nPLATE: b 4081 sc\nPHONE: 081000911039",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910002
+  },
+  {
+    "pair_id": "910003_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 04 FEB 2026\n\n2 UNIT FUSO\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : NANANG\nNopol : N 8220 PT\nNo hp : 081000910067\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nREVISI\nDriver : WAHYU\nNopol : AB 9713 FP\nNo hp : 081000910837",
+    "text_b": "RO_DATE: 04 feb 2026\nLOAD_DATE: 04 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: adit\nPLATE: b 8701 cg\nPHONE: 081000910080",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910003
+  },
+  {
+    "pair_id": "910003_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 04 FEB 2026\n2 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nREVISI\nDriver : WAHYU\nNopol : AB 9713 FP\nNo hp : 081000910837\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 04 feb 2026\nLOAD_DATE: 04 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: wahyu\nPLATE: ab 9713 fp\nPHONE: 081000910837",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910003
+  },
+  {
+    "pair_id": "910003_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 04 FEB 2026\n\n2 UNIT FUSO\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : NANANG\nNopol : N 8220 PT\nNo hp : 081000910067\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nREVISI\nDriver : WAHYU\nNopol : AB 9713 FP\nNo hp : 081000910837",
+    "text_b": "RO_DATE: 04 feb 2026\nLOAD_DATE: 04 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: nanang\nPLATE: n 8220 pt\nPHONE: 081000910067",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910003
+  },
+  {
+    "pair_id": "910003_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 04 FEB 2026\n2 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nREVISI\nDriver : WAHYU\nNopol : AB 9713 FP\nNo hp : 081000910837\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 04 feb 2026\nLOAD_DATE: 04 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: nanang\nPLATE: n 8220 pt\nPHONE: 081000910067",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910003
+  },
+  {
+    "pair_id": "910003_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 04 FEB 2026\n\n2 UNIT FUSO\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : NANANG\nNopol : N 8220 PT\nNo hp : 081000910067\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nREVISI\nDriver : WAHYU\nNopol : AB 9713 FP\nNo hp : 081000910837",
+    "text_b": "RO_DATE: 04 feb 2026\nLOAD_DATE: 04 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: cgk-sub\nUNIT_TYPE: fuso\nDRIVER: wahyu\nPLATE: ab 9713 fp\nPHONE: 081000910837",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910003
+  },
+  {
+    "pair_id": "910003_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 04 FEB 2026\n2 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nREVISI\nDriver : WAHYU\nNopol : AB 9713 FP\nNo hp : 081000910837\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 04 mar 2026\nLOAD_DATE: 05 mar 2026\nTIME: 22:00\nORIGIN: argopantes\nDESTINATION: cgk-pku\nUNIT_TYPE: tronton\nDRIVER: chandra\nPLATE: w 4821 mk\nPHONE: 081000911059",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910003
+  },
+  {
+    "pair_id": "910004_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 05 FEB 2026\n\n2 UNIT TRONTON\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nRevisi\nDriver : SOFYAN\nNopol : L 1454 ZX\nNo hp : 081000910857\nMohon diprioritaskan loading malam ini\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : BUDI\nNopol : D 9367 UI\nNo hp : 081000910098",
+    "text_b": "RO_DATE: 05 feb 2026\nLOAD_DATE: 05 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: adit\nPLATE: ab 8886 hv\nPHONE: 081000910085",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910004
+  },
+  {
+    "pair_id": "910004_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 05 FEB 2026\n2 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nRevisi\nDriver : SOFYAN\nNopol : L 1454 ZX\nNo hp : 081000910857\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 05 feb 2026\nLOAD_DATE: 05 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: sofyan\nPLATE: l 1454 zx\nPHONE: 081000910857",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910004
+  },
+  {
+    "pair_id": "910004_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 05 FEB 2026\n\n2 UNIT TRONTON\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nRevisi\nDriver : SOFYAN\nNopol : L 1454 ZX\nNo hp : 081000910857\nMohon diprioritaskan loading malam ini\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : BUDI\nNopol : D 9367 UI\nNo hp : 081000910098",
+    "text_b": "RO_DATE: 05 feb 2026\nLOAD_DATE: 05 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: budi\nPLATE: d 9367 ui\nPHONE: 081000910098",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910004
+  },
+  {
+    "pair_id": "910004_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 05 FEB 2026\n2 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nRevisi\nDriver : SOFYAN\nNopol : L 1454 ZX\nNo hp : 081000910857\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 05 feb 2026\nLOAD_DATE: 05 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: budi\nPLATE: d 9367 ui\nPHONE: 081000910098",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910004
+  },
+  {
+    "pair_id": "910004_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 05 FEB 2026\n\n2 UNIT TRONTON\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nRevisi\nDriver : SOFYAN\nNopol : L 1454 ZX\nNo hp : 081000910857\nMohon diprioritaskan loading malam ini\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : BUDI\nNopol : D 9367 UI\nNo hp : 081000910098",
+    "text_b": "RO_DATE: 05 feb 2026\nLOAD_DATE: 05 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: cgk-mes\nUNIT_TYPE: tronton\nDRIVER: sofyan\nPLATE: l 1454 zx\nPHONE: 081000910857",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910004
+  },
+  {
+    "pair_id": "910004_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 05 FEB 2026\n2 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nRevisi\nDriver : SOFYAN\nNopol : L 1454 ZX\nNo hp : 081000910857\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 05 mar 2026\nLOAD_DATE: 06 mar 2026\nTIME: segera\nORIGIN: megahub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: twb\nDRIVER: sandri\nPLATE: b 5561 gs\nPHONE: 081000911079",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910004
+  },
+  {
+    "pair_id": "910005_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 06 FEB 2026 mohon proses\n\n2 UNIT TWB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : BUDI\nNopol : BK 9552 ZX\nNo hp : 081000910103\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nrevisi DRIVER\nDriver : CHANDRA\nNopol : AB 2194 TF\nNo hp : 081000910877",
+    "text_b": "RO_DATE: 06 feb 2026\nLOAD_DATE: 06 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: dodi\nPLATE: w 1034 mk\nPHONE: 081000910116",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910005
+  },
+  {
+    "pair_id": "910005_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 06 FEB 2026\n2 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nrevisi DRIVER\nDriver : CHANDRA\nNopol : AB 2194 TF\nNo hp : 081000910877\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 06 feb 2026\nLOAD_DATE: 06 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: chandra\nPLATE: ab 2194 tf\nPHONE: 081000910877",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910005
+  },
+  {
+    "pair_id": "910005_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 06 FEB 2026 mohon proses\n\n2 UNIT TWB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : BUDI\nNopol : BK 9552 ZX\nNo hp : 081000910103\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nrevisi DRIVER\nDriver : CHANDRA\nNopol : AB 2194 TF\nNo hp : 081000910877",
+    "text_b": "RO_DATE: 06 feb 2026\nLOAD_DATE: 06 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: budi\nPLATE: bk 9552 zx\nPHONE: 081000910103",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910005
+  },
+  {
+    "pair_id": "910005_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 06 FEB 2026\n2 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nrevisi DRIVER\nDriver : CHANDRA\nNopol : AB 2194 TF\nNo hp : 081000910877\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 06 feb 2026\nLOAD_DATE: 06 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: budi\nPLATE: bk 9552 zx\nPHONE: 081000910103",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910005
+  },
+  {
+    "pair_id": "910005_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 06 FEB 2026 mohon proses\n\n2 UNIT TWB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : BUDI\nNopol : BK 9552 ZX\nNo hp : 081000910103\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nrevisi DRIVER\nDriver : CHANDRA\nNopol : AB 2194 TF\nNo hp : 081000910877",
+    "text_b": "RO_DATE: 06 feb 2026\nLOAD_DATE: 06 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-pku\nUNIT_TYPE: twb\nDRIVER: chandra\nPLATE: ab 2194 tf\nPHONE: 081000910877",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910005
+  },
+  {
+    "pair_id": "910005_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 06 FEB 2026\n2 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nrevisi DRIVER\nDriver : CHANDRA\nNopol : AB 2194 TF\nNo hp : 081000910877\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 06 mar 2026\nLOAD_DATE: 07 mar 2026\nTIME: 18:00\nORIGIN: jne sub\nDESTINATION: sub-cgk\nUNIT_TYPE: cddl\nDRIVER: ibnu\nPLATE: w 6301 aa\nPHONE: 081000911099",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910005
+  },
+  {
+    "pair_id": "910006_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 07 FEB 2026\n\n3 UNIT CDDL\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nREVISI\nDriver : IBNU\nNopol : L 2934 NN\nNo hp : 081000910897\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : UMAR\nNopol : AD 1700 EM\nNo hp : 081000910134\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : HENDRA\nNopol : N 2181 RZ\nNo hp : 081000910147",
+    "text_b": "RO_DATE: 07 feb 2026\nLOAD_DATE: 07 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: dodi\nPLATE: l 1219 rz\nPHONE: 081000910121",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910006
+  },
+  {
+    "pair_id": "910006_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 07 FEB 2026\n3 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nREVISI\nDriver : IBNU\nNopol : L 2934 NN\nNo hp : 081000910897\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 07 feb 2026\nLOAD_DATE: 07 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: ibnu\nPLATE: l 2934 nn\nPHONE: 081000910897",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910006
+  },
+  {
+    "pair_id": "910006_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 07 FEB 2026\n\n3 UNIT CDDL\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nREVISI\nDriver : IBNU\nNopol : L 2934 NN\nNo hp : 081000910897\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : UMAR\nNopol : AD 1700 EM\nNo hp : 081000910134\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : HENDRA\nNopol : N 2181 RZ\nNo hp : 081000910147",
+    "text_b": "RO_DATE: 07 feb 2026\nLOAD_DATE: 07 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: umar\nPLATE: ad 1700 em\nPHONE: 081000910134",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910006
+  },
+  {
+    "pair_id": "910006_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 07 FEB 2026\n3 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nREVISI\nDriver : IBNU\nNopol : L 2934 NN\nNo hp : 081000910897\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 07 feb 2026\nLOAD_DATE: 07 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: hendra\nPLATE: n 2181 rz\nPHONE: 081000910147",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910006
+  },
+  {
+    "pair_id": "910006_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 07 FEB 2026\n\n3 UNIT CDDL\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nREVISI\nDriver : IBNU\nNopol : L 2934 NN\nNo hp : 081000910897\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : UMAR\nNopol : AD 1700 EM\nNo hp : 081000910134\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : HENDRA\nNopol : N 2181 RZ\nNo hp : 081000910147",
+    "text_b": "RO_DATE: 07 feb 2026\nLOAD_DATE: 07 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: cddl\nDRIVER: ibnu\nPLATE: l 2934 nn\nPHONE: 081000910897",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910006
+  },
+  {
+    "pair_id": "910006_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 07 FEB 2026\n3 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nREVISI\nDriver : IBNU\nNopol : L 2934 NN\nNo hp : 081000910897\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 07 mar 2026\nLOAD_DATE: 08 mar 2026\nTIME: 06:00\nORIGIN: cikokol\nDESTINATION: cgk-sub\nUNIT_TYPE: wb\nDRIVER: apar\nPLATE: b 7041 ui\nPHONE: 081000911119",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910006
+  },
+  {
+    "pair_id": "910007_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 08 FEB 2026\n\n3 UNIT WB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : UMAR\nNopol : N 1885 JB\nNo hp : 081000910139\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nRevisi\nDriver : APAR\nNopol : AB 3674 HV\nNo hp : 081000910917\nMohon diprioritaskan loading malam ini\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : WAHYU\nNopol : AB 2847 JB\nNo hp : 081000910165",
+    "text_b": "RO_DATE: 08 feb 2026\nLOAD_DATE: 08 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: hendra\nPLATE: b 2366 wo\nPHONE: 081000910152",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910007
+  },
+  {
+    "pair_id": "910007_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 08 FEB 2026\n3 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nRevisi\nDriver : APAR\nNopol : AB 3674 HV\nNo hp : 081000910917\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 08 feb 2026\nLOAD_DATE: 08 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: apar\nPLATE: ab 3674 hv\nPHONE: 081000910917",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910007
+  },
+  {
+    "pair_id": "910007_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 08 FEB 2026\n\n3 UNIT WB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : UMAR\nNopol : N 1885 JB\nNo hp : 081000910139\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nRevisi\nDriver : APAR\nNopol : AB 3674 HV\nNo hp : 081000910917\nMohon diprioritaskan loading malam ini\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : WAHYU\nNopol : AB 2847 JB\nNo hp : 081000910165",
+    "text_b": "RO_DATE: 08 feb 2026\nLOAD_DATE: 08 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: wahyu\nPLATE: ab 2847 jb\nPHONE: 081000910165",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910007
+  },
+  {
+    "pair_id": "910007_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 08 FEB 2026\n3 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nRevisi\nDriver : APAR\nNopol : AB 3674 HV\nNo hp : 081000910917\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 08 feb 2026\nLOAD_DATE: 08 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: umar\nPLATE: n 1885 jb\nPHONE: 081000910139",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910007
+  },
+  {
+    "pair_id": "910007_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 08 FEB 2026\n\n3 UNIT WB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : UMAR\nNopol : N 1885 JB\nNo hp : 081000910139\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nRevisi\nDriver : APAR\nNopol : AB 3674 HV\nNo hp : 081000910917\nMohon diprioritaskan loading malam ini\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : WAHYU\nNopol : AB 2847 JB\nNo hp : 081000910165",
+    "text_b": "RO_DATE: 08 feb 2026\nLOAD_DATE: 08 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: sub-cgk\nUNIT_TYPE: wb\nDRIVER: apar\nPLATE: ab 3674 hv\nPHONE: 081000910917",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910007
+  },
+  {
+    "pair_id": "910007_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 08 FEB 2026\n3 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nRevisi\nDriver : APAR\nNopol : AB 3674 HV\nNo hp : 081000910917\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 08 mar 2026\nLOAD_DATE: 09 mar 2026\nTIME: 03:00\nORIGIN: cikarang\nDESTINATION: cgk-mes\nUNIT_TYPE: fuso\nDRIVER: dedeng\nPLATE: w 7781 oq\nPHONE: 081000911139",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910007
+  },
+  {
+    "pair_id": "910008_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 09 FEB 2026 mohon proses\n\n3 UNIT FUSO\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : HENDRA\nNopol : AB 2551 BD\nNo hp : 081000910157\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : WAHYU\nNopol : D 3032 OQ\nNo hp : 081000910170\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nrevisi DRIVER\nDriver : DEDENG\nNopol : L 4414 BD\nNo hp : 081000910937",
+    "text_b": "RO_DATE: 09 feb 2026\nLOAD_DATE: 09 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: sofyan\nPLATE: bk 3513 bd\nPHONE: 081000910183",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910008
+  },
+  {
+    "pair_id": "910008_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 09 FEB 2026\n3 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nrevisi DRIVER\nDriver : DEDENG\nNopol : L 4414 BD\nNo hp : 081000910937\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 09 feb 2026\nLOAD_DATE: 09 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: dedeng\nPLATE: l 4414 bd\nPHONE: 081000910937",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910008
+  },
+  {
+    "pair_id": "910008_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 09 FEB 2026 mohon proses\n\n3 UNIT FUSO\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : HENDRA\nNopol : AB 2551 BD\nNo hp : 081000910157\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : WAHYU\nNopol : D 3032 OQ\nNo hp : 081000910170\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nrevisi DRIVER\nDriver : DEDENG\nNopol : L 4414 BD\nNo hp : 081000910937",
+    "text_b": "RO_DATE: 09 feb 2026\nLOAD_DATE: 09 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: wahyu\nPLATE: d 3032 oq\nPHONE: 081000910170",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910008
+  },
+  {
+    "pair_id": "910008_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 09 FEB 2026\n3 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nrevisi DRIVER\nDriver : DEDENG\nNopol : L 4414 BD\nNo hp : 081000910937\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 09 feb 2026\nLOAD_DATE: 09 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: hendra\nPLATE: ab 2551 bd\nPHONE: 081000910157",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910008
+  },
+  {
+    "pair_id": "910008_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 09 FEB 2026 mohon proses\n\n3 UNIT FUSO\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : HENDRA\nNopol : AB 2551 BD\nNo hp : 081000910157\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : WAHYU\nNopol : D 3032 OQ\nNo hp : 081000910170\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nrevisi DRIVER\nDriver : DEDENG\nNopol : L 4414 BD\nNo hp : 081000910937",
+    "text_b": "RO_DATE: 09 feb 2026\nLOAD_DATE: 09 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: cgk-sub\nUNIT_TYPE: fuso\nDRIVER: dedeng\nPLATE: l 4414 bd\nPHONE: 081000910937",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910008
+  },
+  {
+    "pair_id": "910008_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 09 FEB 2026\n3 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nrevisi DRIVER\nDriver : DEDENG\nNopol : L 4414 BD\nNo hp : 081000910937\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 09 mar 2026\nLOAD_DATE: 10 mar 2026\nTIME: 22:00\nORIGIN: argopantes\nDESTINATION: cgk-pku\nUNIT_TYPE: tronton\nDRIVER: aldi\nPLATE: b 8521 iy\nPHONE: 081000911159",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910008
+  },
+  {
+    "pair_id": "910009_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 10 FEB 2026\n\n4 UNIT TRONTON\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : WAHYU\nNopol : BK 3217 TF\nNo hp : 081000910175\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nREVISI\nDriver : USMAN\nNopol : AB 5154 VL\nNo hp : 081000910957\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : CHANDRA\nNopol : L 4179 TF\nNo hp : 081000910201\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : SANDRI\nNopol : AD 4660 GS\nNo hp : 081000910214",
+    "text_b": "RO_DATE: 10 feb 2026\nLOAD_DATE: 10 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: sofyan\nPLATE: w 3698 gs\nPHONE: 081000910188",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910009
+  },
+  {
+    "pair_id": "910009_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 10 FEB 2026\n4 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nREVISI\nDriver : USMAN\nNopol : AB 5154 VL\nNo hp : 081000910957\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 10 feb 2026\nLOAD_DATE: 10 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: usman\nPLATE: ab 5154 vl\nPHONE: 081000910957",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910009
+  },
+  {
+    "pair_id": "910009_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 10 FEB 2026\n\n4 UNIT TRONTON\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : WAHYU\nNopol : BK 3217 TF\nNo hp : 081000910175\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nREVISI\nDriver : USMAN\nNopol : AB 5154 VL\nNo hp : 081000910957\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : CHANDRA\nNopol : L 4179 TF\nNo hp : 081000910201\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : SANDRI\nNopol : AD 4660 GS\nNo hp : 081000910214",
+    "text_b": "RO_DATE: 10 feb 2026\nLOAD_DATE: 10 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: chandra\nPLATE: l 4179 tf\nPHONE: 081000910201",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910009
+  },
+  {
+    "pair_id": "910009_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 10 FEB 2026\n4 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nREVISI\nDriver : USMAN\nNopol : AB 5154 VL\nNo hp : 081000910957\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 10 feb 2026\nLOAD_DATE: 10 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: wahyu\nPLATE: bk 3217 tf\nPHONE: 081000910175",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910009
+  },
+  {
+    "pair_id": "910009_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 10 FEB 2026\n\n4 UNIT TRONTON\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : WAHYU\nNopol : BK 3217 TF\nNo hp : 081000910175\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nREVISI\nDriver : USMAN\nNopol : AB 5154 VL\nNo hp : 081000910957\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : CHANDRA\nNopol : L 4179 TF\nNo hp : 081000910201\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : SANDRI\nNopol : AD 4660 GS\nNo hp : 081000910214",
+    "text_b": "RO_DATE: 10 feb 2026\nLOAD_DATE: 10 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: cgk-mes\nUNIT_TYPE: tronton\nDRIVER: usman\nPLATE: ab 5154 vl\nPHONE: 081000910957",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910009
+  },
+  {
+    "pair_id": "910009_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 10 FEB 2026\n4 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nREVISI\nDriver : USMAN\nNopol : AB 5154 VL\nNo hp : 081000910957\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 10 mar 2026\nLOAD_DATE: 11 mar 2026\nTIME: segera\nORIGIN: megahub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: twb\nDRIVER: usman\nPLATE: w 9261 cg\nPHONE: 081000911179",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910009
+  },
+  {
+    "pair_id": "910010_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 11 FEB 2026\n\n4 UNIT TWB\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : SOFYAN\nNopol : L 3883 LH\nNo hp : 081000910193\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : CHANDRA\nNopol : AD 4364 YU\nNo hp : 081000910206\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nRevisi\nDriver : JUPRI\nNopol : L 5894 PT\nNo hp : 081000910977\nMohon diprioritaskan loading malam ini\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : IBNU\nNopol : B 5326 YU\nNo hp : 081000910232",
+    "text_b": "RO_DATE: 11 feb 2026\nLOAD_DATE: 11 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: sandri\nPLATE: n 4845 lh\nPHONE: 081000910219",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910010
+  },
+  {
+    "pair_id": "910010_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 11 FEB 2026\n4 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nRevisi\nDriver : JUPRI\nNopol : L 5894 PT\nNo hp : 081000910977\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 11 feb 2026\nLOAD_DATE: 11 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: jupri\nPLATE: l 5894 pt\nPHONE: 081000910977",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910010
+  },
+  {
+    "pair_id": "910010_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 11 FEB 2026\n\n4 UNIT TWB\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : SOFYAN\nNopol : L 3883 LH\nNo hp : 081000910193\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : CHANDRA\nNopol : AD 4364 YU\nNo hp : 081000910206\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nRevisi\nDriver : JUPRI\nNopol : L 5894 PT\nNo hp : 081000910977\nMohon diprioritaskan loading malam ini\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : IBNU\nNopol : B 5326 YU\nNo hp : 081000910232",
+    "text_b": "RO_DATE: 11 feb 2026\nLOAD_DATE: 11 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: ibnu\nPLATE: b 5326 yu\nPHONE: 081000910232",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910010
+  },
+  {
+    "pair_id": "910010_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 11 FEB 2026\n4 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nRevisi\nDriver : JUPRI\nNopol : L 5894 PT\nNo hp : 081000910977\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 11 feb 2026\nLOAD_DATE: 11 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: sofyan\nPLATE: l 3883 lh\nPHONE: 081000910193",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910010
+  },
+  {
+    "pair_id": "910010_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 11 FEB 2026\n\n4 UNIT TWB\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : SOFYAN\nNopol : L 3883 LH\nNo hp : 081000910193\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : CHANDRA\nNopol : AD 4364 YU\nNo hp : 081000910206\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nRevisi\nDriver : JUPRI\nNopol : L 5894 PT\nNo hp : 081000910977\nMohon diprioritaskan loading malam ini\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : IBNU\nNopol : B 5326 YU\nNo hp : 081000910232",
+    "text_b": "RO_DATE: 11 feb 2026\nLOAD_DATE: 11 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-pku\nUNIT_TYPE: twb\nDRIVER: jupri\nPLATE: l 5894 pt\nPHONE: 081000910977",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910010
+  },
+  {
+    "pair_id": "910010_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 11 FEB 2026\n4 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nRevisi\nDriver : JUPRI\nNopol : L 5894 PT\nNo hp : 081000910977\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 11 mar 2026\nLOAD_DATE: 12 mar 2026\nTIME: 18:00\nORIGIN: jne sub\nDESTINATION: sub-cgk\nUNIT_TYPE: cddl\nDRIVER: jupri\nPLATE: b 1002 wo\nPHONE: 081000911199",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910010
+  },
+  {
+    "pair_id": "910011_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 12 FEB 2026 mohon proses\n\n4 UNIT CDDL\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : CHANDRA\nNopol : N 4549 DJ\nNo hp : 081000910211\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : SANDRI\nNopol : B 5030 QW\nNo hp : 081000910224\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : IBNU\nNopol : AB 5511 DJ\nNo hp : 081000910237\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nrevisi DRIVER\nDriver : SYARIAL\nNopol : AB 6634 JB\nNo hp : 081000910997",
+    "text_b": "RO_DATE: 12 feb 2026\nLOAD_DATE: 12 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: apar\nPLATE: d 5992 qw\nPHONE: 081000910250",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910011
+  },
+  {
+    "pair_id": "910011_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 12 FEB 2026\n4 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nrevisi DRIVER\nDriver : SYARIAL\nNopol : AB 6634 JB\nNo hp : 081000910997\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 12 feb 2026\nLOAD_DATE: 12 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: syarial\nPLATE: ab 6634 jb\nPHONE: 081000910997",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910011
+  },
+  {
+    "pair_id": "910011_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 12 FEB 2026 mohon proses\n\n4 UNIT CDDL\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : CHANDRA\nNopol : N 4549 DJ\nNo hp : 081000910211\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : SANDRI\nNopol : B 5030 QW\nNo hp : 081000910224\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : IBNU\nNopol : AB 5511 DJ\nNo hp : 081000910237\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nrevisi DRIVER\nDriver : SYARIAL\nNopol : AB 6634 JB\nNo hp : 081000910997",
+    "text_b": "RO_DATE: 12 feb 2026\nLOAD_DATE: 12 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: ibnu\nPLATE: ab 5511 dj\nPHONE: 081000910237",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910011
+  },
+  {
+    "pair_id": "910011_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 12 FEB 2026\n4 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nrevisi DRIVER\nDriver : SYARIAL\nNopol : AB 6634 JB\nNo hp : 081000910997\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 12 feb 2026\nLOAD_DATE: 12 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: chandra\nPLATE: n 4549 dj\nPHONE: 081000910211",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910011
+  },
+  {
+    "pair_id": "910011_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 12 FEB 2026 mohon proses\n\n4 UNIT CDDL\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : CHANDRA\nNopol : N 4549 DJ\nNo hp : 081000910211\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : SANDRI\nNopol : B 5030 QW\nNo hp : 081000910224\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : IBNU\nNopol : AB 5511 DJ\nNo hp : 081000910237\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nrevisi DRIVER\nDriver : SYARIAL\nNopol : AB 6634 JB\nNo hp : 081000910997",
+    "text_b": "RO_DATE: 12 feb 2026\nLOAD_DATE: 12 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: cddl\nDRIVER: syarial\nPLATE: ab 6634 jb\nPHONE: 081000910997",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910011
+  },
+  {
+    "pair_id": "910011_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 12 FEB 2026\n4 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nrevisi DRIVER\nDriver : SYARIAL\nNopol : AB 6634 JB\nNo hp : 081000910997\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 12 mar 2026\nLOAD_DATE: 13 mar 2026\nTIME: 06:00\nORIGIN: cikokol\nDESTINATION: cgk-sub\nUNIT_TYPE: wb\nDRIVER: syarial\nPLATE: w 1742 qw\nPHONE: 081000911219",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910011
+  },
+  {
+    "pair_id": "910012_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 13 FEB 2026\n\n5 UNIT WB\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : SANDRI\nNopol : AB 5215 VL\nNo hp : 081000910229\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : IBNU\nNopol : D 5696 IY\nNo hp : 081000910242\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nREVISI\nDriver : RAMA\nNopol : L 7374 DJ\nNo hp : 081000911017\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : DEDENG\nNopol : W 6658 IY\nNo hp : 081000910268\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : ALDI\nNopol : L 7139 VL\nNo hp : 081000910281",
+    "text_b": "RO_DATE: 13 feb 2026\nLOAD_DATE: 13 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: apar\nPLATE: bk 6177 vl\nPHONE: 081000910255",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910012
+  },
+  {
+    "pair_id": "910012_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 13 FEB 2026\n5 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nREVISI\nDriver : RAMA\nNopol : L 7374 DJ\nNo hp : 081000911017\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 13 feb 2026\nLOAD_DATE: 13 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: rama\nPLATE: l 7374 dj\nPHONE: 081000911017",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910012
+  },
+  {
+    "pair_id": "910012_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 13 FEB 2026\n\n5 UNIT WB\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : SANDRI\nNopol : AB 5215 VL\nNo hp : 081000910229\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : IBNU\nNopol : D 5696 IY\nNo hp : 081000910242\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nREVISI\nDriver : RAMA\nNopol : L 7374 DJ\nNo hp : 081000911017\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : DEDENG\nNopol : W 6658 IY\nNo hp : 081000910268\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : ALDI\nNopol : L 7139 VL\nNo hp : 081000910281",
+    "text_b": "RO_DATE: 13 feb 2026\nLOAD_DATE: 13 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: dedeng\nPLATE: w 6658 iy\nPHONE: 081000910268",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910012
+  },
+  {
+    "pair_id": "910012_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 13 FEB 2026\n5 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nREVISI\nDriver : RAMA\nNopol : L 7374 DJ\nNo hp : 081000911017\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 13 feb 2026\nLOAD_DATE: 13 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: sandri\nPLATE: ab 5215 vl\nPHONE: 081000910229",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910012
+  },
+  {
+    "pair_id": "910012_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 13 FEB 2026\n\n5 UNIT WB\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : SANDRI\nNopol : AB 5215 VL\nNo hp : 081000910229\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : IBNU\nNopol : D 5696 IY\nNo hp : 081000910242\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nREVISI\nDriver : RAMA\nNopol : L 7374 DJ\nNo hp : 081000911017\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : DEDENG\nNopol : W 6658 IY\nNo hp : 081000910268\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : ALDI\nNopol : L 7139 VL\nNo hp : 081000910281",
+    "text_b": "RO_DATE: 13 feb 2026\nLOAD_DATE: 13 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: sub-cgk\nUNIT_TYPE: wb\nDRIVER: rama\nPLATE: l 7374 dj\nPHONE: 081000911017",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910012
+  },
+  {
+    "pair_id": "910012_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 13 FEB 2026\n5 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nREVISI\nDriver : RAMA\nNopol : L 7374 DJ\nNo hp : 081000911017\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 13 mar 2026\nLOAD_DATE: 14 mar 2026\nTIME: 03:00\nORIGIN: cikarang\nDESTINATION: cgk-mes\nUNIT_TYPE: fuso\nDRIVER: randy\nPLATE: b 2482 ke\nPHONE: 081000911239",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910012
+  },
+  {
+    "pair_id": "910013_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 14 FEB 2026\n\n5 UNIT FUSO\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : IBNU\nNopol : BK 5881 NN\nNo hp : 081000910247\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : APAR\nNopol : W 6362 AA\nNo hp : 081000910260\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : DEDENG\nNopol : L 6843 NN\nNo hp : 081000910273\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nRevisi\nDriver : DAVIT\nNopol : AB 8114 XR\nNo hp : 081000911037\nMohon diprioritaskan loading malam ini\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : USMAN\nNopol : N 7805 NN\nNo hp : 081000910299",
+    "text_b": "RO_DATE: 14 feb 2026\nLOAD_DATE: 14 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: aldi\nPLATE: ad 7324 aa\nPHONE: 081000910286",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910013
+  },
+  {
+    "pair_id": "910013_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 14 FEB 2026\n5 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nRevisi\nDriver : DAVIT\nNopol : AB 8114 XR\nNo hp : 081000911037\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 14 feb 2026\nLOAD_DATE: 14 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: davit\nPLATE: ab 8114 xr\nPHONE: 081000911037",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910013
+  },
+  {
+    "pair_id": "910013_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 14 FEB 2026\n\n5 UNIT FUSO\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : IBNU\nNopol : BK 5881 NN\nNo hp : 081000910247\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : APAR\nNopol : W 6362 AA\nNo hp : 081000910260\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : DEDENG\nNopol : L 6843 NN\nNo hp : 081000910273\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nRevisi\nDriver : DAVIT\nNopol : AB 8114 XR\nNo hp : 081000911037\nMohon diprioritaskan loading malam ini\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : USMAN\nNopol : N 7805 NN\nNo hp : 081000910299",
+    "text_b": "RO_DATE: 14 feb 2026\nLOAD_DATE: 14 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: usman\nPLATE: n 7805 nn\nPHONE: 081000910299",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910013
+  },
+  {
+    "pair_id": "910013_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 14 FEB 2026\n5 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nRevisi\nDriver : DAVIT\nNopol : AB 8114 XR\nNo hp : 081000911037\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 14 feb 2026\nLOAD_DATE: 14 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: ibnu\nPLATE: bk 5881 nn\nPHONE: 081000910247",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910013
+  },
+  {
+    "pair_id": "910013_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 14 FEB 2026\n\n5 UNIT FUSO\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : IBNU\nNopol : BK 5881 NN\nNo hp : 081000910247\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : APAR\nNopol : W 6362 AA\nNo hp : 081000910260\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : DEDENG\nNopol : L 6843 NN\nNo hp : 081000910273\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nRevisi\nDriver : DAVIT\nNopol : AB 8114 XR\nNo hp : 081000911037\nMohon diprioritaskan loading malam ini\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : USMAN\nNopol : N 7805 NN\nNo hp : 081000910299",
+    "text_b": "RO_DATE: 14 feb 2026\nLOAD_DATE: 14 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: cgk-sub\nUNIT_TYPE: fuso\nDRIVER: davit\nPLATE: ab 8114 xr\nPHONE: 081000911037",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910013
+  },
+  {
+    "pair_id": "910013_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 14 FEB 2026\n5 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nRevisi\nDriver : DAVIT\nNopol : AB 8114 XR\nNo hp : 081000911037\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 14 mar 2026\nLOAD_DATE: 15 mar 2026\nTIME: 22:00\nORIGIN: argopantes\nDESTINATION: cgk-pku\nUNIT_TYPE: tronton\nDRIVER: rama\nPLATE: w 3222 em\nPHONE: 081000911259",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910013
+  },
+  {
+    "pair_id": "910014_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 15 FEB 2026 mohon proses\n\n5 UNIT TRONTON\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : APAR\nNopol : L 6547 FP\nNo hp : 081000910265\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : DEDENG\nNopol : AD 7028 SC\nNo hp : 081000910278\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ALDI\nNopol : N 7509 FP\nNo hp : 081000910291\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : USMAN\nNopol : B 7990 SC\nNo hp : 081000910304\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nrevisi DRIVER\nDriver : MULYADI\nNopol : L 8854 RZ\nNo hp : 081000911057",
+    "text_b": "RO_DATE: 15 feb 2026\nLOAD_DATE: 15 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: jupri\nPLATE: ab 8471 fp\nPHONE: 081000910317",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910014
+  },
+  {
+    "pair_id": "910014_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 15 FEB 2026\n5 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nrevisi DRIVER\nDriver : MULYADI\nNopol : L 8854 RZ\nNo hp : 081000911057\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 15 feb 2026\nLOAD_DATE: 15 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: mulyadi\nPLATE: l 8854 rz\nPHONE: 081000911057",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910014
+  },
+  {
+    "pair_id": "910014_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 15 FEB 2026 mohon proses\n\n5 UNIT TRONTON\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : APAR\nNopol : L 6547 FP\nNo hp : 081000910265\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : DEDENG\nNopol : AD 7028 SC\nNo hp : 081000910278\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ALDI\nNopol : N 7509 FP\nNo hp : 081000910291\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : USMAN\nNopol : B 7990 SC\nNo hp : 081000910304\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nrevisi DRIVER\nDriver : MULYADI\nNopol : L 8854 RZ\nNo hp : 081000911057",
+    "text_b": "RO_DATE: 15 feb 2026\nLOAD_DATE: 15 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: usman\nPLATE: b 7990 sc\nPHONE: 081000910304",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910014
+  },
+  {
+    "pair_id": "910014_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 15 FEB 2026\n5 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nrevisi DRIVER\nDriver : MULYADI\nNopol : L 8854 RZ\nNo hp : 081000911057\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 15 feb 2026\nLOAD_DATE: 15 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: apar\nPLATE: l 6547 fp\nPHONE: 081000910265",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910014
+  },
+  {
+    "pair_id": "910014_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 15 FEB 2026 mohon proses\n\n5 UNIT TRONTON\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : APAR\nNopol : L 6547 FP\nNo hp : 081000910265\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : DEDENG\nNopol : AD 7028 SC\nNo hp : 081000910278\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ALDI\nNopol : N 7509 FP\nNo hp : 081000910291\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : USMAN\nNopol : B 7990 SC\nNo hp : 081000910304\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nrevisi DRIVER\nDriver : MULYADI\nNopol : L 8854 RZ\nNo hp : 081000911057",
+    "text_b": "RO_DATE: 15 feb 2026\nLOAD_DATE: 15 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: cgk-mes\nUNIT_TYPE: tronton\nDRIVER: mulyadi\nPLATE: l 8854 rz\nPHONE: 081000911057",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910014
+  },
+  {
+    "pair_id": "910014_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 15 FEB 2026\n5 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nrevisi DRIVER\nDriver : MULYADI\nNopol : L 8854 RZ\nNo hp : 081000911057\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 15 mar 2026\nLOAD_DATE: 16 mar 2026\nTIME: segera\nORIGIN: megahub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: twb\nDRIVER: davit\nPLATE: b 3962 yu\nPHONE: 081000911279",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910014
+  },
+  {
+    "pair_id": "910015_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 16 FEB 2026\n\n6 UNIT TWB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : DEDENG\nNopol : N 7213 XR\nNo hp : 081000910283\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : ALDI\nNopol : B 7694 KE\nNo hp : 081000910296\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : USMAN\nNopol : AB 8175 XR\nNo hp : 081000910309\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nREVISI\nDriver : ILHAM\nNopol : AB 9594 LH\nNo hp : 081000911077\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : SYARIAL\nNopol : BK 9137 XR\nNo hp : 081000910335\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : RANDY\nNopol : W 9618 KE\nNo hp : 081000910348",
+    "text_b": "RO_DATE: 16 feb 2026\nLOAD_DATE: 16 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: jupri\nPLATE: d 8656 ke\nPHONE: 081000910322",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910015
+  },
+  {
+    "pair_id": "910015_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 16 FEB 2026\n6 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nREVISI\nDriver : ILHAM\nNopol : AB 9594 LH\nNo hp : 081000911077\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 16 feb 2026\nLOAD_DATE: 16 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: ilham\nPLATE: ab 9594 lh\nPHONE: 081000911077",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910015
+  },
+  {
+    "pair_id": "910015_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 16 FEB 2026\n\n6 UNIT TWB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : DEDENG\nNopol : N 7213 XR\nNo hp : 081000910283\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : ALDI\nNopol : B 7694 KE\nNo hp : 081000910296\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : USMAN\nNopol : AB 8175 XR\nNo hp : 081000910309\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nREVISI\nDriver : ILHAM\nNopol : AB 9594 LH\nNo hp : 081000911077\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : SYARIAL\nNopol : BK 9137 XR\nNo hp : 081000910335\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : RANDY\nNopol : W 9618 KE\nNo hp : 081000910348",
+    "text_b": "RO_DATE: 16 feb 2026\nLOAD_DATE: 16 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: syarial\nPLATE: bk 9137 xr\nPHONE: 081000910335",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910015
+  },
+  {
+    "pair_id": "910015_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 16 FEB 2026\n6 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nREVISI\nDriver : ILHAM\nNopol : AB 9594 LH\nNo hp : 081000911077\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 16 feb 2026\nLOAD_DATE: 16 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: dedeng\nPLATE: n 7213 xr\nPHONE: 081000910283",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910015
+  },
+  {
+    "pair_id": "910015_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 16 FEB 2026\n\n6 UNIT TWB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : DEDENG\nNopol : N 7213 XR\nNo hp : 081000910283\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : ALDI\nNopol : B 7694 KE\nNo hp : 081000910296\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : USMAN\nNopol : AB 8175 XR\nNo hp : 081000910309\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nREVISI\nDriver : ILHAM\nNopol : AB 9594 LH\nNo hp : 081000911077\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : SYARIAL\nNopol : BK 9137 XR\nNo hp : 081000910335\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : RANDY\nNopol : W 9618 KE\nNo hp : 081000910348",
+    "text_b": "RO_DATE: 16 feb 2026\nLOAD_DATE: 16 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-pku\nUNIT_TYPE: twb\nDRIVER: ilham\nPLATE: ab 9594 lh\nPHONE: 081000911077",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910015
+  },
+  {
+    "pair_id": "910015_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 16 FEB 2026\n6 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nREVISI\nDriver : ILHAM\nNopol : AB 9594 LH\nNo hp : 081000911077\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 16 mar 2026\nLOAD_DATE: 17 mar 2026\nTIME: 18:00\nORIGIN: jne sub\nDESTINATION: sub-cgk\nUNIT_TYPE: cddl\nDRIVER: mulyadi\nPLATE: w 4702 sc\nPHONE: 081000911299",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910015
+  },
+  {
+    "pair_id": "910016_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 17 FEB 2026\n\n6 UNIT CDDL\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : ALDI\nNopol : AB 7879 PT\nNo hp : 081000910301\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : USMAN\nNopol : D 8360 CG\nNo hp : 081000910314\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : JUPRI\nNopol : BK 8841 PT\nNo hp : 081000910327\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : SYARIAL\nNopol : W 9322 CG\nNo hp : 081000910340\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nRevisi\nDriver : FARHAN\nNopol : L 1335 FP\nNo hp : 081000911097\nMohon diprioritaskan loading malam ini\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : RAMA\nNopol : AD 1285 CG\nNo hp : 081000910366",
+    "text_b": "RO_DATE: 17 feb 2026\nLOAD_DATE: 17 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: randy\nPLATE: l 9803 pt\nPHONE: 081000910353",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910016
+  },
+  {
+    "pair_id": "910016_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 17 FEB 2026\n6 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nRevisi\nDriver : FARHAN\nNopol : L 1335 FP\nNo hp : 081000911097\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 17 feb 2026\nLOAD_DATE: 17 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: farhan\nPLATE: l 1335 fp\nPHONE: 081000911097",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910016
+  },
+  {
+    "pair_id": "910016_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 17 FEB 2026\n\n6 UNIT CDDL\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : ALDI\nNopol : AB 7879 PT\nNo hp : 081000910301\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : USMAN\nNopol : D 8360 CG\nNo hp : 081000910314\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : JUPRI\nNopol : BK 8841 PT\nNo hp : 081000910327\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : SYARIAL\nNopol : W 9322 CG\nNo hp : 081000910340\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nRevisi\nDriver : FARHAN\nNopol : L 1335 FP\nNo hp : 081000911097\nMohon diprioritaskan loading malam ini\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : RAMA\nNopol : AD 1285 CG\nNo hp : 081000910366",
+    "text_b": "RO_DATE: 17 feb 2026\nLOAD_DATE: 17 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: rama\nPLATE: ad 1285 cg\nPHONE: 081000910366",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910016
+  },
+  {
+    "pair_id": "910016_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 17 FEB 2026\n6 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nRevisi\nDriver : FARHAN\nNopol : L 1335 FP\nNo hp : 081000911097\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 17 feb 2026\nLOAD_DATE: 17 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: aldi\nPLATE: ab 7879 pt\nPHONE: 081000910301",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910016
+  },
+  {
+    "pair_id": "910016_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 17 FEB 2026\n\n6 UNIT CDDL\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : ALDI\nNopol : AB 7879 PT\nNo hp : 081000910301\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : USMAN\nNopol : D 8360 CG\nNo hp : 081000910314\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : JUPRI\nNopol : BK 8841 PT\nNo hp : 081000910327\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : SYARIAL\nNopol : W 9322 CG\nNo hp : 081000910340\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nRevisi\nDriver : FARHAN\nNopol : L 1335 FP\nNo hp : 081000911097\nMohon diprioritaskan loading malam ini\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : RAMA\nNopol : AD 1285 CG\nNo hp : 081000910366",
+    "text_b": "RO_DATE: 17 feb 2026\nLOAD_DATE: 17 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: cddl\nDRIVER: farhan\nPLATE: l 1335 fp\nPHONE: 081000911097",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910016
+  },
+  {
+    "pair_id": "910016_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 17 FEB 2026\n6 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nRevisi\nDriver : FARHAN\nNopol : L 1335 FP\nNo hp : 081000911097\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 17 mar 2026\nLOAD_DATE: 18 mar 2026\nTIME: 06:00\nORIGIN: cikokol\nDESTINATION: cgk-sub\nUNIT_TYPE: wb\nDRIVER: firman\nPLATE: b 5442 mk\nPHONE: 081000911319",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910016
+  },
+  {
+    "pair_id": "910017_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 18 FEB 2026 mohon proses\n\n6 UNIT WB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : USMAN\nNopol : BK 8545 HV\nNo hp : 081000910319\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : JUPRI\nNopol : W 9026 UI\nNo hp : 081000910332\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : SYARIAL\nNopol : L 9507 HV\nNo hp : 081000910345\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : RANDY\nNopol : AD 9988 UI\nNo hp : 081000910358\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : RAMA\nNopol : N 1470 HV\nNo hp : 081000910371\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nrevisi DRIVER\nDriver : BAGUS\nNopol : AB 2075 ZX\nNo hp : 081000911117",
+    "text_b": "RO_DATE: 18 feb 2026\nLOAD_DATE: 18 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: davit\nPLATE: b 1951 ui\nPHONE: 081000910384",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910017
+  },
+  {
+    "pair_id": "910017_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 18 FEB 2026\n6 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nrevisi DRIVER\nDriver : BAGUS\nNopol : AB 2075 ZX\nNo hp : 081000911117\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 18 feb 2026\nLOAD_DATE: 18 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: bagus\nPLATE: ab 2075 zx\nPHONE: 081000911117",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910017
+  },
+  {
+    "pair_id": "910017_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 18 FEB 2026 mohon proses\n\n6 UNIT WB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : USMAN\nNopol : BK 8545 HV\nNo hp : 081000910319\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : JUPRI\nNopol : W 9026 UI\nNo hp : 081000910332\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : SYARIAL\nNopol : L 9507 HV\nNo hp : 081000910345\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : RANDY\nNopol : AD 9988 UI\nNo hp : 081000910358\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : RAMA\nNopol : N 1470 HV\nNo hp : 081000910371\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nrevisi DRIVER\nDriver : BAGUS\nNopol : AB 2075 ZX\nNo hp : 081000911117",
+    "text_b": "RO_DATE: 18 feb 2026\nLOAD_DATE: 18 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: rama\nPLATE: n 1470 hv\nPHONE: 081000910371",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910017
+  },
+  {
+    "pair_id": "910017_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 18 FEB 2026\n6 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nrevisi DRIVER\nDriver : BAGUS\nNopol : AB 2075 ZX\nNo hp : 081000911117\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 18 feb 2026\nLOAD_DATE: 18 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: usman\nPLATE: bk 8545 hv\nPHONE: 081000910319",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910017
+  },
+  {
+    "pair_id": "910017_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 18 FEB 2026 mohon proses\n\n6 UNIT WB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : USMAN\nNopol : BK 8545 HV\nNo hp : 081000910319\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : JUPRI\nNopol : W 9026 UI\nNo hp : 081000910332\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : SYARIAL\nNopol : L 9507 HV\nNo hp : 081000910345\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : RANDY\nNopol : AD 9988 UI\nNo hp : 081000910358\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : RAMA\nNopol : N 1470 HV\nNo hp : 081000910371\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nrevisi DRIVER\nDriver : BAGUS\nNopol : AB 2075 ZX\nNo hp : 081000911117",
+    "text_b": "RO_DATE: 18 feb 2026\nLOAD_DATE: 18 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: sub-cgk\nUNIT_TYPE: wb\nDRIVER: bagus\nPLATE: ab 2075 zx\nPHONE: 081000911117",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910017
+  },
+  {
+    "pair_id": "910017_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 18 FEB 2026\n6 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nrevisi DRIVER\nDriver : BAGUS\nNopol : AB 2075 ZX\nNo hp : 081000911117\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 18 mar 2026\nLOAD_DATE: 19 mar 2026\nTIME: 03:00\nORIGIN: cikarang\nDESTINATION: cgk-mes\nUNIT_TYPE: fuso\nDRIVER: ilham\nPLATE: w 6182 gs\nPHONE: 081000911339",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910017
+  },
+  {
+    "pair_id": "910018_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 19 FEB 2026\n\n7 UNIT FUSO\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : JUPRI\nNopol : L 9211 ZX\nNo hp : 081000910337\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : SYARIAL\nNopol : AD 9692 MK\nNo hp : 081000910350\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : RANDY\nNopol : N 1174 ZX\nNo hp : 081000910363\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : RAMA\nNopol : B 1655 MK\nNo hp : 081000910376\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nREVISI\nDriver : ANDRE\nNopol : L 2815 TF\nNo hp : 081000911137\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : MULYADI\nNopol : D 2617 MK\nNo hp : 081000910402\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : FIRMAN\nNopol : BK 3098 ZX\nNo hp : 081000910415",
+    "text_b": "RO_DATE: 19 feb 2026\nLOAD_DATE: 19 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: davit\nPLATE: ab 2136 zx\nPHONE: 081000910389",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910018
+  },
+  {
+    "pair_id": "910018_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 19 FEB 2026\n7 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nREVISI\nDriver : ANDRE\nNopol : L 2815 TF\nNo hp : 081000911137\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 19 feb 2026\nLOAD_DATE: 19 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: andre\nPLATE: l 2815 tf\nPHONE: 081000911137",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910018
+  },
+  {
+    "pair_id": "910018_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 19 FEB 2026\n\n7 UNIT FUSO\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : JUPRI\nNopol : L 9211 ZX\nNo hp : 081000910337\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : SYARIAL\nNopol : AD 9692 MK\nNo hp : 081000910350\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : RANDY\nNopol : N 1174 ZX\nNo hp : 081000910363\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : RAMA\nNopol : B 1655 MK\nNo hp : 081000910376\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nREVISI\nDriver : ANDRE\nNopol : L 2815 TF\nNo hp : 081000911137\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : MULYADI\nNopol : D 2617 MK\nNo hp : 081000910402\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : FIRMAN\nNopol : BK 3098 ZX\nNo hp : 081000910415",
+    "text_b": "RO_DATE: 19 feb 2026\nLOAD_DATE: 19 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: mulyadi\nPLATE: d 2617 mk\nPHONE: 081000910402",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910018
+  },
+  {
+    "pair_id": "910018_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 19 FEB 2026\n7 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nREVISI\nDriver : ANDRE\nNopol : L 2815 TF\nNo hp : 081000911137\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 19 feb 2026\nLOAD_DATE: 19 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: jupri\nPLATE: l 9211 zx\nPHONE: 081000910337",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910018
+  },
+  {
+    "pair_id": "910018_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 19 FEB 2026\n\n7 UNIT FUSO\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : JUPRI\nNopol : L 9211 ZX\nNo hp : 081000910337\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : SYARIAL\nNopol : AD 9692 MK\nNo hp : 081000910350\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : RANDY\nNopol : N 1174 ZX\nNo hp : 081000910363\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : RAMA\nNopol : B 1655 MK\nNo hp : 081000910376\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nREVISI\nDriver : ANDRE\nNopol : L 2815 TF\nNo hp : 081000911137\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : MULYADI\nNopol : D 2617 MK\nNo hp : 081000910402\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : FIRMAN\nNopol : BK 3098 ZX\nNo hp : 081000910415",
+    "text_b": "RO_DATE: 19 feb 2026\nLOAD_DATE: 19 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: cgk-sub\nUNIT_TYPE: fuso\nDRIVER: andre\nPLATE: l 2815 tf\nPHONE: 081000911137",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910018
+  },
+  {
+    "pair_id": "910018_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 19 FEB 2026\n7 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nREVISI\nDriver : ANDRE\nNopol : L 2815 TF\nNo hp : 081000911137\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 19 mar 2026\nLOAD_DATE: 20 mar 2026\nTIME: 22:00\nORIGIN: argopantes\nDESTINATION: cgk-pku\nUNIT_TYPE: tronton\nDRIVER: farhan\nPLATE: b 6922 aa\nPHONE: 081000911359",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910018
+  },
+  {
+    "pair_id": "910019_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 20 FEB 2026\n\n7 UNIT TRONTON\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : SYARIAL\nNopol : N 9877 RZ\nNo hp : 081000910355\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : RANDY\nNopol : B 1359 EM\nNo hp : 081000910368\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : RAMA\nNopol : AB 1840 RZ\nNo hp : 081000910381\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : DAVIT\nNopol : D 2321 EM\nNo hp : 081000910394\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : MULYADI\nNopol : BK 2802 RZ\nNo hp : 081000910407\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nRevisi\nDriver : DEDI\nNopol : AB 3555 NN\nNo hp : 081000911157\nMohon diprioritaskan loading malam ini\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ILHAM\nNopol : L 3764 RZ\nNo hp : 081000910433",
+    "text_b": "RO_DATE: 20 feb 2026\nLOAD_DATE: 20 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: firman\nPLATE: w 3283 em\nPHONE: 081000910420",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910019
+  },
+  {
+    "pair_id": "910019_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 20 FEB 2026\n7 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nRevisi\nDriver : DEDI\nNopol : AB 3555 NN\nNo hp : 081000911157\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 20 feb 2026\nLOAD_DATE: 20 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: dedi\nPLATE: ab 3555 nn\nPHONE: 081000911157",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910019
+  },
+  {
+    "pair_id": "910019_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 20 FEB 2026\n\n7 UNIT TRONTON\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : SYARIAL\nNopol : N 9877 RZ\nNo hp : 081000910355\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : RANDY\nNopol : B 1359 EM\nNo hp : 081000910368\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : RAMA\nNopol : AB 1840 RZ\nNo hp : 081000910381\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : DAVIT\nNopol : D 2321 EM\nNo hp : 081000910394\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : MULYADI\nNopol : BK 2802 RZ\nNo hp : 081000910407\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nRevisi\nDriver : DEDI\nNopol : AB 3555 NN\nNo hp : 081000911157\nMohon diprioritaskan loading malam ini\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ILHAM\nNopol : L 3764 RZ\nNo hp : 081000910433",
+    "text_b": "RO_DATE: 20 feb 2026\nLOAD_DATE: 20 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: ilham\nPLATE: l 3764 rz\nPHONE: 081000910433",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910019
+  },
+  {
+    "pair_id": "910019_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 20 FEB 2026\n7 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nRevisi\nDriver : DEDI\nNopol : AB 3555 NN\nNo hp : 081000911157\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 20 feb 2026\nLOAD_DATE: 20 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: syarial\nPLATE: n 9877 rz\nPHONE: 081000910355",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910019
+  },
+  {
+    "pair_id": "910019_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 20 FEB 2026\n\n7 UNIT TRONTON\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : SYARIAL\nNopol : N 9877 RZ\nNo hp : 081000910355\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : RANDY\nNopol : B 1359 EM\nNo hp : 081000910368\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : RAMA\nNopol : AB 1840 RZ\nNo hp : 081000910381\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : DAVIT\nNopol : D 2321 EM\nNo hp : 081000910394\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : MULYADI\nNopol : BK 2802 RZ\nNo hp : 081000910407\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nRevisi\nDriver : DEDI\nNopol : AB 3555 NN\nNo hp : 081000911157\nMohon diprioritaskan loading malam ini\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ILHAM\nNopol : L 3764 RZ\nNo hp : 081000910433",
+    "text_b": "RO_DATE: 20 feb 2026\nLOAD_DATE: 20 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: cgk-mes\nUNIT_TYPE: tronton\nDRIVER: dedi\nPLATE: ab 3555 nn\nPHONE: 081000911157",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910019
+  },
+  {
+    "pair_id": "910019_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 20 FEB 2026\n7 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nRevisi\nDriver : DEDI\nNopol : AB 3555 NN\nNo hp : 081000911157\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 20 mar 2026\nLOAD_DATE: 21 mar 2026\nTIME: segera\nORIGIN: megahub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: twb\nDRIVER: bagus\nPLATE: w 7662 ui\nPHONE: 081000911379",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910019
+  },
+  {
+    "pair_id": "910020_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 21 FEB 2026 mohon proses\n\n7 UNIT TWB\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : RANDY\nNopol : AB 1544 JB\nNo hp : 081000910373\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : RAMA\nNopol : D 2025 WO\nNo hp : 081000910386\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : DAVIT\nNopol : BK 2506 JB\nNo hp : 081000910399\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : MULYADI\nNopol : W 2987 WO\nNo hp : 081000910412\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : FIRMAN\nNopol : L 3468 JB\nNo hp : 081000910425\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : ILHAM\nNopol : AD 3949 WO\nNo hp : 081000910438\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nrevisi DRIVER\nDriver : SULAIMAN\nNopol : L 4295 HV\nNo hp : 081000911177",
+    "text_b": "RO_DATE: 21 feb 2026\nLOAD_DATE: 21 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: farhan\nPLATE: n 4430 jb\nPHONE: 081000910451",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910020
+  },
+  {
+    "pair_id": "910020_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 21 FEB 2026\n7 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nrevisi DRIVER\nDriver : SULAIMAN\nNopol : L 4295 HV\nNo hp : 081000911177\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 21 feb 2026\nLOAD_DATE: 21 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: sulaiman\nPLATE: l 4295 hv\nPHONE: 081000911177",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910020
+  },
+  {
+    "pair_id": "910020_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 21 FEB 2026 mohon proses\n\n7 UNIT TWB\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : RANDY\nNopol : AB 1544 JB\nNo hp : 081000910373\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : RAMA\nNopol : D 2025 WO\nNo hp : 081000910386\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : DAVIT\nNopol : BK 2506 JB\nNo hp : 081000910399\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : MULYADI\nNopol : W 2987 WO\nNo hp : 081000910412\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : FIRMAN\nNopol : L 3468 JB\nNo hp : 081000910425\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : ILHAM\nNopol : AD 3949 WO\nNo hp : 081000910438\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nrevisi DRIVER\nDriver : SULAIMAN\nNopol : L 4295 HV\nNo hp : 081000911177",
+    "text_b": "RO_DATE: 21 feb 2026\nLOAD_DATE: 21 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: ilham\nPLATE: ad 3949 wo\nPHONE: 081000910438",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910020
+  },
+  {
+    "pair_id": "910020_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 21 FEB 2026\n7 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nrevisi DRIVER\nDriver : SULAIMAN\nNopol : L 4295 HV\nNo hp : 081000911177\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 21 feb 2026\nLOAD_DATE: 21 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: randy\nPLATE: ab 1544 jb\nPHONE: 081000910373",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910020
+  },
+  {
+    "pair_id": "910020_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 21 FEB 2026 mohon proses\n\n7 UNIT TWB\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : RANDY\nNopol : AB 1544 JB\nNo hp : 081000910373\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : RAMA\nNopol : D 2025 WO\nNo hp : 081000910386\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : DAVIT\nNopol : BK 2506 JB\nNo hp : 081000910399\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : MULYADI\nNopol : W 2987 WO\nNo hp : 081000910412\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : FIRMAN\nNopol : L 3468 JB\nNo hp : 081000910425\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : ILHAM\nNopol : AD 3949 WO\nNo hp : 081000910438\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nrevisi DRIVER\nDriver : SULAIMAN\nNopol : L 4295 HV\nNo hp : 081000911177",
+    "text_b": "RO_DATE: 21 feb 2026\nLOAD_DATE: 21 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-pku\nUNIT_TYPE: twb\nDRIVER: sulaiman\nPLATE: l 4295 hv\nPHONE: 081000911177",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910020
+  },
+  {
+    "pair_id": "910020_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 21 FEB 2026\n7 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nrevisi DRIVER\nDriver : SULAIMAN\nNopol : L 4295 HV\nNo hp : 081000911177\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 21 mar 2026\nLOAD_DATE: 22 mar 2026\nTIME: 18:00\nORIGIN: jne sub\nDESTINATION: sub-cgk\nUNIT_TYPE: cddl\nDRIVER: yoga\nPLATE: b 8402 oq\nPHONE: 081000911399",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910020
+  },
+  {
+    "pair_id": "910021_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 22 FEB 2026\n\n8 UNIT CDDL\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : RAMA\nNopol : BK 2210 BD\nNo hp : 081000910391\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : DAVIT\nNopol : W 2691 OQ\nNo hp : 081000910404\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : MULYADI\nNopol : L 3172 BD\nNo hp : 081000910417\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : FIRMAN\nNopol : AD 3653 OQ\nNo hp : 081000910430\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : ILHAM\nNopol : N 4134 BD\nNo hp : 081000910443\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nREVISI\nDriver : NANANG\nNopol : AB 5035 BD\nNo hp : 081000911197\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : BAGUS\nNopol : AB 5096 BD\nNo hp : 081000910469\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : YOGA\nNopol : D 5577 OQ\nNo hp : 081000910482",
+    "text_b": "RO_DATE: 22 feb 2026\nLOAD_DATE: 22 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: farhan\nPLATE: b 4615 oq\nPHONE: 081000910456",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910021
+  },
+  {
+    "pair_id": "910021_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 22 FEB 2026\n8 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nREVISI\nDriver : NANANG\nNopol : AB 5035 BD\nNo hp : 081000911197\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 22 feb 2026\nLOAD_DATE: 22 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: nanang\nPLATE: ab 5035 bd\nPHONE: 081000911197",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910021
+  },
+  {
+    "pair_id": "910021_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 22 FEB 2026\n\n8 UNIT CDDL\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : RAMA\nNopol : BK 2210 BD\nNo hp : 081000910391\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : DAVIT\nNopol : W 2691 OQ\nNo hp : 081000910404\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : MULYADI\nNopol : L 3172 BD\nNo hp : 081000910417\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : FIRMAN\nNopol : AD 3653 OQ\nNo hp : 081000910430\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : ILHAM\nNopol : N 4134 BD\nNo hp : 081000910443\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nREVISI\nDriver : NANANG\nNopol : AB 5035 BD\nNo hp : 081000911197\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : BAGUS\nNopol : AB 5096 BD\nNo hp : 081000910469\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : YOGA\nNopol : D 5577 OQ\nNo hp : 081000910482",
+    "text_b": "RO_DATE: 22 feb 2026\nLOAD_DATE: 22 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: bagus\nPLATE: ab 5096 bd\nPHONE: 081000910469",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910021
+  },
+  {
+    "pair_id": "910021_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 22 FEB 2026\n8 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nREVISI\nDriver : NANANG\nNopol : AB 5035 BD\nNo hp : 081000911197\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 22 feb 2026\nLOAD_DATE: 22 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: rama\nPLATE: bk 2210 bd\nPHONE: 081000910391",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910021
+  },
+  {
+    "pair_id": "910021_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 22 FEB 2026\n\n8 UNIT CDDL\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : RAMA\nNopol : BK 2210 BD\nNo hp : 081000910391\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : DAVIT\nNopol : W 2691 OQ\nNo hp : 081000910404\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : MULYADI\nNopol : L 3172 BD\nNo hp : 081000910417\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : FIRMAN\nNopol : AD 3653 OQ\nNo hp : 081000910430\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : ILHAM\nNopol : N 4134 BD\nNo hp : 081000910443\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nREVISI\nDriver : NANANG\nNopol : AB 5035 BD\nNo hp : 081000911197\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : BAGUS\nNopol : AB 5096 BD\nNo hp : 081000910469\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : YOGA\nNopol : D 5577 OQ\nNo hp : 081000910482",
+    "text_b": "RO_DATE: 22 feb 2026\nLOAD_DATE: 22 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: cddl\nDRIVER: nanang\nPLATE: ab 5035 bd\nPHONE: 081000911197",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910021
+  },
+  {
+    "pair_id": "910021_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 22 FEB 2026\n8 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nREVISI\nDriver : NANANG\nNopol : AB 5035 BD\nNo hp : 081000911197\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 22 mar 2026\nLOAD_DATE: 23 mar 2026\nTIME: 06:00\nORIGIN: cikokol\nDESTINATION: cgk-sub\nUNIT_TYPE: wb\nDRIVER: andre\nPLATE: w 9142 iy\nPHONE: 081000911419",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910021
+  },
+  {
+    "pair_id": "910022_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 23 FEB 2026\n\n8 UNIT WB\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : DAVIT\nNopol : L 2876 TF\nNo hp : 081000910409\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : MULYADI\nNopol : AD 3357 GS\nNo hp : 081000910422\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : FIRMAN\nNopol : N 3838 TF\nNo hp : 081000910435\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : ILHAM\nNopol : B 4319 GS\nNo hp : 081000910448\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : FARHAN\nNopol : AB 4800 TF\nNo hp : 081000910461\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : BAGUS\nNopol : D 5281 GS\nNo hp : 081000910474\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nRevisi\nDriver : ADIT\nNopol : L 5775 VL\nNo hp : 081000911217\nMohon diprioritaskan loading malam ini\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : ANDRE\nNopol : W 6243 GS\nNo hp : 081000910500",
+    "text_b": "RO_DATE: 23 feb 2026\nLOAD_DATE: 23 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: yoga\nPLATE: bk 5762 tf\nPHONE: 081000910487",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910022
+  },
+  {
+    "pair_id": "910022_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 23 FEB 2026\n8 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nRevisi\nDriver : ADIT\nNopol : L 5775 VL\nNo hp : 081000911217\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 23 feb 2026\nLOAD_DATE: 23 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: adit\nPLATE: l 5775 vl\nPHONE: 081000911217",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910022
+  },
+  {
+    "pair_id": "910022_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 23 FEB 2026\n\n8 UNIT WB\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : DAVIT\nNopol : L 2876 TF\nNo hp : 081000910409\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : MULYADI\nNopol : AD 3357 GS\nNo hp : 081000910422\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : FIRMAN\nNopol : N 3838 TF\nNo hp : 081000910435\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : ILHAM\nNopol : B 4319 GS\nNo hp : 081000910448\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : FARHAN\nNopol : AB 4800 TF\nNo hp : 081000910461\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : BAGUS\nNopol : D 5281 GS\nNo hp : 081000910474\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nRevisi\nDriver : ADIT\nNopol : L 5775 VL\nNo hp : 081000911217\nMohon diprioritaskan loading malam ini\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : ANDRE\nNopol : W 6243 GS\nNo hp : 081000910500",
+    "text_b": "RO_DATE: 23 feb 2026\nLOAD_DATE: 23 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: andre\nPLATE: w 6243 gs\nPHONE: 081000910500",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910022
+  },
+  {
+    "pair_id": "910022_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 23 FEB 2026\n8 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nRevisi\nDriver : ADIT\nNopol : L 5775 VL\nNo hp : 081000911217\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 23 feb 2026\nLOAD_DATE: 23 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: davit\nPLATE: l 2876 tf\nPHONE: 081000910409",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910022
+  },
+  {
+    "pair_id": "910022_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 23 FEB 2026\n\n8 UNIT WB\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : DAVIT\nNopol : L 2876 TF\nNo hp : 081000910409\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : MULYADI\nNopol : AD 3357 GS\nNo hp : 081000910422\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : FIRMAN\nNopol : N 3838 TF\nNo hp : 081000910435\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : ILHAM\nNopol : B 4319 GS\nNo hp : 081000910448\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : FARHAN\nNopol : AB 4800 TF\nNo hp : 081000910461\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : BAGUS\nNopol : D 5281 GS\nNo hp : 081000910474\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nRevisi\nDriver : ADIT\nNopol : L 5775 VL\nNo hp : 081000911217\nMohon diprioritaskan loading malam ini\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : ANDRE\nNopol : W 6243 GS\nNo hp : 081000910500",
+    "text_b": "RO_DATE: 23 feb 2026\nLOAD_DATE: 23 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: sub-cgk\nUNIT_TYPE: wb\nDRIVER: adit\nPLATE: l 5775 vl\nPHONE: 081000911217",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910022
+  },
+  {
+    "pair_id": "910022_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 23 FEB 2026\n8 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nRevisi\nDriver : ADIT\nNopol : L 5775 VL\nNo hp : 081000911217\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 23 mar 2026\nLOAD_DATE: 24 mar 2026\nTIME: 03:00\nORIGIN: cikarang\nDESTINATION: cgk-mes\nUNIT_TYPE: fuso\nDRIVER: dedi\nPLATE: b 9882 cg\nPHONE: 081000911439",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910022
+  },
+  {
+    "pair_id": "910023_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 24 FEB 2026 mohon proses\n\n8 UNIT FUSO\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : MULYADI\nNopol : N 3542 LH\nNo hp : 081000910427\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : FIRMAN\nNopol : B 4023 YU\nNo hp : 081000910440\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : ILHAM\nNopol : AB 4504 LH\nNo hp : 081000910453\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : FARHAN\nNopol : D 4985 YU\nNo hp : 081000910466\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : BAGUS\nNopol : BK 5466 LH\nNo hp : 081000910479\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : YOGA\nNopol : W 5947 YU\nNo hp : 081000910492\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : ANDRE\nNopol : L 6428 LH\nNo hp : 081000910505\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nrevisi DRIVER\nDriver : BUDI\nNopol : AB 6515 PT\nNo hp : 081000911237",
+    "text_b": "RO_DATE: 24 feb 2026\nLOAD_DATE: 24 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: dedi\nPLATE: ad 6909 yu\nPHONE: 081000910518",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910023
+  },
+  {
+    "pair_id": "910023_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 24 FEB 2026\n8 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nrevisi DRIVER\nDriver : BUDI\nNopol : AB 6515 PT\nNo hp : 081000911237\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 24 feb 2026\nLOAD_DATE: 24 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: budi\nPLATE: ab 6515 pt\nPHONE: 081000911237",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910023
+  },
+  {
+    "pair_id": "910023_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 24 FEB 2026 mohon proses\n\n8 UNIT FUSO\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : MULYADI\nNopol : N 3542 LH\nNo hp : 081000910427\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : FIRMAN\nNopol : B 4023 YU\nNo hp : 081000910440\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : ILHAM\nNopol : AB 4504 LH\nNo hp : 081000910453\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : FARHAN\nNopol : D 4985 YU\nNo hp : 081000910466\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : BAGUS\nNopol : BK 5466 LH\nNo hp : 081000910479\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : YOGA\nNopol : W 5947 YU\nNo hp : 081000910492\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : ANDRE\nNopol : L 6428 LH\nNo hp : 081000910505\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nrevisi DRIVER\nDriver : BUDI\nNopol : AB 6515 PT\nNo hp : 081000911237",
+    "text_b": "RO_DATE: 24 feb 2026\nLOAD_DATE: 24 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: andre\nPLATE: l 6428 lh\nPHONE: 081000910505",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910023
+  },
+  {
+    "pair_id": "910023_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 24 FEB 2026\n8 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nrevisi DRIVER\nDriver : BUDI\nNopol : AB 6515 PT\nNo hp : 081000911237\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 24 feb 2026\nLOAD_DATE: 24 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: mulyadi\nPLATE: n 3542 lh\nPHONE: 081000910427",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910023
+  },
+  {
+    "pair_id": "910023_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 24 FEB 2026 mohon proses\n\n8 UNIT FUSO\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : MULYADI\nNopol : N 3542 LH\nNo hp : 081000910427\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : FIRMAN\nNopol : B 4023 YU\nNo hp : 081000910440\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : ILHAM\nNopol : AB 4504 LH\nNo hp : 081000910453\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : FARHAN\nNopol : D 4985 YU\nNo hp : 081000910466\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : BAGUS\nNopol : BK 5466 LH\nNo hp : 081000910479\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : YOGA\nNopol : W 5947 YU\nNo hp : 081000910492\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : ANDRE\nNopol : L 6428 LH\nNo hp : 081000910505\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nrevisi DRIVER\nDriver : BUDI\nNopol : AB 6515 PT\nNo hp : 081000911237",
+    "text_b": "RO_DATE: 24 feb 2026\nLOAD_DATE: 24 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: cgk-sub\nUNIT_TYPE: fuso\nDRIVER: budi\nPLATE: ab 6515 pt\nPHONE: 081000911237",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910023
+  },
+  {
+    "pair_id": "910023_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 24 FEB 2026\n8 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nrevisi DRIVER\nDriver : BUDI\nNopol : AB 6515 PT\nNo hp : 081000911237\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 24 mar 2026\nLOAD_DATE: 25 mar 2026\nTIME: 22:00\nORIGIN: argopantes\nDESTINATION: cgk-pku\nUNIT_TYPE: tronton\nDRIVER: sulaiman\nPLATE: w 1623 wo\nPHONE: 081000911459",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910023
+  },
+  {
+    "pair_id": "910024_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 25 FEB 2026\n\n9 UNIT TRONTON\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : FIRMAN\nNopol : AB 4208 DJ\nNo hp : 081000910445\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ILHAM\nNopol : D 4689 QW\nNo hp : 081000910458\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : FARHAN\nNopol : BK 5170 DJ\nNo hp : 081000910471\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : BAGUS\nNopol : W 5651 QW\nNo hp : 081000910484\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : YOGA\nNopol : L 6132 DJ\nNo hp : 081000910497\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ANDRE\nNopol : AD 6613 QW\nNo hp : 081000910510\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nREVISI\nDriver : UMAR\nNopol : L 7255 JB\nNo hp : 081000911257\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : SULAIMAN\nNopol : B 7575 QW\nNo hp : 081000910536\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : RIZKI\nNopol : AB 8056 DJ\nNo hp : 081000910549",
+    "text_b": "RO_DATE: 25 feb 2026\nLOAD_DATE: 25 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: dedi\nPLATE: n 7094 dj\nPHONE: 081000910523",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910024
+  },
+  {
+    "pair_id": "910024_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 25 FEB 2026\n9 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nREVISI\nDriver : UMAR\nNopol : L 7255 JB\nNo hp : 081000911257\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 25 feb 2026\nLOAD_DATE: 25 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: umar\nPLATE: l 7255 jb\nPHONE: 081000911257",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910024
+  },
+  {
+    "pair_id": "910024_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 25 FEB 2026\n\n9 UNIT TRONTON\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : FIRMAN\nNopol : AB 4208 DJ\nNo hp : 081000910445\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ILHAM\nNopol : D 4689 QW\nNo hp : 081000910458\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : FARHAN\nNopol : BK 5170 DJ\nNo hp : 081000910471\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : BAGUS\nNopol : W 5651 QW\nNo hp : 081000910484\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : YOGA\nNopol : L 6132 DJ\nNo hp : 081000910497\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ANDRE\nNopol : AD 6613 QW\nNo hp : 081000910510\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nREVISI\nDriver : UMAR\nNopol : L 7255 JB\nNo hp : 081000911257\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : SULAIMAN\nNopol : B 7575 QW\nNo hp : 081000910536\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : RIZKI\nNopol : AB 8056 DJ\nNo hp : 081000910549",
+    "text_b": "RO_DATE: 25 feb 2026\nLOAD_DATE: 25 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: sulaiman\nPLATE: b 7575 qw\nPHONE: 081000910536",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910024
+  },
+  {
+    "pair_id": "910024_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 25 FEB 2026\n9 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nREVISI\nDriver : UMAR\nNopol : L 7255 JB\nNo hp : 081000911257\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 25 feb 2026\nLOAD_DATE: 25 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: firman\nPLATE: ab 4208 dj\nPHONE: 081000910445",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910024
+  },
+  {
+    "pair_id": "910024_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 25 FEB 2026\n\n9 UNIT TRONTON\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : FIRMAN\nNopol : AB 4208 DJ\nNo hp : 081000910445\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ILHAM\nNopol : D 4689 QW\nNo hp : 081000910458\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : FARHAN\nNopol : BK 5170 DJ\nNo hp : 081000910471\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : BAGUS\nNopol : W 5651 QW\nNo hp : 081000910484\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : YOGA\nNopol : L 6132 DJ\nNo hp : 081000910497\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ANDRE\nNopol : AD 6613 QW\nNo hp : 081000910510\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nREVISI\nDriver : UMAR\nNopol : L 7255 JB\nNo hp : 081000911257\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : SULAIMAN\nNopol : B 7575 QW\nNo hp : 081000910536\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : RIZKI\nNopol : AB 8056 DJ\nNo hp : 081000910549",
+    "text_b": "RO_DATE: 25 feb 2026\nLOAD_DATE: 25 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: cgk-mes\nUNIT_TYPE: tronton\nDRIVER: umar\nPLATE: l 7255 jb\nPHONE: 081000911257",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910024
+  },
+  {
+    "pair_id": "910024_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 25 FEB 2026\n9 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nREVISI\nDriver : UMAR\nNopol : L 7255 JB\nNo hp : 081000911257\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 25 mar 2026\nLOAD_DATE: 26 mar 2026\nTIME: segera\nORIGIN: megahub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: twb\nDRIVER: rizki\nPLATE: b 2363 qw\nPHONE: 081000911479",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910024
+  },
+  {
+    "pair_id": "910025_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 26 FEB 2026\n\n9 UNIT TWB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : ILHAM\nNopol : BK 4874 VL\nNo hp : 081000910463\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : FARHAN\nNopol : W 5355 IY\nNo hp : 081000910476\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : BAGUS\nNopol : L 5836 VL\nNo hp : 081000910489\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : YOGA\nNopol : AD 6317 IY\nNo hp : 081000910502\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : ANDRE\nNopol : N 6798 VL\nNo hp : 081000910515\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : DEDI\nNopol : B 7279 IY\nNo hp : 081000910528\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : SULAIMAN\nNopol : AB 7760 VL\nNo hp : 081000910541\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nRevisi\nDriver : HENDRA\nNopol : AB 7995 DJ\nNo hp : 081000911277\nMohon diprioritaskan loading malam ini\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : NANANG\nNopol : BK 8722 VL\nNo hp : 081000910567",
+    "text_b": "RO_DATE: 26 feb 2026\nLOAD_DATE: 26 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: rizki\nPLATE: d 8241 iy\nPHONE: 081000910554",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910025
+  },
+  {
+    "pair_id": "910025_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 26 FEB 2026\n9 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nRevisi\nDriver : HENDRA\nNopol : AB 7995 DJ\nNo hp : 081000911277\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 26 feb 2026\nLOAD_DATE: 26 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: hendra\nPLATE: ab 7995 dj\nPHONE: 081000911277",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910025
+  },
+  {
+    "pair_id": "910025_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 26 FEB 2026\n\n9 UNIT TWB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : ILHAM\nNopol : BK 4874 VL\nNo hp : 081000910463\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : FARHAN\nNopol : W 5355 IY\nNo hp : 081000910476\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : BAGUS\nNopol : L 5836 VL\nNo hp : 081000910489\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : YOGA\nNopol : AD 6317 IY\nNo hp : 081000910502\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : ANDRE\nNopol : N 6798 VL\nNo hp : 081000910515\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : DEDI\nNopol : B 7279 IY\nNo hp : 081000910528\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : SULAIMAN\nNopol : AB 7760 VL\nNo hp : 081000910541\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nRevisi\nDriver : HENDRA\nNopol : AB 7995 DJ\nNo hp : 081000911277\nMohon diprioritaskan loading malam ini\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : NANANG\nNopol : BK 8722 VL\nNo hp : 081000910567",
+    "text_b": "RO_DATE: 26 feb 2026\nLOAD_DATE: 26 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: nanang\nPLATE: bk 8722 vl\nPHONE: 081000910567",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910025
+  },
+  {
+    "pair_id": "910025_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 26 FEB 2026\n9 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nRevisi\nDriver : HENDRA\nNopol : AB 7995 DJ\nNo hp : 081000911277\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 26 feb 2026\nLOAD_DATE: 26 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-sub\nUNIT_TYPE: twb\nDRIVER: ilham\nPLATE: bk 4874 vl\nPHONE: 081000910463",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910025
+  },
+  {
+    "pair_id": "910025_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 26 FEB 2026\n\n9 UNIT TWB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : ILHAM\nNopol : BK 4874 VL\nNo hp : 081000910463\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : FARHAN\nNopol : W 5355 IY\nNo hp : 081000910476\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : BAGUS\nNopol : L 5836 VL\nNo hp : 081000910489\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : YOGA\nNopol : AD 6317 IY\nNo hp : 081000910502\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : ANDRE\nNopol : N 6798 VL\nNo hp : 081000910515\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : DEDI\nNopol : B 7279 IY\nNo hp : 081000910528\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : SULAIMAN\nNopol : AB 7760 VL\nNo hp : 081000910541\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\n\nRevisi\nDriver : HENDRA\nNopol : AB 7995 DJ\nNo hp : 081000911277\nMohon diprioritaskan loading malam ini\n\nLokasi  : CIKARANG\nWaktu loading  : 22.00\nRute/tujuan : CGK-SUB\nDriver : NANANG\nNopol : BK 8722 VL\nNo hp : 081000910567",
+    "text_b": "RO_DATE: 26 feb 2026\nLOAD_DATE: 26 feb 2026\nTIME: 22:00\nORIGIN: cikarang\nDESTINATION: cgk-pku\nUNIT_TYPE: twb\nDRIVER: hendra\nPLATE: ab 7995 dj\nPHONE: 081000911277",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910025
+  },
+  {
+    "pair_id": "910025_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 26 FEB 2026\n9 UNIT TWB\nLokasi : CIKARANG\nRute/tujuan : CGK-SUB\nWaktu loading : 22.00\nRevisi\nDriver : HENDRA\nNopol : AB 7995 DJ\nNo hp : 081000911277\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 26 mar 2026\nLOAD_DATE: 27 mar 2026\nTIME: 18:00\nORIGIN: jne sub\nDESTINATION: sub-cgk\nUNIT_TYPE: cddl\nDRIVER: nanang\nPLATE: w 3103 ke\nPHONE: 081000911499",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910025
+  },
+  {
+    "pair_id": "910026_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 27 FEB 2026 mohon proses\n\n9 UNIT CDDL\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : FARHAN\nNopol : L 5540 NN\nNo hp : 081000910481\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : BAGUS\nNopol : AD 6021 AA\nNo hp : 081000910494\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : YOGA\nNopol : N 6502 NN\nNo hp : 081000910507\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : ANDRE\nNopol : B 6983 AA\nNo hp : 081000910520\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : DEDI\nNopol : AB 7464 NN\nNo hp : 081000910533\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : SULAIMAN\nNopol : D 7945 AA\nNo hp : 081000910546\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : RIZKI\nNopol : BK 8426 NN\nNo hp : 081000910559\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : NANANG\nNopol : W 8907 AA\nNo hp : 081000910572\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nrevisi DRIVER\nDriver : WAHYU\nNopol : L 8735 XR\nNo hp : 081000911297",
+    "text_b": "RO_DATE: 27 feb 2026\nLOAD_DATE: 27 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: adit\nPLATE: l 9388 nn\nPHONE: 081000910585",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910026
+  },
+  {
+    "pair_id": "910026_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 27 FEB 2026\n9 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nrevisi DRIVER\nDriver : WAHYU\nNopol : L 8735 XR\nNo hp : 081000911297\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 27 feb 2026\nLOAD_DATE: 27 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: wahyu\nPLATE: l 8735 xr\nPHONE: 081000911297",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910026
+  },
+  {
+    "pair_id": "910026_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 27 FEB 2026 mohon proses\n\n9 UNIT CDDL\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : FARHAN\nNopol : L 5540 NN\nNo hp : 081000910481\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : BAGUS\nNopol : AD 6021 AA\nNo hp : 081000910494\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : YOGA\nNopol : N 6502 NN\nNo hp : 081000910507\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : ANDRE\nNopol : B 6983 AA\nNo hp : 081000910520\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : DEDI\nNopol : AB 7464 NN\nNo hp : 081000910533\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : SULAIMAN\nNopol : D 7945 AA\nNo hp : 081000910546\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : RIZKI\nNopol : BK 8426 NN\nNo hp : 081000910559\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : NANANG\nNopol : W 8907 AA\nNo hp : 081000910572\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nrevisi DRIVER\nDriver : WAHYU\nNopol : L 8735 XR\nNo hp : 081000911297",
+    "text_b": "RO_DATE: 27 feb 2026\nLOAD_DATE: 27 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: nanang\nPLATE: w 8907 aa\nPHONE: 081000910572",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910026
+  },
+  {
+    "pair_id": "910026_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 27 FEB 2026\n9 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nrevisi DRIVER\nDriver : WAHYU\nNopol : L 8735 XR\nNo hp : 081000911297\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 27 feb 2026\nLOAD_DATE: 27 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: cgk-mes\nUNIT_TYPE: cddl\nDRIVER: farhan\nPLATE: l 5540 nn\nPHONE: 081000910481",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910026
+  },
+  {
+    "pair_id": "910026_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 27 FEB 2026 mohon proses\n\n9 UNIT CDDL\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : FARHAN\nNopol : L 5540 NN\nNo hp : 081000910481\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : BAGUS\nNopol : AD 6021 AA\nNo hp : 081000910494\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : YOGA\nNopol : N 6502 NN\nNo hp : 081000910507\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : ANDRE\nNopol : B 6983 AA\nNo hp : 081000910520\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : DEDI\nNopol : AB 7464 NN\nNo hp : 081000910533\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : SULAIMAN\nNopol : D 7945 AA\nNo hp : 081000910546\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : RIZKI\nNopol : BK 8426 NN\nNo hp : 081000910559\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\nDriver : NANANG\nNopol : W 8907 AA\nNo hp : 081000910572\n\nLokasi  : ARGOPANTES\nWaktu loading  : SEGERA\nRute/tujuan : CGK-MES\n\nrevisi DRIVER\nDriver : WAHYU\nNopol : L 8735 XR\nNo hp : 081000911297",
+    "text_b": "RO_DATE: 27 feb 2026\nLOAD_DATE: 27 feb 2026\nTIME: segera\nORIGIN: argopantes\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: cddl\nDRIVER: wahyu\nPLATE: l 8735 xr\nPHONE: 081000911297",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910026
+  },
+  {
+    "pair_id": "910026_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 27 FEB 2026\n9 UNIT CDDL\nLokasi : ARGOPANTES\nRute/tujuan : CGK-MES\nWaktu loading : SEGERA\nrevisi DRIVER\nDriver : WAHYU\nNopol : L 8735 XR\nNo hp : 081000911297\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 27 mar 2026\nLOAD_DATE: 28 mar 2026\nTIME: 06:00\nORIGIN: cikokol\nDESTINATION: cgk-sub\nUNIT_TYPE: wb\nDRIVER: adit\nPLATE: b 3843 em\nPHONE: 081000911519",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910026
+  },
+  {
+    "pair_id": "910027_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 28 FEB 2026\n\n10 UNIT WB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : BAGUS\nNopol : N 6206 FP\nNo hp : 081000910499\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : YOGA\nNopol : B 6687 SC\nNo hp : 081000910512\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : ANDRE\nNopol : AB 7168 FP\nNo hp : 081000910525\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : DEDI\nNopol : D 7649 SC\nNo hp : 081000910538\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : SULAIMAN\nNopol : BK 8130 FP\nNo hp : 081000910551\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : RIZKI\nNopol : W 8611 SC\nNo hp : 081000910564\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : NANANG\nNopol : L 9092 FP\nNo hp : 081000910577\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nREVISI\nDriver : CHANDRA\nNopol : AB 9475 RZ\nNo hp : 081000911317\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : BUDI\nNopol : N 1055 FP\nNo hp : 081000910603\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : DODI\nNopol : B 1536 SC\nNo hp : 081000910616",
+    "text_b": "RO_DATE: 28 feb 2026\nLOAD_DATE: 28 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: adit\nPLATE: ad 9573 sc\nPHONE: 081000910590",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910027
+  },
+  {
+    "pair_id": "910027_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 28 FEB 2026\n10 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nREVISI\nDriver : CHANDRA\nNopol : AB 9475 RZ\nNo hp : 081000911317\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 28 feb 2026\nLOAD_DATE: 28 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: chandra\nPLATE: ab 9475 rz\nPHONE: 081000911317",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910027
+  },
+  {
+    "pair_id": "910027_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 28 FEB 2026\n\n10 UNIT WB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : BAGUS\nNopol : N 6206 FP\nNo hp : 081000910499\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : YOGA\nNopol : B 6687 SC\nNo hp : 081000910512\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : ANDRE\nNopol : AB 7168 FP\nNo hp : 081000910525\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : DEDI\nNopol : D 7649 SC\nNo hp : 081000910538\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : SULAIMAN\nNopol : BK 8130 FP\nNo hp : 081000910551\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : RIZKI\nNopol : W 8611 SC\nNo hp : 081000910564\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : NANANG\nNopol : L 9092 FP\nNo hp : 081000910577\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nREVISI\nDriver : CHANDRA\nNopol : AB 9475 RZ\nNo hp : 081000911317\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : BUDI\nNopol : N 1055 FP\nNo hp : 081000910603\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : DODI\nNopol : B 1536 SC\nNo hp : 081000910616",
+    "text_b": "RO_DATE: 28 feb 2026\nLOAD_DATE: 28 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: budi\nPLATE: n 1055 fp\nPHONE: 081000910603",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910027
+  },
+  {
+    "pair_id": "910027_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 28 FEB 2026\n10 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nREVISI\nDriver : CHANDRA\nNopol : AB 9475 RZ\nNo hp : 081000911317\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 28 feb 2026\nLOAD_DATE: 28 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: cgk-pku\nUNIT_TYPE: wb\nDRIVER: bagus\nPLATE: n 6206 fp\nPHONE: 081000910499",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910027
+  },
+  {
+    "pair_id": "910027_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Request Order Oncall Tgl 28 FEB 2026\n\n10 UNIT WB\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : BAGUS\nNopol : N 6206 FP\nNo hp : 081000910499\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : YOGA\nNopol : B 6687 SC\nNo hp : 081000910512\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : ANDRE\nNopol : AB 7168 FP\nNo hp : 081000910525\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : DEDI\nNopol : D 7649 SC\nNo hp : 081000910538\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : SULAIMAN\nNopol : BK 8130 FP\nNo hp : 081000910551\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : RIZKI\nNopol : W 8611 SC\nNo hp : 081000910564\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : NANANG\nNopol : L 9092 FP\nNo hp : 081000910577\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\n\nREVISI\nDriver : CHANDRA\nNopol : AB 9475 RZ\nNo hp : 081000911317\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : BUDI\nNopol : N 1055 FP\nNo hp : 081000910603\n\nLokasi  : MEGAHUB\nWaktu loading  : 18.00\nRute/tujuan : CGK-PKU\nDriver : DODI\nNopol : B 1536 SC\nNo hp : 081000910616",
+    "text_b": "RO_DATE: 28 feb 2026\nLOAD_DATE: 28 feb 2026\nTIME: 18:00\nORIGIN: megahub\nDESTINATION: sub-cgk\nUNIT_TYPE: wb\nDRIVER: chandra\nPLATE: ab 9475 rz\nPHONE: 081000911317",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910027
+  },
+  {
+    "pair_id": "910027_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 28 FEB 2026\n10 UNIT WB\nLokasi : MEGAHUB\nRute/tujuan : CGK-PKU\nWaktu loading : 18.00\nREVISI\nDriver : CHANDRA\nNopol : AB 9475 RZ\nNo hp : 081000911317\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 28 mar 2026\nLOAD_DATE: 29 mar 2026\nTIME: 03:00\nORIGIN: cikarang\nDESTINATION: cgk-mes\nUNIT_TYPE: fuso\nDRIVER: budi\nPLATE: w 4583 yu\nPHONE: 081000911539",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910027
+  },
+  {
+    "pair_id": "910028_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 01 FEB 2026\n\n10 UNIT FUSO\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : YOGA\nNopol : AB 6872 XR\nNo hp : 081000910517\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : ANDRE\nNopol : D 7353 KE\nNo hp : 081000910530\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : DEDI\nNopol : BK 7834 XR\nNo hp : 081000910543\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : SULAIMAN\nNopol : W 8315 KE\nNo hp : 081000910556\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : RIZKI\nNopol : L 8796 XR\nNo hp : 081000910569\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : NANANG\nNopol : AD 9277 KE\nNo hp : 081000910582\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : ADIT\nNopol : N 9758 XR\nNo hp : 081000910595\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : BUDI\nNopol : B 1240 KE\nNo hp : 081000910608\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nRevisi\nDriver : SANDRI\nNopol : L 1216 LH\nNo hp : 081000911337\nMohon diprioritaskan loading malam ini\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : UMAR\nNopol : D 2202 KE\nNo hp : 081000910634",
+    "text_b": "RO_DATE: 01 feb 2026\nLOAD_DATE: 01 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: dodi\nPLATE: ab 1721 xr\nPHONE: 081000910621",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910028
+  },
+  {
+    "pair_id": "910028_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 01 FEB 2026\n10 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nRevisi\nDriver : SANDRI\nNopol : L 1216 LH\nNo hp : 081000911337\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 01 feb 2026\nLOAD_DATE: 01 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: sandri\nPLATE: l 1216 lh\nPHONE: 081000911337",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910028
+  },
+  {
+    "pair_id": "910028_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 01 FEB 2026\n\n10 UNIT FUSO\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : YOGA\nNopol : AB 6872 XR\nNo hp : 081000910517\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : ANDRE\nNopol : D 7353 KE\nNo hp : 081000910530\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : DEDI\nNopol : BK 7834 XR\nNo hp : 081000910543\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : SULAIMAN\nNopol : W 8315 KE\nNo hp : 081000910556\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : RIZKI\nNopol : L 8796 XR\nNo hp : 081000910569\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : NANANG\nNopol : AD 9277 KE\nNo hp : 081000910582\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : ADIT\nNopol : N 9758 XR\nNo hp : 081000910595\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : BUDI\nNopol : B 1240 KE\nNo hp : 081000910608\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nRevisi\nDriver : SANDRI\nNopol : L 1216 LH\nNo hp : 081000911337\nMohon diprioritaskan loading malam ini\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : UMAR\nNopol : D 2202 KE\nNo hp : 081000910634",
+    "text_b": "RO_DATE: 01 feb 2026\nLOAD_DATE: 01 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: umar\nPLATE: d 2202 ke\nPHONE: 081000910634",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910028
+  },
+  {
+    "pair_id": "910028_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 01 FEB 2026\n10 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nRevisi\nDriver : SANDRI\nNopol : L 1216 LH\nNo hp : 081000911337\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 01 feb 2026\nLOAD_DATE: 01 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: fuso\nDRIVER: yoga\nPLATE: ab 6872 xr\nPHONE: 081000910517",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910028
+  },
+  {
+    "pair_id": "910028_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: REQUEST ORDER ONCALL 01 FEB 2026\n\n10 UNIT FUSO\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : YOGA\nNopol : AB 6872 XR\nNo hp : 081000910517\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : ANDRE\nNopol : D 7353 KE\nNo hp : 081000910530\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : DEDI\nNopol : BK 7834 XR\nNo hp : 081000910543\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : SULAIMAN\nNopol : W 8315 KE\nNo hp : 081000910556\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : RIZKI\nNopol : L 8796 XR\nNo hp : 081000910569\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : NANANG\nNopol : AD 9277 KE\nNo hp : 081000910582\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : ADIT\nNopol : N 9758 XR\nNo hp : 081000910595\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : BUDI\nNopol : B 1240 KE\nNo hp : 081000910608\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\n\nRevisi\nDriver : SANDRI\nNopol : L 1216 LH\nNo hp : 081000911337\nMohon diprioritaskan loading malam ini\n\nLokasi  : JNE SUB\nWaktu loading  : 06.00\nRute/tujuan : CKR-JATENG TENTATIVE\nDriver : UMAR\nNopol : D 2202 KE\nNo hp : 081000910634",
+    "text_b": "RO_DATE: 01 feb 2026\nLOAD_DATE: 01 feb 2026\nTIME: 06:00\nORIGIN: jne sub\nDESTINATION: cgk-sub\nUNIT_TYPE: fuso\nDRIVER: sandri\nPLATE: l 1216 lh\nPHONE: 081000911337",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910028
+  },
+  {
+    "pair_id": "910028_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 01 FEB 2026\n10 UNIT FUSO\nLokasi : JNE SUB\nRute/tujuan : CKR-JATENG TENTATIVE\nWaktu loading : 06.00\nRevisi\nDriver : SANDRI\nNopol : L 1216 LH\nNo hp : 081000911337\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 01 mar 2026\nLOAD_DATE: 02 mar 2026\nTIME: 22:00\nORIGIN: argopantes\nDESTINATION: cgk-pku\nUNIT_TYPE: tronton\nDRIVER: dodi\nPLATE: b 5323 sc\nPHONE: 081000911559",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910028
+  },
+  {
+    "pair_id": "910029_pos_multi_pre",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 02 FEB 2026 mohon proses\n\n10 UNIT TRONTON\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ANDRE\nNopol : BK 7538 PT\nNo hp : 081000910535\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : DEDI\nNopol : W 8019 CG\nNo hp : 081000910548\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : SULAIMAN\nNopol : L 8500 PT\nNo hp : 081000910561\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : RIZKI\nNopol : AD 8981 CG\nNo hp : 081000910574\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : NANANG\nNopol : N 9462 PT\nNo hp : 081000910587\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ADIT\nNopol : B 9943 CG\nNo hp : 081000910600\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : BUDI\nNopol : AB 1425 PT\nNo hp : 081000910613\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : DODI\nNopol : D 1906 CG\nNo hp : 081000910626\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : UMAR\nNopol : BK 2387 PT\nNo hp : 081000910639\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nrevisi DRIVER\nDriver : IBNU\nNopol : AB 1956 FP\nNo hp : 081000911357",
+    "text_b": "RO_DATE: 02 feb 2026\nLOAD_DATE: 02 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: hendra\nPLATE: w 2868 cg\nPHONE: 081000910652",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_pre",
+    "source_id": 910029
+  },
+  {
+    "pair_id": "910029_pos_multi_post",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 02 FEB 2026\n10 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nrevisi DRIVER\nDriver : IBNU\nNopol : AB 1956 FP\nNo hp : 081000911357\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 02 feb 2026\nLOAD_DATE: 02 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: ibnu\nPLATE: ab 1956 fp\nPHONE: 081000911357",
+    "label": "MATCH",
+    "pair_kind": "positive_multi_unit_revision_post",
+    "source_id": 910029
+  },
+  {
+    "pair_id": "910029_neg_wrong_segment_1",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 02 FEB 2026 mohon proses\n\n10 UNIT TRONTON\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ANDRE\nNopol : BK 7538 PT\nNo hp : 081000910535\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : DEDI\nNopol : W 8019 CG\nNo hp : 081000910548\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : SULAIMAN\nNopol : L 8500 PT\nNo hp : 081000910561\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : RIZKI\nNopol : AD 8981 CG\nNo hp : 081000910574\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : NANANG\nNopol : N 9462 PT\nNo hp : 081000910587\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ADIT\nNopol : B 9943 CG\nNo hp : 081000910600\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : BUDI\nNopol : AB 1425 PT\nNo hp : 081000910613\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : DODI\nNopol : D 1906 CG\nNo hp : 081000910626\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : UMAR\nNopol : BK 2387 PT\nNo hp : 081000910639\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nrevisi DRIVER\nDriver : IBNU\nNopol : AB 1956 FP\nNo hp : 081000911357",
+    "text_b": "RO_DATE: 02 feb 2026\nLOAD_DATE: 02 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: umar\nPLATE: bk 2387 pt\nPHONE: 081000910639",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910029
+  },
+  {
+    "pair_id": "910029_neg_wrong_segment_2",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 02 FEB 2026\n10 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nrevisi DRIVER\nDriver : IBNU\nNopol : AB 1956 FP\nNo hp : 081000911357\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 02 feb 2026\nLOAD_DATE: 02 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: sub-cgk\nUNIT_TYPE: tronton\nDRIVER: andre\nPLATE: bk 7538 pt\nPHONE: 081000910535",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_wrong_segment",
+    "source_id": 910029
+  },
+  {
+    "pair_id": "910029_neg_route_shift",
+    "text_a": "[05.31, 7/3/2026] Akbar Rafay: Order Oncall 02 FEB 2026 mohon proses\n\n10 UNIT TRONTON\nInfo cepat: mohon monitor unit di lapangan\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ANDRE\nNopol : BK 7538 PT\nNo hp : 081000910535\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : DEDI\nNopol : W 8019 CG\nNo hp : 081000910548\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : SULAIMAN\nNopol : L 8500 PT\nNo hp : 081000910561\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : RIZKI\nNopol : AD 8981 CG\nNo hp : 081000910574\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : NANANG\nNopol : N 9462 PT\nNo hp : 081000910587\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : ADIT\nNopol : B 9943 CG\nNo hp : 081000910600\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : BUDI\nNopol : AB 1425 PT\nNo hp : 081000910613\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : DODI\nNopol : D 1906 CG\nNo hp : 081000910626\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\nDriver : UMAR\nNopol : BK 2387 PT\nNo hp : 081000910639\n\nLokasi  : CIKOKOL\nWaktu loading  : 03.00\nRute/tujuan : SUB-CGK\n\nrevisi DRIVER\nDriver : IBNU\nNopol : AB 1956 FP\nNo hp : 081000911357",
+    "text_b": "RO_DATE: 02 feb 2026\nLOAD_DATE: 02 feb 2026\nTIME: 03:00\nORIGIN: cikokol\nDESTINATION: cgk-mes\nUNIT_TYPE: tronton\nDRIVER: ibnu\nPLATE: ab 1956 fp\nPHONE: 081000911357",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_route_shift",
+    "source_id": 910029
+  },
+  {
+    "pair_id": "910029_neg_random",
+    "text_a": "REQUEST ORDER ONCALL\nTanggal : 02 FEB 2026\n10 UNIT TRONTON\nLokasi : CIKOKOL\nRute/tujuan : SUB-CGK\nWaktu loading : 03.00\nrevisi DRIVER\nDriver : IBNU\nNopol : AB 1956 FP\nNo hp : 081000911357\nCatatan: header tidak mengandung kata ulang/tambahan",
+    "text_b": "RO_DATE: 02 mar 2026\nLOAD_DATE: 03 mar 2026\nTIME: segera\nORIGIN: megahub\nDESTINATION: ckr-jateng tentative\nUNIT_TYPE: twb\nDRIVER: umar\nPLATE: w 6063 mk\nPHONE: 081000911579",
+    "label": "NO_MATCH",
+    "pair_kind": "negative_multi_unit_random",
+    "source_id": 910029
+  }
+]

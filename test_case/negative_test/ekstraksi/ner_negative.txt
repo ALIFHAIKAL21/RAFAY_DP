@@ -1,0 +1,271 @@
+persiapan data buat 06 febuari 2026
+
+UNIT TWB 50 CBM
+Lokasi :
+Waktu loading :
+Rute/tujuan :
+driver :
+Nopol :
+No hp :
+
+Waktu loading :
+Rute/tujuan :
+driver :
+Nopol :
+No hp :
+
+Waktu loading :
+Rute/tujuan :
+driver :
+Nopol :
+No hp :
+
+
+REQUEST UNIT ON CALL TGL 05 FEB 26
+
+2 UNIT
+Lokasi : belum ditentukan
+Waktu loading : menunggu info
+Rute/tujuan : menyusul
+Driver : belum ada
+Nopol : belum ada
+No hp : belum ada
+
+unit kedua juga masih menunggu vendor
+Waktu loading :
+Rute/tujuan :
+Driver :
+Nopol :
+No hp :
+
+
+REQUEST UNITT ON CALL TGL 06 FEBUARY 2026
+
+info dari Akbar Rafay, nomor admin 081234567890
+
+3 UNIT TWB 50 CBM
+Lokasi :
+Waktu loadng :
+Rute/tujuan :
+drivr :
+Nopol :
+No hp :
+
+pak Budi bilang data kendaraan belum turun
+Waktu loading :
+Rute/tujuan :
+driver :
+Nopol :
+No hp :
+
+nomor pool 085712345678 hanya untuk koordinasi
+Waktu loading :
+Rute/tujuan :
+driver :
+Nopol :
+No hp :
+
+
+REQUEST 
+
+yang JNE masih berupa template pak
+
+2 UNIT TWB 50 CBM
+Lokasi : JNE
+Waktu loading :
+Rute/tujuan :
+driver :
+Nopol :
+No hp :
+
+catatan : CDDL 40 CBM LAGI KOSONG JADI TWB DULU YANG READY
+
+
+REQUEST UNIT ON CALL TGL 06 FEBUARI 2026
+
+info tambahan dari admin, ini belum menjadi order final
+
+
+Lokasi :
+Waktu loading : 012831414049124
+Rute/tujan :
+driver : masih dicari
+Nopol : menyusul
+No hp : belum aktif
+
+Waktu loading :
+Rute/tujan :
+driver :
+Nopol :
+No hp :
+
+Waktu loading :
+Rute/tujan :
+driver :
+Nopol :
+No hp :
+
+
+REQUEST ORDER ONCALL
+06 FEB 2026
+
+pak ini template unit argopantes, identitas belum tersedia SAMA JUMLAH UNIT NYA BELUM PASTI
+
+6 UNIT WB/50 CBM
+Lokasi : CGK-SUB
+Waktu loading :
+Rute/tujuan : CGK-SUB
+driver :
+Nopol :
+No hp :
+
+Waktu loading :
+Rute/tujuan : CGK-SUB
+driver :
+Nopol :
+No hp :
+
+Waktu loading :
+Rute/tujuan : CGK-SUB
+driver :
+Nopol :
+No hp :
+
+Waktu loading :
+Rute/tujuan : CGK-SUB
+driver :
+Nopol :
+No hp :
+
+Waktu loading :
+Rute/tujuan : CGK-SUB
+driver :
+Nopol :
+No hp :
+
+Waktu loading :
+Rute/tujuan : CGK-SUB
+driver :
+Nopol :
+No hp :
+
+
+REQEST ORDE ONCALLLLL
+06 FEB 2026
+
+SI MANULANG UDAH GA SABAR MAU NARIK, LANGSUNG AJA DI DATA NANTI SISA NYA SI DEDEN SAMA SI AGUS BELUM PASTI JADI NARIK ATAU TIDAK
+
+3 UNIT CDDL/24 CBM
+Lksi : ARGOPANTES
+WKTU lOAAADINGG : 18:00 
+Rute/tujuanNNN : CGK - JATIM TENTATIF
+drivr : MANULANG
+Nopl : B 890 UX
+No hB : 6281574673448
+
+WKTU lOAAADINGG : 18:00 
+Rute/tujuanNNN : CGK - JATIM TENTATIF
+drivr : 
+Nopl : 
+No hB : 
+
+WKTU lOAAADINGG : 18:00 
+Rute/tujuanNNN : CGK - JATIM TENTATIF
+drivr : 
+Nopl : 
+No hB : 
+
+REQUEST ORDER ONCAL
+06 FEBUARI 2026
+
+RAFAY
+3 UNIT TWB 50 CBM
+Lokasi :
+Rute/tujuan :
+Waktu loading :
+DRIVER :
+NOPOL :
+NO HPP :
+
+REQUEST ORDER ONCAL
+06 FEBUARI 2026
+
+siap pak, TADI 3 UNIT RALAT AJA JADI FIX NYA INI
+
+5 UNIT TWB 50 CBM
+Lokasi :
+Rute/tujuan :
+Waktu loading :
+DRIVER :
+NOPOL :
+NOHP :
+
+
+REQUEST ORDER ONCALL 08 FEBRUARI 2025
+
+pak ini draft data sumatera
+
+3 UNIT TWB 50 CBM
+Lokasi : ARGOPANTES
+Waktu loading : SEGERA
+Rute/tujuan : CGK - MES
+driver :
+Nopol : 
+No hp :
+
+Waktu loading : SEGERA
+Rute/tujuan : CGK - MES
+driver : tidak diketahui
+Nopol : tidak tersedia
+No hp : tidak tersedia
+
+Waktu loading : SEGERA
+Rute/tujuan : CGK - MES
+driver :
+Nopol :
+No hp :
+
+
+REQUEST ORDER ONCALL TGL 09 FEB 2026
+
+1 UNIT CDDL 24 CBM
+Lokasi : AGUS
+Waktu loding : CGK - SUB
+Rute/tujuan : 18:00
+Driver : MEGAHUB
+Nopol : 6281574673448
+No hp : H 892 AX
+
+DANI BILANG NANTI KANDIDAT NYA YANG MAU ISI SI ADRI
+
+BESOK ADA KENDALA JADI GESER AJA KE TGL 10 FEB 2026
+
+1 UNIT CDDL 50 CBM
+Lokasi :
+Waktu loading :
+Rute/tujuan :
+Driver :
+Nopol :
+No hp :
+
+
+
+REQUEST ORDER ONCALL TGL 09 FEB 2026
+
+DATA DULU AJA YA TADI YANG MEGAHUB BATAL JADI NYA INI AJA MIN
+
+4 UNIT TWB 50 CBM
+Lokasi : CIKARANG
+Waktu loading : 22.00
+Rute/tujuan : CGK-SUB
+Driver :
+Nopol :
+No hp :
+
+Lokasi : CIKARANG
+Waktu loading : 22.00
+Rute/tujuan : CGK-SUB
+Driver :
+Nopol :
+No hp :
+

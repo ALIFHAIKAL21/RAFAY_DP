@@ -8,7 +8,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from app import enforce_block_quota, mark_order_block
+from app import apply_driver_pair_from_text, enforce_block_quota, mark_order_block
 
 
 class SingleLoadingMultiIdentityTests(unittest.TestCase):
@@ -93,6 +93,53 @@ No hp  : 082313572678
         assigned = self._extract_assigned_rows(df_final)
         self.assertEqual(len(assigned), 1)
         self.assertEqual(assigned.iloc[0]["DRIVER"].upper(), "ROSYIT")
+
+    def test_numbered_driver_pair_single_plate_is_one_assigned_unit(self):
+        original_text = """
+REQUEST ORDER ONCAL
+06 APRIL 2026
+
+3 unit TWB 50 Cbm
+Lokasi : CIKOKOL
+Rute/ tuj : CGK - PKU
+Waktu loading : SEGERA
+RAFAY
+DRIVER 1 :  Otong
+DRIVER 2 :  Tarman
+NOPOL    : B 7370 SJF
+NOHP      :081234000010
+""".strip()
+
+        df_raw = pd.DataFrame(
+            [
+                {
+                    "UNIT_QTY": "3",
+                    "UNIT_TYPE": "TWB",
+                    "ORIGIN": "CIKOKOL",
+                    "DESTINATION": "CGK, PKU",
+                    "DRIVER": "Otong",
+                    "PLATE": "B 7370 SJF",
+                    "PHONE": "081234000010",
+                    "TIME": "SEGERA",
+                    "DATE": "06/04/2026",
+                    "RO_DATE": "06/04/2026",
+                    "Original_Text": original_text,
+                }
+            ]
+        )
+
+        df_final = enforce_block_quota(mark_order_block(df_raw))
+        df_final = apply_driver_pair_from_text(df_final)
+
+        self.assertEqual(len(df_final), 3)
+        assigned = self._extract_assigned_rows(df_final)
+        self.assertEqual(len(assigned), 1)
+        self.assertEqual(assigned.iloc[0]["DRIVER"], "Otong & Tarman")
+        self.assertEqual(assigned.iloc[0]["PLATE"], "B 7370 SJF")
+        self.assertEqual(
+            int((df_final["PLATE"].fillna("").astype(str).str.upper() == "B 7370 SJF").sum()),
+            1,
+        )
 
 
 if __name__ == "__main__":

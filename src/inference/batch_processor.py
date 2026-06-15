@@ -66,9 +66,10 @@ class ChatBatchProcessor:
         # Ini mencegah gumpal/duplikasi karena split di "Waktu loading".
         # Header bisa diawali metadata WA "[HH.MM, DD/MM/YYYY] Nama: ...".
         # Jangan anggap "REQUEST ORDER KHUSUS" (auto-format) sebagai header pemisah.
+        request_header_word = r'(?:requestt?|reqest|reques|requer)(?!\s+order\s+khusus)'
         header_regex = re.compile(
             r'(?im)^\s*(?:\[[^\]]+\]\s*[^:]+:\s*)?'
-            r'(?:request(?!\s+order\s+khusus)|requer|oncall|unit\s+on\s+call|on\s+call)\b'
+            rf'(?:{request_header_word}|oncall|unit\s+on\s+call|on\s+call)\b'
         )
         header_hits = [m.start() for m in header_regex.finditer(clean_text)]
         if header_hits:
@@ -92,7 +93,7 @@ class ChatBatchProcessor:
             r"(?i)("
             r"\[.*?\]"
             r"|(?:\n|^)\s*(?=Waktu\s*loading)"
-            r"|(?:\n|^)\s*(?=(?:request(?!\s+order\s+khusus)|requer|oncall|unit\s+on\s+call|on\s+call))"
+            rf"|(?:\n|^)\s*(?=(?:{request_header_word}|oncall|unit\s+on\s+call|on\s+call))"
             r")"
         )
 

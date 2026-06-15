@@ -68,7 +68,13 @@ except ValueError:
     APP_EVENT_THRESHOLD = 0.75
 
 _env_revision_matcher_path = os.getenv("RAFAY_REVISION_MATCHER_MODEL_PATH", "").strip()
-_default_revision_matcher = ROOT_DIR / "models" / "indobert_revision_matcher" / "final_model"
+_default_revision_matcher_spc = ROOT_DIR / "models" / "indobert_spc" / "final_model"
+_legacy_default_revision_matcher = ROOT_DIR / "models" / "indobert_revision_matcher" / "final_model"
+_default_revision_matcher = (
+    _default_revision_matcher_spc
+    if _default_revision_matcher_spc.exists()
+    else _legacy_default_revision_matcher
+)
 if _env_revision_matcher_path:
     _rev_env_path = Path(_env_revision_matcher_path)
     APP_REVISION_MATCHER_MODEL_PATH = str(_rev_env_path) if _rev_env_path.exists() else _env_revision_matcher_path
@@ -579,8 +585,9 @@ def extract_ro_date_from_text(text):
     for idx, line in enumerate(lines):
         if not re.search(header_pattern, line):
             continue
+        line_for_date = re.sub(r'^\s*\[[^\]]+\]\s*[^:]+:\s*', '', line).strip()
         # Cek tanggal pada baris header
-        m_inline = re.search(date_pattern, line)
+        m_inline = re.search(date_pattern, line_for_date)
         if m_inline:
             return m_inline.group(1).strip()
         # Jika tanggal ada di baris berikutnya (header multi-line)
@@ -721,15 +728,19 @@ def extract_loading_details(text):
         plate = ""
         phone = ""
 
-        driver_match = re.search(
-            r'(?im)^[ \t]*(?:driver|pengemudi)(?:[ \t]*\d+)?[ \t]*[:.]?[ \t]*([^\n\r]*)',
-            section
-        )
-        if driver_match:
-            driver = clean_driver_name(driver_match.group(1))
+        d1, d2 = extract_driver_pair_from_text(section)
+        if d1 and d2:
+            driver = d1 if d1.lower() == d2.lower() else f"{d1} & {d2}"
+        else:
+            driver_match = re.search(
+                r'(?im)^[ \t]*(?:driver|pengemudi)(?:[ \t]*\d+)?[ \t]*[:.]?[ \t]*([^\n\r]*)',
+                section
+            )
+            if driver_match:
+                driver = clean_driver_name(driver_match.group(1))
 
         plate_match = re.search(
-            r'(?im)^[ \t]*(?:nopol|no\.?\s*pol(?:isi)?|no\.?\s*plat|plat)[ \t]*[:.]?[ \t]*([^\n\r]*)',
+            r'(?im)^[ \t]*(?:nopol|no\.?\s*pol(?:isi)?|no\.?\s*plat|plat)[ \t]*[:.]?[ \t]*([A-Z]{1,2}\s*\d{1,5}\s*[A-Z]{1,4})\b',
             section
         )
         if plate_match:
@@ -812,7 +823,12 @@ def apply_driver_pair_from_text(df_final):
             combined = f"{d1} & {d2}"
         current = str(row.get('DRIVER', '')).strip()
         if not current:
-            df.at[idx, 'DRIVER'] = combined
+            has_identity_anchor = bool(
+                clean_plate_value(row.get('PLATE', ''))
+                or normalize_phone_number(row.get('PHONE', ''))
+            )
+            if has_identity_anchor:
+                df.at[idx, 'DRIVER'] = combined
             continue
         current_norm = clean_driver_name(current).lower()
         # Normalisasi label seperti "driver 1 : nama" atau "1 : nama"
@@ -1242,9 +1258,26 @@ def enforce_block_quota(df):
     def _compact(text):
         return re.sub(r'[^A-Z0-9]', '', str(text).upper())
 
+    revision_block_flags = {}
+    if 'Original_Text' in df.columns and 'BLOCK_ID' in df.columns:
+        for bid in df['BLOCK_ID'].unique():
+            if bid == 0:
+                continue
+            bid_data = df[df['BLOCK_ID'] == bid]
+            bid_texts = [str(x).strip() for x in bid_data['Original_Text'] if str(x).strip()]
+            # Treat a block as revision-only when any row contains a revision marker.
+            # Revision messages often include a header + order details after the marker,
+            # so requiring every row to start with a revision keyword is too strict.
+            revision_block_flags[bid] = bool(
+                bid_texts and any(_has_revision_marker(txt) for txt in bid_texts)
+            )
+    has_non_revision_block = any(not is_rev for is_rev in revision_block_flags.values())
+
     for block_id in df['BLOCK_ID'].unique():
         if block_id == 0: continue
         block_data = df[df['BLOCK_ID'] == block_id].copy()
+        if revision_block_flags.get(block_id, False) and has_non_revision_block:
+            continue
         target_qty = 1
         explicit_qty_found = False
         extra_unit_count = 0
@@ -1270,7 +1303,7 @@ def enforce_block_quota(df):
                 header_row = row
             # Baris revisi (Rev/Revisi/Update) hanya untuk update field, bukan order baru.
             orig_text_lower = str(row.get('Original_Text', '')).lower()
-            if re.search(r'\b(?:rev|revisi|update)\b', orig_text_lower):
+            if _has_revision_marker(orig_text_lower):
                 continue
 
             # Jika tidak ada qty di header tapi ada order valid, hitung sebagai +1 unit.
@@ -1483,13 +1516,25 @@ def enforce_block_quota(df):
                     continue
 
                 drv_match = re.search(
-                    r'(?i)^\s*(?:d+driver|driver|pengemudi)(?:\s*\d+)?\s*[:.]?\s*(.*)$',
+                    r'(?i)^\s*(?:d+driver|driver|pengemudi)(?:\s*([12]))?\s*[:.]?\s*(.*)$',
                     line
                 )
                 if drv_match:
+                    driver_idx = str(drv_match.group(1) or "").strip()
+                    driver_val = clean_driver_name(drv_match.group(2))
+                    if (
+                        driver_idx
+                        and current.get("driver")
+                        and not current.get("plate")
+                        and not current.get("phone")
+                    ):
+                        current_driver = clean_driver_name(current.get("driver", ""))
+                        if driver_val and driver_val.lower() != current_driver.lower():
+                            current["driver"] = f"{current_driver} & {driver_val}" if current_driver else driver_val
+                        continue
                     if current.get("driver") or current.get("plate") or current.get("phone"):
                         _flush_current()
-                    current["driver"] = clean_driver_name(drv_match.group(1))
+                    current["driver"] = driver_val
                     continue
 
                 plate_match = re.search(
@@ -1868,6 +1913,8 @@ def enforce_block_quota(df):
                     _apply_identity_from_seq(clean_slot, seq_slot, overwrite=True)
                     _apply_datetime_from_seq(clean_slot, seq_slot, force=True)
                 final_rows.append(clean_slot)
+    if not final_rows:
+        return df.iloc[0:0].copy().reset_index(drop=True)
     return pd.DataFrame(final_rows).reset_index(drop=True)
 
 # --- [FALLBACK] REVISI BERBASIS RULE ENGINE LAMA ---
@@ -2096,6 +2143,33 @@ def _normalize_message_text(value):
     return re.sub(r"\s+", " ", str(value)).strip().upper()
 
 
+def _find_source_indices_for_message(df, message_str):
+    if "Original_Text" not in df.columns:
+        return []
+
+    message_variants = {_normalize_message_text(message_str)}
+    try:
+        formatted_msg = auto_format_chat_input(message_str)
+        formatted_norm = _normalize_message_text(formatted_msg)
+        if formatted_norm:
+            message_variants.add(formatted_norm)
+    except Exception:
+        pass
+
+    source_indices = []
+    for idx in df.index:
+        row_norm = _normalize_message_text(df.at[idx, "Original_Text"])
+        if not row_norm:
+            continue
+        if any(
+            row_norm == msg_norm or (len(row_norm) >= 30 and row_norm in msg_norm)
+            for msg_norm in message_variants
+            if msg_norm
+        ):
+            source_indices.append(idx)
+    return source_indices
+
+
 def _split_wa_messages(chat_text):
     wa_pattern = r"(?=\[\d{2}[.,:]\d{2}[, ]+\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\]\s*[^:]+:)"
     messages = [m for m in re.split(wa_pattern, str(chat_text)) if str(m).strip()]
@@ -2203,6 +2277,118 @@ def _revision_payload_context_compatible(payload, row_data):
     return True
 
 
+_REVISION_IDENTITY_FIELDS = {"DRIVER", "PLATE", "PHONE"}
+
+
+def _is_bare_revision_message(message_text):
+    txt = normalize_field_labels_in_text(message_text or "")
+    if not re.search(r"(?i)\b(?:rev|revisi)\b", txt):
+        return False
+
+    field_scope_pattern = (
+        r"(?i)\b(?:driver|pengemudi|sopir|nopol|no\.?\s*pol(?:isi)?|"
+        r"no\.?\s*plat|plat|no\.?\s*hp|hp|no\.?\s*telp|kontak)\b"
+    )
+    for line in str(txt).splitlines():
+        if not re.search(r"(?i)\b(?:rev|revisi)\b", line):
+            continue
+        tail = re.sub(r"(?i)^.*?\b(?:rev|revisi)\b", "", line).strip()
+        if tail and re.search(field_scope_pattern, tail):
+            return False
+    return True
+
+
+def _has_identity_triplet_updates(updates):
+    updates = updates or {}
+    return all(str(updates.get(field, "") or "").strip() for field in _REVISION_IDENTITY_FIELDS)
+
+
+def _has_full_stable_revision_context(payload):
+    return bool(
+        payload.get("target_time")
+        and payload.get("target_origin")
+        and payload.get("target_route")
+        and payload.get("target_unit")
+    )
+
+
+def _revision_scope_from_message(message_text):
+    txt = normalize_field_labels_in_text(message_text or "")
+    scope_patterns = [
+        ("DRIVER", r"(?i)\b(?:driver|pengemudi|sopir)\b"),
+        ("PLATE", r"(?i)\b(?:nopol|no\.?\s*pol(?:isi)?|no\.?\s*plat|plat)\b"),
+        ("PHONE", r"(?i)\b(?:no\.?\s*hp|hp|no\.?\s*telp|kontak)\b"),
+    ]
+    has_revision_marker = False
+    for line in str(txt).splitlines():
+        if not re.search(r"(?i)\b(?:rev|revisi|update|ubah|ganti)\b", line):
+            continue
+        has_revision_marker = True
+        tail = re.sub(r"(?i)^.*?\b(?:rev|revisi|update|ubah|ganti)\b", "", line).strip()
+        for scope, pattern in scope_patterns:
+            if tail and re.search(pattern, tail):
+                return scope
+    if has_revision_marker and _is_bare_revision_message(message_text):
+        return "BARE"
+    return ""
+
+
+def _context_fallback_update_fields(message_text, payload, updates):
+    scope = _revision_scope_from_message(message_text)
+    if scope == "DRIVER":
+        return set(_REVISION_IDENTITY_FIELDS)
+    if scope == "PLATE":
+        return {"PLATE"}
+    if scope == "PHONE":
+        return {"PHONE"}
+    if (
+        scope == "BARE"
+        and _has_identity_triplet_updates(updates)
+        and _has_full_stable_revision_context(payload)
+    ):
+        return set(_REVISION_IDENTITY_FIELDS)
+    return set()
+
+
+def _narrow_context_fallback_candidates(df, payload, candidates):
+    scored = []
+    for item in candidates:
+        idx = int(item.get("candidate_index", -1))
+        if idx not in df.index:
+            continue
+        row = df.loc[idx]
+        score = 0
+
+        target_time = payload.get("target_time", "")
+        row_time = _revml_normalize_time(row.get("TIME", ""))
+        if target_time and row_time == target_time:
+            score += 1
+
+        target_origin = payload.get("target_origin", "")
+        row_origin = normalize_origin(row.get("ORIGIN", ""))
+        if target_origin and row_origin == target_origin:
+            score += 1
+
+        target_route = payload.get("target_route", "")
+        row_route = normalize_route(row.get("DESTINATION", ""))
+        if target_route and row_route == target_route:
+            score += 1
+
+        target_unit = payload.get("target_unit", "")
+        row_unit = normalize_unit_type(row.get("UNIT_TYPE", ""))
+        if target_unit and row_unit == target_unit:
+            score += 1
+
+        scored.append((score, item))
+
+    if not scored:
+        return []
+    best_score = max(score for score, _ in scored)
+    if best_score <= 0:
+        return candidates
+    return [item for score, item in scored if score == best_score]
+
+
 def _build_match_candidates_for_payload(df, payload, mode, revision_mask, source_index_set, reserved_targets):
     strict_candidates = []
     broad_candidates = []
@@ -2276,6 +2462,384 @@ def _select_target_with_matcher(matcher, query_text, strict_candidates, broad_ca
     return result
 
 
+_REVISION_MARKER_LINE_RE = re.compile(r"(?i)^\s*(?:rev|revisi|update|ubah|ganti)\b")
+
+
+def _has_revision_marker(text):
+    txt = str(text or "")
+    if not txt:
+        return False
+
+    # Primary marker: explicit revision line, e.g. "REVISI DRIVER".
+    for line in txt.splitlines():
+        if _REVISION_MARKER_LINE_RE.search(line):
+            return True
+
+    # Secondary marker: revision keyword + target field in the same line.
+    # Prevents false positives from section labels like "PESAN REVISI".
+    for line in txt.splitlines():
+        has_revision_word = bool(re.search(r"(?i)\b(?:rev|revisi|update|ubah|ganti)\b", line))
+        has_target_field = bool(
+            re.search(
+                r"(?i)\b(?:driver|pengemudi|nopol|plat|no\.?\s*hp|hp|kontak|jam|waktu)\b",
+                line,
+            )
+        )
+        if has_revision_word and has_target_field:
+            return True
+    return False
+
+
+def _extract_revision_old_anchors(message_text):
+    anchors = {}
+    for line in str(message_text or "").splitlines():
+        if not _has_revision_marker(line):
+            continue
+        if re.search(r"(?i)\b(?:nopol|no\.?\s*pol(?:isi)?|no\.?\s*plat|plat)\b", line):
+            plate_match = re.search(r"\b([A-Z]{1,2}\s*\d{1,5}\s*[A-Z]{1,4})\b", line, re.IGNORECASE)
+            if plate_match:
+                plate = clean_plate_value(plate_match.group(1))
+                if plate:
+                    anchors["PLATE"] = plate
+        if re.search(r"(?i)\b(?:no\.?\s*hp|hp|no\.?\s*telp|kontak)\b", line):
+            phone_match = re.search(r"([+0-9][0-9\s\-]{6,})", line)
+            if phone_match:
+                phone = normalize_phone_number(phone_match.group(1))
+                if phone:
+                    anchors["PHONE"] = phone
+    return anchors
+
+
+def _extract_identity_updates_from_fragment(fragment):
+    text = normalize_field_labels_in_text(fragment or "")
+    updates = {}
+
+    driver_match = re.search(
+        r"(?im)^\s*(?:driver|pengemudi)(?:\s*\d+)?\s*[:.]?\s*([^\n\r]+)",
+        text,
+    )
+    if driver_match:
+        driver_val = clean_driver_name(driver_match.group(1))
+        if driver_val:
+            updates["DRIVER"] = driver_val
+
+    plate_match = re.search(
+        r"(?im)^\s*(?:nopol|no\.?\s*pol(?:isi)?|no\.?\s*plat|plat)\s*[:.]?\s*([A-Z]{1,2}\s*\d{1,5}\s*[A-Z]{1,4})\b",
+        text,
+    )
+    if plate_match:
+        plate_val = clean_plate_value(plate_match.group(1))
+        if plate_val:
+            updates["PLATE"] = plate_val
+
+    phone_match = re.search(
+        r"(?im)^\s*(?:no\.?\s*hp|hp|no\.?\s*telp|no\.?\s*tlp|kontak)\s*[:.]?\s*([+0-9][0-9\s\-]{6,})",
+        text,
+    )
+    if phone_match:
+        phone_val = normalize_phone_number(phone_match.group(1))
+        if phone_val:
+            updates["PHONE"] = phone_val
+
+    return updates
+
+
+def _line_values_with_positions(text, pattern, normalizer):
+    values = []
+    for match in re.finditer(pattern, str(text or "")):
+        raw = match.group(1).strip()
+        value = normalizer(raw)
+        if value:
+            values.append({"pos": match.start(), "value": value})
+    return values
+
+
+def _context_value_near_marker(text, marker_pos, pattern, normalizer, fallback_value=""):
+    matches = _line_values_with_positions(text, pattern, normalizer)
+    before = [m for m in matches if m["pos"] < marker_pos]
+    if before:
+        return before[-1]["value"]
+    after = [m for m in matches if m["pos"] >= marker_pos]
+    if after:
+        return after[0]["value"]
+    return fallback_value
+
+
+def _loading_context_near_marker(text, marker_pos):
+    candidates = extract_loading_candidates(text)
+    before = [c for c in candidates if int(c.get("pos", 0) or 0) < marker_pos]
+    if before:
+        return before[-1]
+    after = [c for c in candidates if int(c.get("pos", 0) or 0) >= marker_pos]
+    if after:
+        return after[0]
+    return {}
+
+
+def _context_occurrence_index(text, marker_pos, target_origin, target_route, target_time, declared_unit_qty):
+    occurrence_sets = []
+
+    if target_route:
+        route_matches = _line_values_with_positions(
+            text,
+            r"(?im)^\s*Rute\s*(?:/|\s+)\s*(?:tujuan|tuj(?:u(?:an)?)?)\s*:\s*([^\n\r]+)",
+            normalize_route,
+        )
+        occurrence_sets.append([m for m in route_matches if m["value"] == target_route])
+
+    if target_time:
+        time_matches = [
+            {"pos": int(c.get("pos", 0) or 0), "value": _revml_normalize_time(c.get("time", ""))}
+            for c in extract_loading_candidates(text)
+        ]
+        occurrence_sets.append([m for m in time_matches if m["value"] == target_time])
+
+    if target_origin:
+        origin_matches = _line_values_with_positions(
+            text,
+            r"(?im)^\s*Lokasi\s*:\s*([^\n\r]+)",
+            normalize_origin,
+        )
+        occurrence_sets.append([m for m in origin_matches if m["value"] == target_origin])
+
+    best_matches = []
+    for matches in occurrence_sets:
+        before = [m for m in matches if m["pos"] < marker_pos]
+        if before:
+            best_matches = matches
+            segment_index = len(before) - 1
+            break
+    else:
+        segment_index = 0
+        best_matches = next((matches for matches in occurrence_sets if matches), [])
+
+    try:
+        qty = int(declared_unit_qty or 0)
+    except Exception:
+        qty = 0
+    segment_count = max(qty, len(best_matches), 1)
+    return segment_index, segment_count
+
+
+def _extract_revision_marker_payloads(
+    txt,
+    *,
+    common_origin,
+    common_route,
+    common_unit,
+    common_ro_date,
+    declared_unit_qty,
+    revision_old_anchors,
+):
+    marker_matches = [
+        m for m in re.finditer(r"(?im)^\s*(?:rev|revisi|update|ubah|ganti)\b[^\n\r]*", txt)
+        if _has_revision_marker(m.group(0))
+    ]
+    payloads = []
+
+    for marker_idx, marker in enumerate(marker_matches):
+        block_end = marker_matches[marker_idx + 1].start() if marker_idx + 1 < len(marker_matches) else len(txt)
+        fragment = txt[marker.start():block_end]
+        updates = _extract_identity_updates_from_fragment(fragment)
+        if not updates:
+            continue
+
+        loading_ctx = _loading_context_near_marker(txt, marker.start())
+        target_time = _revml_normalize_time(loading_ctx.get("time", ""))
+        target_load_date = str(loading_ctx.get("date", "") or "").strip()
+        target_origin = _context_value_near_marker(
+            txt,
+            marker.start(),
+            r"(?im)^\s*Lokasi\s*:\s*([^\n\r]+)",
+            normalize_origin,
+            common_origin,
+        )
+        target_route = _context_value_near_marker(
+            txt,
+            marker.start(),
+            r"(?im)^\s*Rute\s*(?:/|\s+)\s*(?:tujuan|tuj(?:u(?:an)?)?)\s*:\s*([^\n\r]+)",
+            normalize_route,
+            common_route,
+        )
+
+        if target_time:
+            updates["TIME"] = target_time
+        if target_load_date:
+            updates["DATE"] = target_load_date
+        if target_origin:
+            updates["ORIGIN"] = target_origin
+        if target_route:
+            updates["DESTINATION"] = target_route
+        if common_unit:
+            updates["UNIT_TYPE"] = common_unit
+        if common_ro_date:
+            updates["RO_DATE"] = common_ro_date
+
+        segment_index, segment_count = _context_occurrence_index(
+            txt,
+            marker.start(),
+            target_origin,
+            target_route,
+            target_time,
+            declared_unit_qty,
+        )
+        payloads.append(
+            {
+                "target_time": target_time,
+                "target_origin": target_origin,
+                "target_route": target_route,
+                "target_unit": common_unit,
+                "target_ro_date": common_ro_date,
+                "target_load_date": target_load_date,
+                "declared_unit_qty": declared_unit_qty,
+                "updates": updates,
+                "is_revision": True,
+                "segment_index": segment_index,
+                "segment_count": segment_count,
+                "segment_has_revision": True,
+                "has_segment_revision_in_message": True,
+                "revision_old_anchors": revision_old_anchors,
+                "skip_revision_payload": False,
+            }
+        )
+
+    return payloads
+
+
+def _loading_segment_texts(text, loading_details):
+    text_str = str(text or "")
+    positions = [int(det.get("pos", 0) or 0) for det in loading_details]
+    starts = []
+    for idx, start in enumerate(positions):
+        segment_start = start
+        prefix_start = positions[idx - 1] if idx > 0 else 0
+        prefix = text_str[prefix_start:start]
+        lokasi_matches = list(re.finditer(r"(?im)^\s*Lokasi\s*:", prefix))
+        if lokasi_matches:
+            segment_start = prefix_start + lokasi_matches[-1].start()
+        starts.append(segment_start)
+
+    segments = []
+    for idx, start in enumerate(starts):
+        end = starts[idx + 1] if (idx + 1) < len(starts) else len(text_str)
+        segments.append(text_str[start:end])
+    return segments
+
+
+def _identity_value(row, field):
+    if field == "DRIVER":
+        return clean_driver_name(row.get("DRIVER", ""))
+    if field == "PLATE":
+        return clean_plate_value(row.get("PLATE", ""))
+    if field == "PHONE":
+        return normalize_phone_number(row.get("PHONE", ""))
+    return str(row.get(field, "") or "").strip()
+
+
+def _payload_identity_overlap_count(payload, row, exclude_fields=None):
+    exclude_fields = set(exclude_fields or [])
+    updates = payload.get("updates", {}) or {}
+    count = 0
+    for field in _REVISION_IDENTITY_FIELDS:
+        if field in exclude_fields:
+            continue
+        incoming = updates.get(field, "")
+        if not str(incoming or "").strip():
+            continue
+        if field == "DRIVER":
+            incoming_norm = clean_driver_name(incoming).upper()
+            row_norm = _identity_value(row, field).upper()
+        else:
+            incoming_norm = _identity_value({"PLATE": incoming, "PHONE": incoming}, field)
+            row_norm = _identity_value(row, field)
+        if incoming_norm and row_norm and incoming_norm == row_norm:
+            count += 1
+    return count
+
+
+def _candidate_indices(candidate_items):
+    indices = []
+    for item in candidate_items or []:
+        try:
+            indices.append(int(item.get("candidate_index", -1)))
+        except Exception:
+            continue
+    return indices
+
+
+def _latest_position_group(indices, group_size):
+    if not indices:
+        return []
+    try:
+        qty = int(group_size or 0)
+    except Exception:
+        qty = 0
+    if qty > 0 and len(indices) > qty:
+        return indices[-qty:]
+    return indices
+
+
+def _resolve_revision_target_deterministic(df, payload, strict_candidates, broad_candidates):
+    result = {"resolved": False, "target_idx": None, "reason": ""}
+    if not bool(payload.get("is_revision", False)):
+        return result
+
+    strict_indices = _candidate_indices(strict_candidates)
+    broad_indices = _candidate_indices(broad_candidates)
+    anchor_indices = strict_indices or broad_indices
+    anchors = payload.get("revision_old_anchors", {}) or {}
+    for field in ("PLATE", "PHONE"):
+        anchor_value = anchors.get(field, "")
+        if not anchor_value:
+            continue
+        matches = []
+        for idx in anchor_indices:
+            if idx not in df.index:
+                continue
+            if _identity_value(df.loc[idx], field) != anchor_value:
+                continue
+            if (
+                int(payload.get("segment_count", 0) or 0) > 1
+                and not bool(payload.get("segment_has_revision", False))
+                and not bool(payload.get("has_segment_revision_in_message", False))
+                and _payload_identity_overlap_count(payload, df.loc[idx], exclude_fields={field}) <= 0
+            ):
+                continue
+            matches.append(idx)
+        if len(matches) == 1:
+            result.update({"resolved": True, "target_idx": matches[0], "reason": f"old_{field.lower()}_anchor"})
+            return result
+
+    target_time = payload.get("target_time", "")
+    if target_time:
+        exact_time_matches = []
+        for idx in anchor_indices:
+            if idx not in df.index:
+                continue
+            row_time = _revml_normalize_time(df.loc[idx].get("TIME", ""))
+            if row_time == target_time:
+                exact_time_matches.append(idx)
+        if len(exact_time_matches) == 1:
+            result.update({"resolved": True, "target_idx": exact_time_matches[0], "reason": "exact_time"})
+            return result
+
+    if (
+        bool(payload.get("segment_has_revision", False))
+        and int(payload.get("segment_count", 0) or 0) > 1
+        and strict_indices
+    ):
+        positional_indices = _latest_position_group(strict_indices, payload.get("declared_unit_qty", 0))
+        try:
+            segment_index = int(payload.get("segment_index", -1))
+        except Exception:
+            segment_index = -1
+        if 0 <= segment_index < len(positional_indices):
+            result.update({"resolved": True, "target_idx": positional_indices[segment_index], "reason": "segment_position"})
+            return result
+
+    return result
+
+
 def _extract_update_payloads(message_text):
     txt = normalize_field_labels_in_text(message_text or "")
     txt_lower = txt.lower()
@@ -2284,10 +2848,29 @@ def _extract_update_payloads(message_text):
     common_route = normalize_route(extract_route_from_text(txt))
     common_unit = normalize_unit_type(extract_unit_type_from_text(txt))
     common_ro_date = extract_ro_date_from_text(txt).strip()
+    declared_unit_qty = extract_unit_qty(txt, "") or 0
+    revision_old_anchors = _extract_revision_old_anchors(txt)
+
+    marker_payloads = []
+    if is_revision:
+        marker_payloads = _extract_revision_marker_payloads(
+            txt,
+            common_origin=common_origin,
+            common_route=common_route,
+            common_unit=common_unit,
+            common_ro_date=common_ro_date,
+            declared_unit_qty=declared_unit_qty,
+            revision_old_anchors=revision_old_anchors,
+        )
+    if marker_payloads:
+        return marker_payloads
 
     payloads = []
     loading_details = extract_loading_details(txt)
-    for det in loading_details:
+    segment_texts = _loading_segment_texts(txt, loading_details) if loading_details else []
+    segment_revision_flags = [_has_revision_marker(segment) for segment in segment_texts]
+    has_segment_revision = any(segment_revision_flags)
+    for segment_index, det in enumerate(loading_details):
         updates = {}
         det_driver = clean_driver_name(det.get("driver", ""))
         det_plate = clean_plate_value(det.get("plate", ""))
@@ -2323,8 +2906,20 @@ def _extract_update_payloads(message_text):
                     "target_unit": common_unit,
                     "target_ro_date": common_ro_date,
                     "target_load_date": det_date,
+                    "declared_unit_qty": declared_unit_qty,
                     "updates": updates,
                     "is_revision": is_revision,
+                    "segment_index": segment_index,
+                    "segment_count": len(loading_details),
+                    "segment_has_revision": bool(segment_revision_flags[segment_index]) if segment_index < len(segment_revision_flags) else False,
+                    "has_segment_revision_in_message": bool(has_segment_revision),
+                    "revision_old_anchors": revision_old_anchors,
+                    "skip_revision_payload": bool(
+                        is_revision
+                        and len(loading_details) > 1
+                        and has_segment_revision
+                        and not (segment_revision_flags[segment_index] if segment_index < len(segment_revision_flags) else False)
+                    ),
                 }
             )
 
@@ -2338,7 +2933,10 @@ def _extract_update_payloads(message_text):
         if driver_val:
             fallback_updates["DRIVER"] = driver_val
 
-    plate_match = re.search(r"(?im)^\s*(?:nopol|no\.?\s*pol(?:isi)?|no\.?\s*plat|plat)\s*[:.]?\s*([^\n\r]+)", txt)
+    plate_match = re.search(
+        r"(?im)^\s*(?:nopol|no\.?\s*pol(?:isi)?|no\.?\s*plat|plat)\s*[:.]?\s*([A-Z]{1,2}\s*\d{1,5}\s*[A-Z]{1,4})\b",
+        txt,
+    )
     if plate_match:
         plate_val = clean_plate_value(plate_match.group(1))
         if plate_val:
@@ -2384,8 +2982,15 @@ def _extract_update_payloads(message_text):
                 "target_unit": common_unit,
                 "target_ro_date": common_ro_date,
                 "target_load_date": target_load_date,
+                "declared_unit_qty": declared_unit_qty,
                 "updates": fallback_updates,
                 "is_revision": is_revision,
+                "segment_index": 0,
+                "segment_count": 1,
+                "segment_has_revision": is_revision,
+                "has_segment_revision_in_message": is_revision,
+                "revision_old_anchors": revision_old_anchors,
+                "skip_revision_payload": False,
             }
         ]
 
@@ -2398,11 +3003,6 @@ def apply_revisions_from_chat(chat_text, df_final):
         return df_final
 
     matcher = _get_revision_matcher()
-    if matcher is None:
-        if APP_REVISION_RULE_FALLBACK_ENABLED:
-            return _apply_revisions_from_chat_rule_engine(chat_text, df_final)
-        return df_final
-
     event_classifier = _get_event_classifier()
     df = df_final.copy().reset_index(drop=True)
     messages = _split_wa_messages(chat_text)
@@ -2435,14 +3035,7 @@ def apply_revisions_from_chat(chat_text, df_final):
                 fallback_messages.append(message_str)
             continue
 
-        source_indices = []
-        if "Original_Text" in df.columns:
-            msg_norm = _normalize_message_text(message_str)
-            source_indices = [
-                idx
-                for idx in df.index
-                if _normalize_message_text(df.at[idx, "Original_Text"]) == msg_norm
-            ]
+        source_indices = _find_source_indices_for_message(df, message_str)
         source_index_set = set(source_indices)
         reserved_targets = set()
         message_applied = False
@@ -2454,6 +3047,8 @@ def apply_revisions_from_chat(chat_text, df_final):
 
             is_revision = bool(payload.get("is_revision", False))
             mode = "REVISION" if is_revision else "REFILL"
+            if mode == "REVISION" and bool(payload.get("skip_revision_payload", False)):
+                continue
             query_text = f"{message_str}\n{_build_match_query_text(payload)}".strip()
             if not query_text:
                 continue
@@ -2480,26 +3075,67 @@ def apply_revisions_from_chat(chat_text, df_final):
             if not candidates:
                 continue
 
-            top_k = min(10, len(candidates))
-            ranked = matcher.rank_candidates(query_text, candidates, top_k=top_k)
-            if not ranked:
-                continue
-
-            best = ranked[0]
-            best_prob = float(best.get("match_probability", 0.0))
-            second_prob = float(ranked[1].get("match_probability", 0.0)) if len(ranked) > 1 else 0.0
-            prob_gap = best_prob - second_prob
             has_strict = bool(strict_candidates)
+            context_fallback_fields = set()
 
-            passes_threshold = (
-                best_prob >= APP_REVISION_MATCH_THRESHOLD
-                or (has_strict and best_prob >= max(0.0, APP_REVISION_MATCH_THRESHOLD - 0.08))
+            deterministic = (
+                _resolve_revision_target_deterministic(df, payload, strict_candidates, broad_candidates)
+                if mode == "REVISION"
+                else {"resolved": False, "target_idx": None}
             )
-            passes_gap = (len(ranked) == 1) or (prob_gap >= APP_REVISION_MATCH_MIN_GAP) or has_strict
-            if not (passes_threshold and passes_gap):
-                continue
+            if deterministic.get("resolved", False):
+                target_idx = int(deterministic.get("target_idx", -1))
+            else:
+                if (
+                    mode == "REVISION"
+                    and int(payload.get("segment_count", 0) or 0) > 1
+                    and payload.get("revision_old_anchors", {})
+                    and not bool(payload.get("has_segment_revision_in_message", False))
+                ):
+                    continue
 
-            target_idx = int(best.get("candidate_index", -1))
+                if matcher is None:
+                    fallback_fields = _context_fallback_update_fields(message_str, payload, updates)
+                    fallback_candidates = _narrow_context_fallback_candidates(df, payload, strict_candidates)
+                    if (
+                        mode == "REVISION"
+                        and fallback_fields
+                        and len(fallback_candidates) == 1
+                    ):
+                        target_idx = int(fallback_candidates[0].get("candidate_index", -1))
+                        context_fallback_fields = fallback_fields
+                    else:
+                        continue
+                else:
+                    top_k = min(10, len(candidates))
+                    ranked = matcher.rank_candidates(query_text, candidates, top_k=top_k)
+                    if not ranked:
+                        continue
+
+                    best = ranked[0]
+                    best_prob = float(best.get("match_probability", 0.0))
+                    second_prob = float(ranked[1].get("match_probability", 0.0)) if len(ranked) > 1 else 0.0
+                    prob_gap = best_prob - second_prob
+
+                    passes_threshold = (
+                        best_prob >= APP_REVISION_MATCH_THRESHOLD
+                        or (has_strict and best_prob >= max(0.0, APP_REVISION_MATCH_THRESHOLD - 0.08))
+                    )
+                    passes_gap = (len(ranked) == 1) or (prob_gap >= APP_REVISION_MATCH_MIN_GAP) or has_strict
+                    if not (passes_threshold and passes_gap):
+                        fallback_fields = _context_fallback_update_fields(message_str, payload, updates)
+                        fallback_candidates = _narrow_context_fallback_candidates(df, payload, strict_candidates)
+                        if (
+                            mode == "REVISION"
+                            and fallback_fields
+                            and len(fallback_candidates) == 1
+                        ):
+                            target_idx = int(fallback_candidates[0].get("candidate_index", -1))
+                            context_fallback_fields = fallback_fields
+                        else:
+                            continue
+                    else:
+                        target_idx = int(best.get("candidate_index", -1))
             if target_idx not in df.index:
                 continue
             if has_strict and not _revision_payload_context_compatible(payload, df.loc[target_idx]):
@@ -2509,6 +3145,8 @@ def apply_revisions_from_chat(chat_text, df_final):
             handled = False
             for field, raw_value in updates.items():
                 if field not in df.columns:
+                    continue
+                if context_fallback_fields and field not in context_fallback_fields:
                     continue
                 value = str(raw_value or "").strip()
                 if not value:
@@ -2733,6 +3371,101 @@ def parser_rows_to_office_df(rows):
     df_office = df_office.drop(columns=["_sort_muat", "_sort_ro"])
     df_office.insert(0, "No.", range(1, len(df_office) + 1))
     return df_office
+
+
+def _is_revision_chat_for_existing_data(chat_text):
+    if not re.search(r"(?i)\b(?:rev|revisi|update|ubah|ganti)\b", str(chat_text or "")):
+        return False
+    try:
+        payloads = _extract_update_payloads(chat_text)
+    except Exception:
+        return False
+    return any(bool(p.get("is_revision", False)) for p in payloads)
+
+
+def _office_df_to_revision_internal_df(df_office):
+    if df_office is None or df_office.empty:
+        return pd.DataFrame()
+    rows = []
+    for idx, row in df_office.reset_index(drop=True).iterrows():
+        rows.append(
+            {
+                "DATE": str(row.get("Tgl Muat", "") or "").strip(),
+                "RO_DATE": str(row.get("Tgl RO", "") or "").strip(),
+                "ORIGIN": str(row.get("Pickup", "") or "").strip(),
+                "DESTINATION": str(row.get("Tujuan", "") or "").strip(),
+                "PLATE": str(row.get("No. Plat", "") or "").strip(),
+                "UNIT_TYPE": str(row.get("Type Truck", "") or "").strip(),
+                "DRIVER": str(row.get("Driver", "") or "").strip(),
+                "PHONE": str(row.get("Kontak Driver", "") or "").strip(),
+                "TIME": str(row.get("Jam Loading", "") or "").strip(),
+                "Original_Text": f"existing-office-row-{idx}",
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def _classify_office_status(row):
+    def _filled(val):
+        if val is None:
+            return False
+        s = str(val).strip()
+        return bool(s) and s.lower() not in ["-", "null", "none", "nan", "undefined"]
+
+    fields = [
+        "Job Number",
+        "Tgl RO",
+        "Tgl Muat",
+        "Pickup",
+        "Tujuan",
+        "No. Plat",
+        "Type Truck",
+        "Driver",
+        "Kontak Driver",
+    ]
+    filled = sum(1 for f in fields if _filled(row.get(f)))
+    if filled == 9:
+        return "ASSIGNED"
+    if filled >= 3:
+        return "PARTIAL"
+    return "UNASSIGNED"
+
+
+def apply_revision_to_existing_office_df(chat_text, df_office):
+    if df_office is None or df_office.empty or not _is_revision_chat_for_existing_data(chat_text):
+        return None
+
+    internal_before = _office_df_to_revision_internal_df(df_office)
+    if internal_before.empty:
+        return None
+
+    internal_after = apply_revisions_from_chat(chat_text, internal_before)
+    if internal_after is None or internal_after.empty or len(internal_after) != len(internal_before):
+        return None
+
+    out = df_office.copy().reset_index(drop=True)
+    field_map = {
+        "RO_DATE": "Tgl RO",
+        "DATE": "Tgl Muat",
+        "ORIGIN": "Pickup",
+        "DESTINATION": "Tujuan",
+        "PLATE": "No. Plat",
+        "UNIT_TYPE": "Type Truck",
+        "DRIVER": "Driver",
+        "PHONE": "Kontak Driver",
+    }
+    for idx in range(len(out)):
+        src = internal_after.iloc[idx]
+        for src_col, office_col in field_map.items():
+            if office_col not in out.columns or src_col not in internal_after.columns:
+                continue
+            val = str(src.get(src_col, "") or "").strip()
+            if val:
+                out.at[idx, office_col] = val
+
+    if "status_unit" in out.columns:
+        out["status_unit"] = out.apply(_classify_office_status, axis=1)
+    return out
 
 
 def load_df_office_from_db():
@@ -3257,14 +3990,7 @@ def compute_revision_business_scores(chat_text, df_before, df_after):
             base_summary["total_refill_messages"] += 1
 
         base_summary["messages_with_updates"] += 1
-        source_indices = []
-        if "Original_Text" in df_before.columns:
-            msg_norm = _normalize_message_text(message_str)
-            source_indices = [
-                idx
-                for idx in df_before.index
-                if _normalize_message_text(df_before.at[idx, "Original_Text"]) == msg_norm
-            ]
+        source_indices = _find_source_indices_for_message(df_before, message_str)
         source_index_set = set(source_indices)
         reserved_targets = set()
         msg_hit = False
@@ -3845,6 +4571,14 @@ def main():
                 st.info("Chat ini sudah pernah diupload. Data lama dipertahankan (tidak diproses ulang).")
                 st.rerun()
 
+            revision_existing_office = None
+            if _is_revision_chat_for_existing_data(chat_input):
+                current_office = st.session_state.get('df_office')
+                if current_office is not None and not current_office.empty:
+                    revision_existing_office = current_office.copy()
+                elif DB_PERSISTENCE_ENABLED and db_load_all_order_rows is not None:
+                    revision_existing_office = load_df_office_from_db()
+
             formatted_input = auto_format_chat_input(chat_input)
             temp_path = "temp.txt"
             with open(temp_path, "w", encoding="utf-8") as f: 
@@ -3933,10 +4667,15 @@ def main():
                 # Renumber setelah sorting
                 df_office['No.'] = range(1, len(df_office) + 1)
                 df_office['Job Number'] = [f"{effective_start+i:03d}/{job_company}-RAFAY/{job_month}/{job_year}" for i in range(len(df_office))]
+                df_office_parser_output = df_office.copy()
+
+                revision_display_df = apply_revision_to_existing_office_df(chat_input, revision_existing_office)
+                if revision_display_df is not None and not revision_display_df.empty:
+                    df_office = revision_display_df
 
                 if DB_PERSISTENCE_ENABLED and db_save_parsed_rows is not None and db_raw_chat_id:
                     try:
-                        db_rows = office_df_to_parser_rows(df_office)
+                        db_rows = office_df_to_parser_rows(df_office_parser_output)
                         db_save_parsed_rows(db_raw_chat_id, db_rows)
                         df_saved = load_df_office_from_db()
                         if df_saved is not None and not df_saved.empty:
