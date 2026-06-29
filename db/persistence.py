@@ -902,6 +902,47 @@ def find_raw_chat_id(chat_text: str) -> Optional[uuid.UUID]:
         session.close()
 
 
+def update_raw_chat_extraction_elapsed(
+    raw_chat_id,
+    elapsed_ms: float | None = None,
+    run_id: str | None = None,
+    run_elapsed_ms: float | None = None,
+) -> bool:
+    raw_chat_uuid = _to_uuid(raw_chat_id)
+    if raw_chat_uuid is None:
+        return False
+    try:
+        elapsed_value = float(elapsed_ms or 0.0) if elapsed_ms is not None else 0.0
+    except Exception:
+        elapsed_value = 0.0
+    try:
+        run_elapsed_value = float(run_elapsed_ms or 0.0) if run_elapsed_ms is not None else 0.0
+    except Exception:
+        run_elapsed_value = 0.0
+    clean_run_id = _clean(run_id)
+    if elapsed_value <= 0 and run_elapsed_value <= 0 and not clean_run_id:
+        return False
+
+    session = SessionLocal()
+    try:
+        row = session.query(RawChat).filter(RawChat.id == raw_chat_uuid).first()
+        if row is None:
+            return False
+        if elapsed_value > 0:
+            row.extraction_elapsed_ms = elapsed_value
+        if clean_run_id:
+            row.extraction_run_id = clean_run_id
+        if run_elapsed_value > 0:
+            row.extraction_run_elapsed_ms = run_elapsed_value
+        session.commit()
+        return True
+    except SQLAlchemyError:
+        session.rollback()
+        return False
+    finally:
+        session.close()
+
+
 def _iter_rows(parsed_rows: Iterable[Dict]):
     # Support list[dict] and pandas.DataFrame without importing pandas explicitly.
     if hasattr(parsed_rows, "to_dict"):
@@ -1377,6 +1418,9 @@ def load_all_raw_chat_records() -> List[Dict[str, str]]:
                 {
                     "id": str(row.id),
                     "created_at": created_at,
+                    "extraction_elapsed_ms": float(row.extraction_elapsed_ms or 0.0),
+                    "extraction_run_id": _clean(row.extraction_run_id),
+                    "extraction_run_elapsed_ms": float(row.extraction_run_elapsed_ms or 0.0),
                     "chat_text": chat_text,
                 }
             )

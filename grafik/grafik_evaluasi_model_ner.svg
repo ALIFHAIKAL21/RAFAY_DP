@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1550" height="780" viewBox="0 0 1550 780">
+<rect width="100%" height="100%" fill="#FFFFFF"/>
+<style><![CDATA[
+text{font-family:Arial, Helvetica, sans-serif;}
+.title{font-size:38px;font-weight:700;fill:#1F2937;}
+.subtitle{font-size:22px;fill:#6B7280;}
+.label{font-size:27px;fill:#1F2937;}
+.axis{font-size:20px;fill:#6B7280;}
+.value{font-size:25px;font-weight:700;fill:#1F2937;}
+.note{font-size:21px;fill:#6B7280;}
+.source{font-size:18px;fill:#6B7280;}
+]]></style>
+<text x="775.0" y="55" text-anchor="middle" class="title">Hasil Evaluasi Model Named Entity Recognition</text>
+<text x="775.0" y="91" text-anchor="middle" class="subtitle">Model indolem/indobert-base-uncased pada data validasi</text>
+<line x1="280.0" y1="150" x2="280.0" y2="665" stroke="#E5E7EB" stroke-width="2"/>
+<text x="280.0" y="698" text-anchor="middle" class="axis">0%</text>
+<line x1="502.0" y1="150" x2="502.0" y2="665" stroke="#E5E7EB" stroke-width="2"/>
+<text x="502.0" y="698" text-anchor="middle" class="axis">20%</text>
+<line x1="724.0" y1="150" x2="724.0" y2="665" stroke="#E5E7EB" stroke-width="2"/>
+<text x="724.0" y="698" text-anchor="middle" class="axis">40%</text>
+<line x1="946.0" y1="150" x2="946.0" y2="665" stroke="#E5E7EB" stroke-width="2"/>
+<text x="946.0" y="698" text-anchor="middle" class="axis">60%</text>
+<line x1="1168.0" y1="150" x2="1168.0" y2="665" stroke="#E5E7EB" stroke-width="2"/>
+<text x="1168.0" y="698" text-anchor="middle" class="axis">80%</text>
+<line x1="1390.0" y1="150" x2="1390.0" y2="665" stroke="#E5E7EB" stroke-width="2"/>
+<text x="1390.0" y="698" text-anchor="middle" class="axis">100%</text>
+<text x="256" y="224.4" text-anchor="end" class="label">Accuracy</text>
+<rect x="280" y="189.4" width="1108.0" height="50" fill="#2F5597"/>
+<text x="1370.0" y="224.4" text-anchor="end" style="font-size:25px;font-weight:700;fill:#FFFFFF;font-family:Arial, Helvetica, sans-serif;">99.82%</text>
+<text x="256" y="353.1" text-anchor="end" class="label">Precision</text>
+<rect x="280" y="318.1" width="1104.5" height="50" fill="#2F5597"/>
+<text x="1366.5" y="353.1" text-anchor="end" style="font-size:25px;font-weight:700;fill:#FFFFFF;font-family:Arial, Helvetica, sans-serif;">99.51%</text>
+<text x="256" y="481.9" text-anchor="end" class="label">Recall</text>
+<rect x="280" y="446.9" width="1108.2" height="50" fill="#2F5597"/>
+<text x="1370.2" y="481.9" text-anchor="end" style="font-size:25px;font-weight:700;fill:#FFFFFF;font-family:Arial, Helvetica, sans-serif;">99.83%</text>
+<text x="256" y="610.6" text-anchor="end" class="label">F1-score</text>
+<rect x="280" y="575.6" width="1106.3" height="50" fill="#2F5597"/>
+<text x="1368.3" y="610.6" text-anchor="end" style="font-size:25px;font-weight:700;fill:#FFFFFF;font-family:Arial, Helvetica, sans-serif;">99.67%</text>
+<line x1="280" y1="665" x2="1390" y2="665" stroke="#9CA3AF" stroke-width="2"/>
+<rect x="280" y="697" width="1110" height="42" rx="8" fill="#F8FAFC" stroke="#CBD5E1"/>
+<text x="300" y="725" class="note">Validation loss: 0.0181 | Epoch terbaik: 3</text>
+<text x="1510" y="758" text-anchor="end" class="source">Sumber: models/indobert_NER/checkpoint-500/trainer_state.json</text>
+</svg>

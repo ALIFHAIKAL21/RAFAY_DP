@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="980" viewBox="0 0 1700 980">
+<rect width="100%" height="100%" fill="#FFFFFF"/>
+<style><![CDATA[
+text{font-family:Arial, Helvetica, sans-serif;}
+.title{font-size:38px;font-weight:700;fill:#111827;}
+.subtitle{font-size:21px;fill:#6B7280;}
+.tick{font-size:17px;fill:#6B7280;}
+.axislabel{font-size:19px;fill:#374151;}
+.legend{font-size:17px;fill:#111827;}
+.note{font-size:18px;fill:#374151;}
+.source{font-size:17px;fill:#6B7280;}
+]]></style>
+<text x="850.0" y="54" text-anchor="middle" class="title">Kurva Metrik Evaluasi Model Sequence Pair Classification</text>
+<text x="850.0" y="88" text-anchor="middle" class="subtitle">Accuracy, Precision MATCH, Recall MATCH, F1 MATCH, dan F1 Macro pada data validasi</text>
+<line x1="170" y1="760.0" x2="1490" y2="760.0" stroke="#E5E7EB" stroke-width="1.5"/>
+<text x="158" y="766.0" text-anchor="end" class="tick">60%</text>
+<line x1="170" y1="607.5" x2="1490" y2="607.5" stroke="#E5E7EB" stroke-width="1.5"/>
+<text x="158" y="613.5" text-anchor="end" class="tick">70%</text>
+<line x1="170" y1="455.0" x2="1490" y2="455.0" stroke="#E5E7EB" stroke-width="1.5"/>
+<text x="158" y="461.0" text-anchor="end" class="tick">80%</text>
+<line x1="170" y1="302.5" x2="1490" y2="302.5" stroke="#E5E7EB" stroke-width="1.5"/>
+<text x="158" y="308.5" text-anchor="end" class="tick">90%</text>
+<line x1="170" y1="150.0" x2="1490" y2="150.0" stroke="#E5E7EB" stroke-width="1.5"/>
+<text x="158" y="156.0" text-anchor="end" class="tick">100%</text>
+<line x1="170.0" y1="150" x2="170.0" y2="760" stroke="#E5E7EB" stroke-width="1"/>
+<text x="170.0" y="791" text-anchor="middle" class="tick">1</text>
+<line x1="500.0" y1="150" x2="500.0" y2="760" stroke="#E5E7EB" stroke-width="1"/>
+<text x="500.0" y="791" text-anchor="middle" class="tick">2</text>
+<line x1="830.0" y1="150" x2="830.0" y2="760" stroke="#E5E7EB" stroke-width="1"/>
+<text x="830.0" y="791" text-anchor="middle" class="tick">3</text>
+<line x1="1160.0" y1="150" x2="1160.0" y2="760" stroke="#E5E7EB" stroke-width="1"/>
+<text x="1160.0" y="791" text-anchor="middle" class="tick">4</text>
+<line x1="1490.0" y1="150" x2="1490.0" y2="760" stroke="#E5E7EB" stroke-width="1"/>
+<text x="1490.0" y="791" text-anchor="middle" class="tick">5</text>
+<line x1="170" y1="760" x2="1490" y2="760" stroke="#374151" stroke-width="2"/>
+<line x1="170" y1="150" x2="170" y2="760" stroke="#374151" stroke-width="2"/>
+<polyline points="170.0,523.1 500.0,373.7 830.0,289.3 1160.0,280.1 1490.0,283.7" fill="none" stroke="#1F4E79" stroke-width="3.2"/>
+<circle cx="170.0" cy="523.1" r="4.8" fill="#1F4E79" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="500.0" cy="373.7" r="4.8" fill="#1F4E79" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="830.0" cy="289.3" r="4.8" fill="#1F4E79" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="1160.0" cy="280.1" r="4.8" fill="#1F4E79" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="1490.0" cy="283.7" r="4.8" fill="#1F4E79" stroke="#FFFFFF" stroke-width="1.4"/>
+<polyline points="170.0,613.9 500.0,260.7 830.0,317.1 1160.0,297.4 1490.0,306.7" fill="none" stroke="#C55A11" stroke-width="3.2"/>
+<circle cx="170.0" cy="613.9" r="4.8" fill="#C55A11" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="500.0" cy="260.7" r="4.8" fill="#C55A11" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="830.0" cy="317.1" r="4.8" fill="#C55A11" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="1160.0" cy="297.4" r="4.8" fill="#C55A11" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="1490.0" cy="306.7" r="4.8" fill="#C55A11" stroke="#FFFFFF" stroke-width="1.4"/>
+<polyline points="170.0,291.3 500.0,505.8 830.0,253.7 1160.0,258.8 1490.0,254.7" fill="none" stroke="#548235" stroke-width="3.2"/>
+<circle cx="170.0" cy="291.3" r="4.8" fill="#548235" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="500.0" cy="505.8" r="4.8" fill="#548235" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="830.0" cy="253.7" r="4.8" fill="#548235" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="1160.0" cy="258.8" r="4.8" fill="#548235" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="1490.0" cy="254.7" r="4.8" fill="#548235" stroke="#FFFFFF" stroke-width="1.4"/>
+<polyline points="170.0,473.9 500.0,394.9 830.0,286.1 1160.0,278.3 1490.0,281.2" fill="none" stroke="#7030A0" stroke-width="3.2"/>
+<circle cx="170.0" cy="473.9" r="4.8" fill="#7030A0" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="500.0" cy="394.9" r="4.8" fill="#7030A0" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="830.0" cy="286.1" r="4.8" fill="#7030A0" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="1160.0" cy="278.3" r="4.8" fill="#7030A0" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="1490.0" cy="281.2" r="4.8" fill="#7030A0" stroke="#FFFFFF" stroke-width="1.4"/>
+<polyline points="170.0,531.9 500.0,375.4 830.0,289.4 1160.0,280.2 1490.0,283.7" fill="none" stroke="#7F7F7F" stroke-width="3.2"/>
+<circle cx="170.0" cy="531.9" r="4.8" fill="#7F7F7F" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="500.0" cy="375.4" r="4.8" fill="#7F7F7F" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="830.0" cy="289.4" r="4.8" fill="#7F7F7F" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="1160.0" cy="280.2" r="4.8" fill="#7F7F7F" stroke="#FFFFFF" stroke-width="1.4"/>
+<circle cx="1490.0" cy="283.7" r="4.8" fill="#7F7F7F" stroke="#FFFFFF" stroke-width="1.4"/>
+<line x1="1160.0" y1="150" x2="1160.0" y2="760" stroke="#C00000" stroke-width="2" stroke-dasharray="8 6"/>
+<rect x="1035" y="172" width="425" height="48" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+<text x="1053" y="203" class="note">F1 MATCH terbaik: 91,58% | Loss: 0.3261</text>
+<line x1="190" y1="836" x2="228" y2="836" stroke="#1F4E79" stroke-width="4"/>
+<circle cx="209" cy="836" r="4.2" fill="#1F4E79"/>
+<text x="238" y="842" class="legend">Accuracy</text>
+<line x1="380" y1="836" x2="418" y2="836" stroke="#C55A11" stroke-width="4"/>
+<circle cx="399" cy="836" r="4.2" fill="#C55A11"/>
+<text x="428" y="842" class="legend">Precision MATCH</text>
+<line x1="655" y1="836" x2="693" y2="836" stroke="#548235" stroke-width="4"/>
+<circle cx="674" cy="836" r="4.2" fill="#548235"/>
+<text x="703" y="842" class="legend">Recall MATCH</text>
+<line x1="890" y1="836" x2="928" y2="836" stroke="#7030A0" stroke-width="4"/>
+<circle cx="909" cy="836" r="4.2" fill="#7030A0"/>
+<text x="938" y="842" class="legend">F1 MATCH</text>
+<line x1="1085" y1="836" x2="1123" y2="836" stroke="#7F7F7F" stroke-width="4"/>
+<circle cx="1104" cy="836" r="4.2" fill="#7F7F7F"/>
+<text x="1133" y="842" class="legend">F1 Macro</text>
+<text x="830.0" y="892" text-anchor="middle" class="axislabel">Epoch</text>
+<text x="86" y="455.0" transform="rotate(-90 86,455.0)" text-anchor="middle" class="axislabel">Nilai metrik validasi</text>
+<text x="1660" y="950" text-anchor="end" class="source">Sumber: models/indobenchmark/indobert-base-p2_15k/checkpoint-7500/trainer_state.json</text>
+</svg>

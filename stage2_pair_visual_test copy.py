@@ -1,48 +1,15 @@
 from __future__ import annotations
 
 import json
-import os
 import re
 import sys
+import time
+import uuid
+from collections import Counter
 from html import escape
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence
-from urllib.parse import urlparse
-
-
-def require_isolated_session_test_environment() -> str:
-    test_mode = str(os.getenv("IDP_SESSION_TEST_MODE", "") or "").strip().lower()
-    if test_mode not in {"1", "true", "on"}:
-        raise RuntimeError(
-            "Aplikasi copy dikunci untuk pengujian sesi. "
-            "Jalankan melalui run_session_test.ps1."
-        )
-
-    database_url = str(os.getenv("DATABASE_URL", "") or "").strip()
-    if not database_url:
-        raise RuntimeError(
-            "DATABASE_URL test wajib disetel sebelum aplikasi copy dijalankan."
-        )
-
-    database_name = urlparse(database_url).path.strip("/").split("/")[-1]
-    expected_name = str(
-        os.getenv("IDP_SESSION_TEST_DB_NAME", "logistic_parser_session_test") or ""
-    ).strip()
-    if (
-        not database_name
-        or not database_name.endswith("_session_test")
-        or database_name != expected_name
-    ):
-        raise RuntimeError(
-            "Guard DB test menolak koneksi. "
-            f"Expected={expected_name!r}, actual={database_name!r}."
-        )
-    return database_name
-
-
-SESSION_TEST_DB_NAME = require_isolated_session_test_environment()
-SESSION_TEST_PORT = str(os.getenv("IDP_SESSION_TEST_PORT", "8502") or "8502").strip()
 
 import pandas as pd
 import streamlit as st
@@ -87,19 +54,8 @@ try:
     from db.persistence import reset_all_data as db_reset_all_data
     from db.persistence import save_parsed_rows as db_save_parsed_rows
     from db.persistence import save_stage2_match_audits as db_save_stage2_match_audits
-    from db.session_workspace import archive_extraction_session as db_archive_extraction_session
-    from db.session_workspace import create_extraction_session as db_create_extraction_session
-    from db.session_workspace import delete_extraction_session as db_delete_extraction_session
-    from db.session_workspace import ensure_default_extraction_session as db_ensure_default_extraction_session
-    from db.session_workspace import export_active_session_bundle as db_export_active_session_bundle
-    from db.session_workspace import get_active_extraction_session as db_get_active_extraction_session
-    from db.session_workspace import init_active_session_schema as db_init_db
-    from db.session_workspace import list_extraction_sessions as db_list_extraction_sessions
-    from db.session_workspace import refresh_active_session_auto_name as db_refresh_active_session_auto_name
-    from db.session_workspace import rename_extraction_session as db_rename_extraction_session
-    from db.session_workspace import restore_extraction_session as db_restore_extraction_session
-    from db.session_workspace import set_active_extraction_session as db_set_active_extraction_session
-    from db.session_workspace import touch_active_extraction_session as db_touch_active_extraction_session
+    from db.persistence import update_raw_chat_extraction_elapsed as db_update_raw_chat_extraction_elapsed
+    from db.session import init_db as db_init_db
 
     DB_PERSISTENCE_ENABLED = True
 except Exception:
@@ -115,19 +71,8 @@ except Exception:
     db_reset_all_data = None
     db_save_parsed_rows = None
     db_save_stage2_match_audits = None
-    db_archive_extraction_session = None
-    db_create_extraction_session = None
-    db_delete_extraction_session = None
-    db_ensure_default_extraction_session = None
-    db_export_active_session_bundle = None
-    db_get_active_extraction_session = None
+    db_update_raw_chat_extraction_elapsed = None
     db_init_db = None
-    db_list_extraction_sessions = None
-    db_refresh_active_session_auto_name = None
-    db_rename_extraction_session = None
-    db_restore_extraction_session = None
-    db_set_active_extraction_session = None
-    db_touch_active_extraction_session = None
     DB_PERSISTENCE_ENABLED = False
 
 LABEL_MATCH = "MATCH"
@@ -178,6 +123,83 @@ class Stage2OrderCandidate:
 
 def clean_text(text: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", str(text or "").strip())
+
+
+def proof_json_safe(value):
+    if isinstance(value, pd.DataFrame):
+        return proof_json_safe(value.to_dict(orient="records"))
+    if isinstance(value, pd.Series):
+        return proof_json_safe(value.to_dict())
+    if isinstance(value, dict):
+        return {str(key): proof_json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [proof_json_safe(item) for item in value]
+    if isinstance(value, Path):
+        return str(value)
+    try:
+        if pd.isna(value):
+            return None
+    except Exception:
+        pass
+    if hasattr(value, "item"):
+        try:
+            return value.item()
+        except Exception:
+            pass
+    return value
+
+
+def proof_json_bytes(payload: Dict[str, object]) -> bytes:
+    return json.dumps(
+        proof_json_safe(payload),
+        ensure_ascii=False,
+        indent=2,
+    ).encode("utf-8")
+
+
+def build_ner_raw_proof_payload(
+    raw_text: str,
+    audits: Sequence[Dict[str, object]],
+) -> Dict[str, object]:
+    return {
+        "proof_type": "ner_raw_output",
+        "description": "Bukti mentah pasca ekstraksi IndoBERT NER sebelum post-processing akhir.",
+        "raw_input": str(raw_text or ""),
+        "chunk_count": len(audits or []),
+        "chunks": list(audits or []),
+    }
+
+
+def build_stage2_raw_proof_payload(
+    preview_rows: Sequence[Dict[str, object]],
+) -> Dict[str, object]:
+    return {
+        "proof_type": "stage2_sequence_pair_raw_output",
+        "description": "Bukti mentah pencocokan pesanan induk dan susulan dari model Sequence Pair Classification.",
+        "candidate_count": len(preview_rows or []),
+        "candidates": list(preview_rows or []),
+    }
+
+
+def build_pipeline_proof_payload(
+    raw_text: str,
+    table_df: pd.DataFrame,
+    ner_audits: Sequence[Dict[str, object]],
+    stage2_preview_rows: Sequence[Dict[str, object]],
+) -> Dict[str, object]:
+    table_records = (
+        table_df.to_dict(orient="records")
+        if isinstance(table_df, pd.DataFrame) and not table_df.empty
+        else []
+    )
+    return {
+        "proof_type": "end_to_end_pipeline_proof",
+        "description": "Bukti teknis ringkas dari input, output NER, tabel hasil ekstraksi, dan output pencocokan SPC.",
+        "raw_input": str(raw_text or ""),
+        "ner_raw": build_ner_raw_proof_payload(raw_text, ner_audits),
+        "extraction_table": table_records,
+        "stage2_raw": build_stage2_raw_proof_payload(stage2_preview_rows),
+    }
 
 
 def case(
@@ -2770,6 +2792,9 @@ def load_all_raw_chat_records_from_db() -> List[Dict[str, str]]:
             {
                 "id": str(record.get("id", "") or ""),
                 "created_at": str(record.get("created_at", "") or ""),
+                "extraction_elapsed_ms": float(record.get("extraction_elapsed_ms", 0.0) or 0.0),
+                "extraction_run_id": str(record.get("extraction_run_id", "") or ""),
+                "extraction_run_elapsed_ms": float(record.get("extraction_run_elapsed_ms", 0.0) or 0.0),
                 "chat_text": chat_text,
             }
         )
@@ -2801,6 +2826,9 @@ def sync_extraction_to_db(
     display_df: pd.DataFrame,
     stage2_apply_row: Dict[str, object] | None = None,
     force_distinct_order_save: bool = False,
+    extraction_elapsed_ms: float | None = None,
+    extraction_run_id: str | None = None,
+    extraction_run_elapsed_ms: float | None = None,
 ) -> tuple[pd.DataFrame, str]:
     if (
         not DB_PERSISTENCE_ENABLED
@@ -2851,6 +2879,20 @@ def sync_extraction_to_db(
                     )
 
         should_parse, raw_chat_id = db_prepare_chat_for_parsing(raw_text)
+        if (
+            raw_chat_id
+            and db_update_raw_chat_extraction_elapsed is not None
+        ):
+            db_update_raw_chat_extraction_elapsed(
+                raw_chat_id,
+                elapsed_ms=float(extraction_elapsed_ms or 0.0) if extraction_elapsed_ms else None,
+                run_id=extraction_run_id,
+                run_elapsed_ms=(
+                    float(extraction_run_elapsed_ms or 0.0)
+                    if extraction_run_elapsed_ms
+                    else None
+                ),
+            )
         if should_parse:
             affected = db_save_parsed_rows(
                 raw_chat_id,
@@ -2887,13 +2929,6 @@ def sync_extraction_to_db(
                 message += f" Stage2: {duplicate_count} unit terdeteksi duplikat, tidak disimpan ulang."
             elif auto_candidate_key:
                 message += f" Stage2: belum ada slot yang terisi otomatis, {skipped_count} unit dilewati."
-        try:
-            if db_refresh_active_session_auto_name is not None:
-                db_refresh_active_session_auto_name()
-            elif db_touch_active_extraction_session is not None:
-                db_touch_active_extraction_session()
-        except Exception:
-            pass
         return load_db_excel_df(), message
     except Exception as e:
         return pd.DataFrame(columns=EXCEL_COLUMNS + ["status_unit"]), f"Gagal sync DB realtime: {e}"
@@ -3695,7 +3730,11 @@ def sync_extraction_blocks_sequentially(
     last_preview_rows: List[Dict[str, object]] = []
     messages: List[str] = []
     processed = 0
+    extraction_run_id = uuid.uuid4().hex
+    extraction_run_started_at = time.perf_counter()
+    processed_chunks: List[str] = []
     for chunk_index, chunk in enumerate(chunks, start=1):
+        chunk_started_at = time.perf_counter()
         chunk_df, _ = rows_from_new_order_text(
             ner_tokenizer,
             ner_model,
@@ -3703,6 +3742,7 @@ def sync_extraction_blocks_sequentially(
             chunk,
             int(ner_max_seq_len),
         )
+        chunk_elapsed_ms = (time.perf_counter() - chunk_started_at) * 1000.0
         if chunk_df.empty:
             messages.append(f"Blok {chunk_index}: tidak ada output NER.")
             continue
@@ -3731,7 +3771,10 @@ def sync_extraction_blocks_sequentially(
             chunk_df,
             stage2_apply_row,
             force_distinct_order_save=force_distinct_order_save,
+            extraction_elapsed_ms=chunk_elapsed_ms,
+            extraction_run_id=extraction_run_id,
         )
+        processed_chunks.append(chunk)
         processed += 1
         messages.append(f"Blok {chunk_index}: {db_message}")
 
@@ -3743,6 +3786,19 @@ def sync_extraction_blocks_sequentially(
                 pass
 
     final_df = load_db_excel_df()
+    extraction_run_elapsed_ms = (time.perf_counter() - extraction_run_started_at) * 1000.0
+    if db_find_raw_chat_id is not None and db_update_raw_chat_extraction_elapsed is not None:
+        for chunk in processed_chunks:
+            try:
+                raw_chat_id = db_find_raw_chat_id(chunk)
+                if raw_chat_id:
+                    db_update_raw_chat_extraction_elapsed(
+                        raw_chat_id,
+                        run_id=extraction_run_id,
+                        run_elapsed_ms=extraction_run_elapsed_ms,
+                    )
+            except Exception:
+                pass
     summary = f"Intra-batch sequential: {processed}/{len(chunks)} blok diproses."
     if messages:
         summary = f"{summary} " + " ".join(messages[-3:])
@@ -4016,11 +4072,21 @@ def render_stage2_match_card(
     elif auto_duplicates > 0:
         action_note = f"{auto_duplicates} unit susulan terdeteksi duplikat dan tidak disimpan ulang."
 
+    card_expand_id = analytics_card_control_id(
+        "stage2-card",
+        title,
+        top.get("candidate_key", ""),
+        top.get("created_at", ""),
+    )
+    safe_card_expand_id = escape(card_expand_id, quote=True)
+    safe_card_expand_title = escape(str(title or "Analitik pencocokan order"), quote=True)
+
     html = f"""
     <style>
     .stage2-audit {{
-        height: {height}px;
-        overflow: auto;
+        height: auto;
+        max-height: none;
+        overflow: visible;
         border: 1px solid #d6dee8;
         border-radius: 8px;
         background: #eef2f7;
@@ -4479,52 +4545,59 @@ def render_stage2_match_card(
         .stage2-change-summary {{ grid-template-columns: 1fr; }}
     }}
     </style>
+    {analytics_expandable_css()}
     <div class="stage2-audit">
-        <section class="stage2-card {decision['class']}">
-            <div class="stage2-head">
-                <div>
-                    <div class="stage2-title">
-                        <span>{escape(title)}</span>
-                        <span class="stage2-tag">Sequence Pair Matching</span>
+        <div class="analytics-expand-wrap">
+            <input class="analytics-expand-toggle" type="checkbox" id="{safe_card_expand_id}" />
+            <label class="analytics-expand-backdrop" for="{safe_card_expand_id}" title="Tutup tampilan besar"></label>
+            <label class="analytics-expand-open" for="{safe_card_expand_id}" title="Perbesar {safe_card_expand_title}">Perbesar</label>
+            <label class="analytics-expand-close" for="{safe_card_expand_id}" title="Tutup tampilan besar">Tutup</label>
+            <section class="stage2-card {decision['class']}">
+                <div class="stage2-head">
+                    <div>
+                        <div class="stage2-title">
+                            <span>{escape(title)}</span>
+                            <span class="stage2-tag">Sequence Pair Matching</span>
+                        </div>
+                        <div class="stage2-subtitle">{escape(subtitle)}</div>
                     </div>
-                    <div class="stage2-subtitle">{escape(subtitle)}</div>
-                </div>
-                <div class="stage2-pills">
-                    <span>Order kandidat {escape(str(metrics['total']))}</span>
-                    <span>{escape(top_conf_label)}</span>
-                </div>
-            </div>
-            <div class="stage2-body">
-                <div class="stage2-score-strip">
-                    <div class="stage2-score">
-                        <div class="stage2-score-label">P_MATCH</div>
-                        <div class="stage2-score-value">{pct_text(top_match)}</div>
-                    </div>
-                    <div class="stage2-score">
-                        <div class="stage2-score-label">P_NO_MATCH</div>
-                        <div class="stage2-score-value">{pct_text(top_no_match)}</div>
-                    </div>
-                    <div class="stage2-score">
-                        <div class="stage2-score-label">Confidence keputusan</div>
-                        <div class="stage2-score-value small">{escape(top_conf_label)}</div>
+                    <div class="stage2-pills">
+                        <span>Order kandidat {escape(str(metrics['total']))}</span>
+                        <span>{escape(top_conf_label)}</span>
                     </div>
                 </div>
-                <div class="stage2-note">
-                    <strong>Penilaian:</strong> {escape(action_note)}
-                </div>
-                <div class="stage2-grid">
-                    <div class="stage2-panel">
-                        <div class="stage2-panel-title">Pesanan awal / chat asli</div>
-                        <pre class="stage2-pre">{escape(candidate_chat_text or 'Raw chat pesanan awal belum tersedia di DB audit lama.')}</pre>
+                <div class="stage2-body">
+                    <div class="stage2-score-strip">
+                        <div class="stage2-score">
+                            <div class="stage2-score-label">P_MATCH</div>
+                            <div class="stage2-score-value">{pct_text(top_match)}</div>
+                        </div>
+                        <div class="stage2-score">
+                            <div class="stage2-score-label">P_NO_MATCH</div>
+                            <div class="stage2-score-value">{pct_text(top_no_match)}</div>
+                        </div>
+                        <div class="stage2-score">
+                            <div class="stage2-score-label">Confidence keputusan</div>
+                            <div class="stage2-score-value small">{escape(top_conf_label)}</div>
+                        </div>
                     </div>
-                    <div class="stage2-panel">
-                        <div class="stage2-panel-title">Pesanan susulan / chat masuk</div>
-                        <pre class="stage2-pre">{escape(str(top.get('incoming_text', '') or '-'))}</pre>
+                    <div class="stage2-note">
+                        <strong>Penilaian:</strong> {escape(action_note)}
                     </div>
+                    <div class="stage2-grid">
+                        <div class="stage2-panel">
+                            <div class="stage2-panel-title">Pesanan awal / chat asli</div>
+                            <pre class="stage2-pre">{escape(candidate_chat_text or 'Raw chat pesanan awal belum tersedia di DB audit lama.')}</pre>
+                        </div>
+                        <div class="stage2-panel">
+                            <div class="stage2-panel-title">Pesanan susulan / chat masuk</div>
+                            <pre class="stage2-pre">{escape(str(top.get('incoming_text', '') or '-'))}</pre>
+                        </div>
+                    </div>
+                    {order_change_html}
                 </div>
-                {order_change_html}
-            </div>
-        </section>
+            </section>
+        </div>
     </div>
     """
     st.html(html)
@@ -5101,6 +5174,135 @@ def stage2_match_evidence_html(event: Dict[str, object]) -> str:
     """
 
 
+def analytics_card_control_id(prefix: str, *parts: object) -> str:
+    raw = "-".join(str(part or "") for part in (prefix, *parts))
+    clean = re.sub(r"[^a-zA-Z0-9_-]+", "-", raw).strip("-").lower()
+    return clean[:120] or "analytics-card"
+
+
+def analytics_expandable_css() -> str:
+    return """
+    <style>
+    .analytics-expand-wrap {
+        position: relative;
+    }
+    .analytics-expand-toggle {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .analytics-expand-open {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        z-index: 20;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #cbd5e1;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.96);
+        color: #0f172a;
+        padding: 6px 10px;
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.10);
+    }
+    .analytics-expand-open:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+    }
+    .analytics-expand-backdrop,
+    .analytics-expand-close {
+        display: none;
+    }
+    .analytics-expand-toggle:checked ~ .analytics-expand-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 999998;
+        background: rgba(15, 23, 42, 0.72);
+        cursor: zoom-out;
+    }
+    .analytics-expand-toggle:checked ~ .analytics-expand-close {
+        display: inline-flex;
+        position: fixed;
+        top: 18px;
+        right: 24px;
+        z-index: 1000001;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #cbd5e1;
+        border-radius: 999px;
+        background: #ffffff;
+        color: #0f172a;
+        padding: 9px 14px;
+        font-size: 12px;
+        font-weight: 900;
+        cursor: pointer;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+    }
+    .analytics-expand-toggle:checked ~ .analytics-expand-open {
+        display: none;
+    }
+    .analytics-expand-toggle:checked ~ .ner-block-card,
+    .analytics-expand-toggle:checked ~ .ner-order-card,
+    .analytics-expand-toggle:checked ~ .stage2-card,
+    .analytics-expand-toggle:checked ~ .stage2-order-timeline-card {
+        position: fixed;
+        inset: 62px 24px 24px 24px;
+        z-index: 1000000;
+        width: auto;
+        height: auto;
+        max-height: calc(100vh - 86px);
+        margin: 0;
+        overflow: auto;
+        border-radius: 10px;
+        box-shadow: 0 22px 60px rgba(15, 23, 42, 0.35);
+    }
+    .analytics-expand-toggle:checked ~ .ner-block-card .chat-original,
+    .analytics-expand-toggle:checked ~ .ner-order-card .chat-original {
+        max-height: 52vh;
+    }
+    .analytics-expand-toggle:checked ~ .ner-block-card .mini-table-wrap,
+    .analytics-expand-toggle:checked ~ .ner-order-card .mini-table-wrap,
+    .analytics-expand-toggle:checked ~ .stage2-order-timeline-card .stage2-change-table-wrap {
+        max-height: 56vh;
+    }
+    .analytics-expand-toggle:checked ~ .stage2-card .stage2-change-table-wrap {
+        max-height: 56vh;
+    }
+    .analytics-expand-toggle:checked ~ .stage2-card .stage2-pre {
+        max-height: 52vh;
+    }
+    .analytics-expand-toggle:checked ~ .stage2-order-timeline-card .stage2-pre {
+        max-height: 52vh;
+    }
+    </style>
+    """
+
+
+def wrap_expandable_analytics_card(
+    card_html: str,
+    control_id: str,
+    title: str,
+    button_label: str = "Perbesar",
+) -> str:
+    safe_id = escape(control_id, quote=True)
+    safe_title = escape(str(title or "Analitik"), quote=True)
+    return f"""
+    <div class="analytics-expand-wrap">
+        <input class="analytics-expand-toggle" type="checkbox" id="{safe_id}" />
+        <label class="analytics-expand-backdrop" for="{safe_id}" title="Tutup tampilan besar"></label>
+        <label class="analytics-expand-open" for="{safe_id}" title="Perbesar {safe_title}">{escape(button_label)}</label>
+        <label class="analytics-expand-close" for="{safe_id}" title="Tutup tampilan besar">Tutup</label>
+        {card_html}
+    </div>
+    """
+
+
 def render_stage2_match_order_timeline(
     history: Sequence[Dict[str, object]] | None = None,
     groups: Sequence[Dict[str, object]] | None = None,
@@ -5165,8 +5367,7 @@ def render_stage2_match_order_timeline(
                 """
             )
 
-        order_cards.append(
-            f"""
+        order_card_html = f"""
             <section class="stage2-order-timeline-card">
                 <div class="stage2-order-timeline-head">
                     <div class="stage2-order-main">
@@ -5183,13 +5384,20 @@ def render_stage2_match_order_timeline(
                 </div>
             </section>
             """
+        order_cards.append(
+            wrap_expandable_analytics_card(
+                order_card_html,
+                analytics_card_control_id("stage2-order", group_index, group.get("key", "")),
+                f"Order pencocokan #{group_index}",
+            )
         )
 
     html = f"""
     <style>
     .stage2-timeline-audit {{
-        height: {height}px;
-        overflow: auto;
+        height: auto;
+        max-height: none;
+        overflow: visible;
         border: 1px solid #d6dee8;
         border-radius: 8px;
         background: #eef2f7;
@@ -5337,26 +5545,27 @@ def render_stage2_match_order_timeline(
         white-space: nowrap;
     }}
     .stage2-evidence {{
-        padding: 10px 12px 12px;
+        padding: 8px 10px 10px;
         border-bottom: 1px solid #d6dee8;
         background: #ffffff;
     }}
     .stage2-evidence-title {{
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         font-size: 12px;
         font-weight: 800;
         color: #0f172a;
     }}
     .stage2-evidence-grid {{
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 7px;
     }}
     .stage2-evidence-card {{
         border: 1px solid #d6dee8;
-        border-radius: 8px;
+        border-radius: 7px;
         background: #fbfdff;
         overflow: hidden;
+        min-width: 0;
     }}
     .stage2-evidence-card.good {{
         border-color: #86efac;
@@ -5377,18 +5586,21 @@ def render_stage2_match_order_timeline(
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 8px;
-        padding: 7px 9px;
+        gap: 6px;
+        padding: 5px 8px;
         border-bottom: 1px solid rgba(148, 163, 184, 0.45);
     }}
     .stage2-evidence-top span {{
         color: #475569;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 700;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }}
     .stage2-evidence-top strong {{
         color: #0f172a;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 900;
         white-space: nowrap;
     }}
@@ -5398,7 +5610,7 @@ def render_stage2_match_order_timeline(
         gap: 0;
     }}
     .stage2-evidence-values div {{
-        padding: 8px 9px;
+        padding: 6px 8px;
         min-width: 0;
     }}
     .stage2-evidence-values div + div {{
@@ -5407,32 +5619,42 @@ def render_stage2_match_order_timeline(
     .stage2-evidence-values span {{
         display: block;
         color: #64748b;
-        font-size: 10px;
-        margin-bottom: 3px;
+        font-size: 9px;
+        margin-bottom: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }}
     .stage2-evidence-values strong {{
         display: block;
         color: #0f172a;
-        font-size: 12px;
+        font-size: 11px;
         line-height: 1.25;
-        overflow-wrap: anywhere;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }}
     .stage2-evidence-single {{
-        padding: 8px 9px;
+        padding: 6px 8px;
         min-width: 0;
     }}
     .stage2-evidence-single span {{
         display: block;
         color: #64748b;
-        font-size: 10px;
-        margin-bottom: 3px;
+        font-size: 9px;
+        margin-bottom: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }}
     .stage2-evidence-single strong {{
         display: block;
         color: #0f172a;
-        font-size: 12px;
+        font-size: 11px;
         line-height: 1.25;
-        overflow-wrap: anywhere;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }}
     .stage2-event-time {{
         margin-top: 2px;
@@ -5715,6 +5937,9 @@ def render_stage2_match_order_timeline(
         background: #fffbeb;
         color: #92400e;
     }}
+    @media (max-width: 1280px) {{
+        .stage2-evidence-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+    }}
     @media (max-width: 980px) {{
         .stage2-order-timeline-head {{ flex-direction: column; }}
         .stage2-order-kicker {{ margin-left: 0; }}
@@ -5726,6 +5951,7 @@ def render_stage2_match_order_timeline(
         .stage2-change-summary {{ grid-template-columns: 1fr; }}
     }}
     </style>
+    {analytics_expandable_css()}
     <div class="stage2-timeline-audit">
         <div class="stage2-timeline-page-head">
             <div class="stage2-timeline-page-title">{escape(title)}</div>
@@ -6011,10 +6237,22 @@ def cumulative_rows_and_audits_from_raw_chats(
             raw_chat_text = str(raw_chat.get("chat_text", "") or "").strip()
             batch_created_at = str(raw_chat.get("created_at", "") or "").strip()
             batch_id = str(raw_chat.get("id", "") or "").strip()
+            try:
+                stored_elapsed_ms = float(raw_chat.get("extraction_elapsed_ms", 0.0) or 0.0)
+            except Exception:
+                stored_elapsed_ms = 0.0
+            stored_run_id = str(raw_chat.get("extraction_run_id", "") or "").strip()
+            try:
+                stored_run_elapsed_ms = float(raw_chat.get("extraction_run_elapsed_ms", 0.0) or 0.0)
+            except Exception:
+                stored_run_elapsed_ms = 0.0
         else:
             raw_chat_text = str(raw_chat or "").strip()
             batch_created_at = ""
             batch_id = ""
+            stored_elapsed_ms = 0.0
+            stored_run_id = ""
+            stored_run_elapsed_ms = 0.0
         if not raw_chat_text:
             continue
 
@@ -6030,6 +6268,7 @@ def cumulative_rows_and_audits_from_raw_chats(
             raw_chat_text,
             max_seq_len,
         )
+        batch_elapsed_ms = stored_elapsed_ms
         if normalized and not batch_df.empty:
             batch_df = normalize_operational_excel(batch_df)
 
@@ -6040,6 +6279,7 @@ def cumulative_rows_and_audits_from_raw_chats(
             batch_df["_batch_label"] = batch_label
             batch_df["_batch_created_at"] = batch_created_at
             batch_df["_batch_id"] = batch_id
+            batch_df["_batch_elapsed_ms"] = batch_elapsed_ms
             batch_df["No."] = range(row_offset + 1, row_offset + len(batch_df) + 1)
             all_frames.append(batch_df)
             row_offset += len(batch_df)
@@ -6051,6 +6291,9 @@ def cumulative_rows_and_audits_from_raw_chats(
             adjusted["batch_label"] = batch_label
             adjusted["batch_created_at"] = batch_created_at
             adjusted["batch_id"] = batch_id
+            adjusted["batch_elapsed_ms"] = batch_elapsed_ms
+            adjusted["extraction_run_id"] = stored_run_id
+            adjusted["extraction_run_elapsed_ms"] = stored_run_elapsed_ms
             all_audits.append(adjusted)
 
         chunk_offset += len(batch_audits)
@@ -6206,17 +6449,156 @@ def span_values_for_labels(spans: Sequence[Dict[str, object]], labels: Sequence[
     return values
 
 
-def span_confidence_for_labels(spans: Sequence[Dict[str, object]], labels: Sequence[str]) -> float:
-    scores = []
-    label_set = set(labels)
-    for span in spans:
-        if str(span.get("label", "")) not in label_set:
-            continue
-        try:
-            scores.append(float(span.get("confidence", 0.0)))
-        except Exception:
-            pass
-    return sum(scores) / len(scores) if scores else 0.0
+def calculate_attribute_f1_score(
+    ground_truth_values: Sequence[str],
+    extracted_values: Sequence[str],
+    attr_key: str = ""
+) -> float:
+    """
+    Hitung F1 Score MURNI untuk satu atribut.
+    
+    F1 Score adalah metrik OBJEKTIF yang tidak bisa "bohong":
+    - 100% = Ekstraksi sempurna, semua token benar
+    - 0% = Gagal total, tidak ada yang benar
+    - 50% = Separuh benar, separuh salah/missing
+    
+    Tidak bergantung pada probabilitas model, hanya perbandingan:
+    Ground Truth vs Hasil Ekstraksi
+    
+    Formula:
+    F1 = 2 × (Precision × Recall) / (Precision + Recall)
+    
+    Di mana:
+    - Precision = Berapa persen dari yang ditangkap yang benar?
+    - Recall = Berapa persen dari yang seharusnya ditangkap yang berhasil?
+    
+    Return: 0.0 - 1.0 (0% - 100%)
+    """
+    # Normalisasi dan gabungkan semua values jadi satu string
+    gt_text = " ".join(str(v) for v in ground_truth_values if v).strip().upper()
+    ext_text = " ".join(str(v) for v in extracted_values if v).strip().upper()
+    
+    # Tokenize: ambil semua kata/angka/karakter alfanumerik
+    gt_tokens = set(re.findall(r'\w+', gt_text))
+    ext_tokens = set(re.findall(r'\w+', ext_text))
+    
+    # === KASUS 1: Both empty (tidak ada ground truth dan tidak ada ekstraksi) ===
+    if not gt_tokens and not ext_tokens:
+        # Jika memang tidak ada yang seharusnya diambil, dan memang tidak diambil = perfect
+        return 1.0
+    
+    # === KASUS 2: Ground truth kosong tapi model extract sesuatu ===
+    if not gt_tokens and ext_tokens:
+        # False positive: model extract sesuatu yang seharusnya tidak ada
+        return 0.0
+    
+    # === KASUS 3: Ground truth ada tapi model tidak extract ===
+    if gt_tokens and not ext_tokens:
+        # Complete miss: gagal total
+        return 0.0
+    
+    # === KASUS 4: Both ada, hitung F1 ===
+    # TP (True Positive): token yang ada di GT dan berhasil di-extract
+    tp = len(gt_tokens & ext_tokens)
+    
+    # FP (False Positive): token yang di-extract tapi tidak ada di GT
+    fp = len(ext_tokens - gt_tokens)
+    
+    # FN (False Negative): token yang ada di GT tapi tidak di-extract
+    fn = len(gt_tokens - ext_tokens)
+    
+    # Hitung Precision dan Recall
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+    
+    # Hitung F1 Score (harmonic mean dari precision dan recall)
+    if precision + recall == 0:
+        return 0.0
+    
+    f1_score = 2 * (precision * recall) / (precision + recall)
+    
+    return f1_score
+
+
+def normalize_eval_entity_value(attr_key: str, value: object) -> str:
+    text = clean_cell_value(str(value or ""))
+    if not filled_value(text):
+        return ""
+
+    if attr_key == "UNIT_QTY":
+        match = re.search(r"\d{1,3}", text)
+        return str(int(match.group(0))) if match else ""
+
+    if attr_key == "PHONE":
+        digits = re.sub(r"\D+", "", text)
+        if digits.startswith("62"):
+            digits = "0" + digits[2:]
+        return digits
+
+    if attr_key == "PLATE":
+        return re.sub(r"[^A-Z0-9]+", "", text.upper())
+
+    normalized = text.casefold()
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+    normalized = re.sub(r"\s*([,/:-])\s*", r"\1", normalized)
+    return normalized
+
+
+def metric_scores_from_counts(tp: int, fp: int, fn: int) -> Dict[str, float]:
+    precision = tp / (tp + fp) if (tp + fp) else 0.0
+    recall = tp / (tp + fn) if (tp + fn) else 0.0
+    f1 = (
+        2 * precision * recall / (precision + recall)
+        if (precision + recall)
+        else 0.0
+    )
+    return {"precision": precision, "recall": recall, "f1": f1}
+
+
+def strict_entity_counts(
+    ground_truth_values: Sequence[str],
+    extracted_values: Sequence[str],
+    attr_key: str,
+) -> Dict[str, object]:
+    gt_norm = [
+        value
+        for value in (
+            normalize_eval_entity_value(attr_key, item)
+            for item in ground_truth_values
+        )
+        if value
+    ]
+    pred_norm = [
+        value
+        for value in (
+            normalize_eval_entity_value(attr_key, item)
+            for item in extracted_values
+        )
+        if value
+    ]
+    gt_counter = Counter(gt_norm)
+    pred_counter = Counter(pred_norm)
+    matched = gt_counter & pred_counter
+    tp = sum(matched.values())
+    fp = sum((pred_counter - gt_counter).values())
+    fn = sum((gt_counter - pred_counter).values())
+    duplicate_fp = sum(max(0, count - 1) for count in pred_counter.values())
+    scores = metric_scores_from_counts(tp, fp, fn)
+    return {
+        "tp": tp,
+        "fp": fp,
+        "fn": fn,
+        "precision": scores["precision"],
+        "recall": scores["recall"],
+        "f1": scores["f1"],
+        "support": sum(gt_counter.values()),
+        "predicted": sum(pred_counter.values()),
+        "gt_counter": gt_counter,
+        "pred_counter": pred_counter,
+        "unmatched_gt": gt_counter - pred_counter,
+        "unmatched_pred": pred_counter - gt_counter,
+        "duplicate_fp": duplicate_fp,
+    }
 
 
 def unique_nonblank(values: Iterable) -> List[str]:
@@ -6262,43 +6644,124 @@ def values_context_match(attr_key: str, ner_values: Sequence[str], output_values
     return output_set.issubset(ner_set) or ner_set.issubset(output_set)
 
 
-def contextual_attribute_confidence(
+def get_ground_truth_for_attribute(
+    excel_df: pd.DataFrame,
+    chunk_id: int,
     attr_key: str,
-    attr_name: str,
-    ner_values: Sequence[str],
-    output_values: Sequence[str],
-    raw_confidence: float,
-) -> float:
-    if not values_context_match(attr_key, ner_values, output_values):
-        return raw_confidence
+    output_col: str
+) -> List[str]:
+    """
+    Ekstrak ground truth values untuk atribut tertentu dari Excel/DataFrame.
+    
+    Ground truth adalah nilai yang SEHARUSNYA di-extract oleh model.
+    Ini diambil dari kolom output yang sudah diisi (bisa manual atau dari sistem lain).
+    
+    Return: List of ground truth values (bisa kosong jika memang tidak ada data)
+    """
+    if excel_df is None or excel_df.empty or output_col not in excel_df.columns:
+        return []
+    
+    # Filter rows untuk chunk ini
+    chunk_rows = excel_df[excel_df["_chunk"] == chunk_id] if "_chunk" in excel_df.columns else excel_df
+    
+    if chunk_rows.empty:
+        return []
+    
+    # Ambil semua values dari kolom output
+    values = []
+    for val in chunk_rows[output_col]:
+        if pd.notna(val) and str(val).strip():
+            values.append(str(val).strip())
+    
+    return values
 
-    has_red_issue = any(attr_value_needs_red_border(attr_name, value) for value in ner_values)
-    has_red_issue = has_red_issue or any(
-        attr_value_needs_red_border(attr_name, value) for value in output_values
-    )
-    if has_red_issue:
-        return raw_confidence
 
-    return max(raw_confidence, 0.95)
+NER_F1_SCORE_AUDIT_THRESHOLD = 0.70  # F1 Score di bawah 70% perlu di-audit
 
 
-NER_CONFIDENCE_AUDIT_THRESHOLD = 0.90
-
-
-def confidence_bucket(score: float, captured: bool) -> str:
-    if not captured:
+def f1_score_bucket(score: float, has_extraction: bool) -> str:
+    """
+    Kategorikan F1 Score ke dalam bucket quality.
+    
+    F1 Score adalah metrik OBJEKTIF:
+    - PERFECT (90-100%): Ekstraksi sempurna
+    - HIGH (70-89%): Ekstraksi bagus, minor issue
+    - MEDIUM (50-69%): Ekstraksi partial, perlu improvement
+    - LOW (1-49%): Ekstraksi buruk, banyak missing/salah
+    - MISSING (0%): Gagal total, tidak ada yang di-extract
+    """
+    if not has_extraction or score == 0.0:
         return "MISSING"
     if score >= 0.90:
-        return "HIGH"
+        return "PERFECT"
     if score >= 0.70:
+        return "HIGH"
+    if score >= 0.50:
         return "MEDIUM"
     return "LOW"
+
+
+def ner_eval_status_from_counts(
+    tp: int,
+    fp: int,
+    fn: int,
+    *,
+    label_swap: bool = False,
+    duplicate_fp: int = 0,
+) -> tuple[str, str]:
+    if tp == 0 and fp == 0 and fn == 0:
+        return "EMPTY", "empty"
+    if fp == 0 and fn == 0 and tp > 0:
+        return "CORRECT", "ok"
+    if label_swap:
+        return "LABEL_SWAP", "bad"
+    if duplicate_fp > 0 and fn == 0:
+        return "DUPLICATE", "warn"
+    if tp == 0 and fp == 0 and fn > 0:
+        return "MISSING", "miss"
+    if tp == 0 and fp > 0 and fn == 0:
+        return "SPURIOUS", "warn"
+    if tp > 0 and (fp > 0 or fn > 0):
+        return "PARTIAL", "warn"
+    return "WRONG", "bad"
+
+
+def ner_eval_status_label(status: str) -> str:
+    labels = {
+        "CORRECT": "Benar",
+        "PARTIAL": "Parsial",
+        "MISSING": "Tidak terekstrak",
+        "SPURIOUS": "Ekstraksi berlebih",
+        "WRONG": "Salah ekstrak",
+        "LABEL_SWAP": "Atribut tertukar",
+        "DUPLICATE": "Duplikasi",
+        "EMPTY": "-",
+    }
+    return labels.get(str(status or "").upper(), str(status or "-"))
+
+
+def pct_or_dash(value: float, evaluated: bool = True) -> str:
+    if not evaluated:
+        return "-"
+    return pct_text(float(value or 0.0))
 
 
 def build_ner_block_evaluation(
     excel_df: pd.DataFrame,
     audits: Sequence[Dict[str, object]],
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Evaluasi NER per blok menggunakan F1 Score murni (bukan confidence).
+    
+    F1 Score dihitung dengan membandingkan:
+    - Ground Truth (dari kolom output yang terisi)
+    - Hasil Ekstraksi NER (dari spans)
+    
+    F1 Score TIDAK BISA BOHONG karena:
+    - Tidak bergantung pada probabilitas model
+    - Murni perbandingan token: berapa yang benar, berapa yang salah, berapa yang missing
+    - 0% jika gagal total, 100% jika perfect, gradasi untuk partial
+    """
     summary_rows = []
     detail_rows = []
 
@@ -6316,44 +6779,67 @@ def build_ner_block_evaluation(
             if "_chunk" in excel_df.columns
             else pd.DataFrame()
         )
+        
         captured_count = 0
-        confidence_values = []
+        f1_scores = []  # Ganti dari confidence_values
         missing_attrs = []
         low_attrs = []
 
-        for _, attr_name, labels, output_col in NER_EVAL_ATTRIBUTES:
+        for attr_key, attr_name, labels, output_col in NER_EVAL_ATTRIBUTES:
+            # Nilai yang di-extract oleh NER
             ner_values = span_values_for_labels(spans, labels)
-            output_values = (
-                unique_nonblank(block_rows[output_col].tolist())
-                if output_col and output_col in block_rows.columns
-                else [str(audit.get("qty_ner", ""))]
+            
+            # Ground truth dari output table (nilai yang seharusnya di-extract)
+            if output_col and output_col in block_rows.columns:
+                ground_truth_values = unique_nonblank(block_rows[output_col].tolist())
+            else:
+                # Special case untuk UNIT_QTY
+                ground_truth_values = [str(audit.get("qty_ner", ""))] if attr_key == "UNIT_QTY" else []
+            
+            # Hitung F1 Score: perbandingan murni ground truth vs extraction
+            f1_score = calculate_attribute_f1_score(
+                ground_truth_values=ground_truth_values,
+                extracted_values=ner_values,
+                attr_key=attr_key
             )
-            captured = bool(ner_values)
-            confidence = span_confidence_for_labels(spans, labels)
-            bucket = confidence_bucket(confidence, captured)
-            if captured:
+            
+            has_extraction = bool(ner_values)
+            bucket = f1_score_bucket(f1_score, has_extraction)
+            
+            if has_extraction:
                 captured_count += 1
-                confidence_values.append(confidence)
+                f1_scores.append(f1_score)
             else:
                 missing_attrs.append(attr_name)
-            if bucket == "LOW":
+            
+            if bucket in ("LOW", "MISSING"):
                 low_attrs.append(attr_name)
 
-            if captured and output_values:
-                status = "OK"
-            elif captured and not output_values:
-                status = "CAPTURED_NO_OUTPUT"
+            # Status untuk display
+            if has_extraction and ground_truth_values:
+                if f1_score >= 0.90:
+                    status = "PERFECT"
+                elif f1_score >= 0.70:
+                    status = "GOOD"
+                elif f1_score >= 0.50:
+                    status = "PARTIAL"
+                else:
+                    status = "POOR"
+            elif has_extraction and not ground_truth_values:
+                status = "CAPTURED_NO_GT"  # NER extract tapi tidak ada ground truth
+            elif not has_extraction and ground_truth_values:
+                status = "MISSING"  # Ada ground truth tapi NER gagal
             else:
-                status = "MISSING"
+                status = "EMPTY"  # Tidak ada ground truth dan tidak ada extraction
 
             detail_rows.append(
                 {
                     "chunk": chunk_id,
                     "attribute": attr_name,
                     "ner_label": "+".join(labels),
-                    "ner_captured": " | ".join(ner_values),
-                    "output_table": " | ".join(output_values),
-                    "confidence": confidence,
+                    "ner_extracted": " | ".join(ner_values),  # Ganti dari ner_captured
+                    "ground_truth": " | ".join(ground_truth_values),  # Ganti dari output_table
+                    "f1_score": f1_score,  # Ganti dari confidence
                     "bucket": bucket,
                     "status": status,
                 }
@@ -6361,8 +6847,11 @@ def build_ner_block_evaluation(
 
         total_attrs = len(NER_EVAL_ATTRIBUTES)
         completeness = captured_count / total_attrs if total_attrs else 0.0
-        avg_conf = sum(confidence_values) / len(confidence_values) if confidence_values else 0.0
-        quality = (0.55 * completeness) + (0.45 * avg_conf)
+        avg_f1 = sum(f1_scores) / len(f1_scores) if f1_scores else 0.0  # Ganti dari avg_conf
+        
+        # Quality score: kombinasi completeness dan F1 score
+        quality = (0.40 * completeness) + (0.60 * avg_f1)  # F1 lebih penting dari completeness
+        
         summary_rows.append(
             {
                 "chunk": chunk_id,
@@ -6370,10 +6859,10 @@ def build_ner_block_evaluation(
                 "output_rows": len(block_rows),
                 "captured": f"{captured_count}/{total_attrs}",
                 "completeness": completeness,
-                "avg_confidence": avg_conf,
+                "avg_f1_score": avg_f1,  # Ganti dari avg_confidence
                 "quality_score": quality,
                 "missing": ", ".join(missing_attrs) if missing_attrs else "-",
-                "low_confidence": ", ".join(low_attrs) if low_attrs else "-",
+                "low_f1": ", ".join(low_attrs) if low_attrs else "-",  # Ganti dari low_confidence
                 "source_preview": re.sub(r"\s+", " ", str(audit.get("ner_input", ""))).strip()[:180],
             }
         )
@@ -6403,10 +6892,10 @@ def render_ner_evaluation_html(
             f"<td>{escape(str(row.get('output_rows', '')))}</td>"
             f"<td>{escape(str(row.get('captured', '')))}</td>"
             f"<td>{pct(row.get('completeness', 0.0))}</td>"
-            f"<td>{pct(row.get('avg_confidence', 0.0))}</td>"
+            f"<td>{pct(row.get('avg_f1_score', 0.0))}</td>"  # Ganti dari avg_confidence
             f"<td>{pct(row.get('quality_score', 0.0))}</td>"
             f"<td>{escape(str(row.get('missing', '')))}</td>"
-            f"<td>{escape(str(row.get('low_confidence', '')))}</td>"
+            f"<td>{escape(str(row.get('low_f1', '')))}</td>"  # Ganti dari low_confidence
             f"<td>{escape(str(row.get('source_preview', '')))}</td>"
             "</tr>"
         )
@@ -6430,8 +6919,9 @@ def render_ner_evaluation_html(
     html = f"""
     <style>
     .ner-eval-wrap {{
-        height: {height}px;
-        overflow: auto;
+        height: auto;
+        max-height: none;
+        overflow: visible;
         border: 1px solid #111;
         background: #fff;
         font-family: Arial, Helvetica, sans-serif;
@@ -6547,14 +7037,8 @@ def output_values_for_attribute(
     output_col: str | None,
 ) -> List[str]:
     if attr_key == "UNIT_QTY":
-        qty = str(audit.get("qty_ner", "") or "").strip()
         rows_count = len(block_rows)
-        values = []
-        if qty:
-            values.append(f"QTY NER {qty}")
-        if rows_count:
-            values.append(f"OUTPUT {rows_count} BARIS")
-        return values
+        return [str(rows_count)] if rows_count else []
 
     if not output_col or output_col not in block_rows.columns:
         return []
@@ -6655,12 +7139,12 @@ def build_simple_ner_eval_cards(
         captured_count = 0
         ok_count = 0
         needs_check_count = 0
-        low_confidence_count = 0
-        low_confidence_attrs = []
+        low_f1_count = 0  # Ganti dari low_confidence_count
+        low_f1_attrs = []  # Ganti dari low_confidence_attrs
         red_output_columns = set()
         red_output_cells = set()
         problem_attrs = set()
-        confidence_values = []
+        f1_scores = []  # Ganti dari confidence_values
         grouped_loading_values = loading_values_from_spans(spans)
         output_attr_map = {
             output_col: attr_name
@@ -6675,27 +7159,40 @@ def build_simple_ner_eval_cards(
             )
             ner_values = unique_clean_values(raw_ner_values)
             output_values = output_values_for_attribute(block_rows, audit, attr_key, output_col)
+            
             captured = bool(ner_values)
             has_output = bool(output_values)
-            raw_confidence = span_confidence_for_labels(spans, labels)
-            confidence = contextual_attribute_confidence(
-                attr_key,
-                attr_name,
-                ner_values,
-                output_values,
-                raw_confidence,
+            
+            # Hitung F1 Score: perbandingan murni ground truth vs extraction
+            f1_score = calculate_attribute_f1_score(
+                ground_truth_values=output_values,  # Output values sebagai ground truth
+                extracted_values=ner_values,
+                attr_key=attr_key
             )
-            low_confidence = captured and confidence < NER_CONFIDENCE_AUDIT_THRESHOLD
+            
+            low_f1 = captured and f1_score < NER_F1_SCORE_AUDIT_THRESHOLD
 
             if captured:
                 captured_count += 1
-                confidence_values.append(confidence)
+                f1_scores.append(f1_score)
 
             needs_check = False
             if captured and has_output:
-                status = "OK"
-                status_class = "ok"
-                ok_count += 1
+                if f1_score >= 0.90:
+                    status = "PERFECT"
+                    status_class = "ok"
+                elif f1_score >= 0.70:
+                    status = "GOOD"
+                    status_class = "ok"
+                elif f1_score >= 0.50:
+                    status = "PARTIAL"
+                    status_class = "warn"
+                    needs_check = True
+                else:
+                    status = "POOR"
+                    status_class = "warn"
+                    needs_check = True
+                ok_count += 1 if f1_score >= 0.70 else 0
             elif captured and not has_output:
                 status = "NER ADA, OUTPUT KOSONG"
                 status_class = "warn"
@@ -6716,9 +7213,9 @@ def build_simple_ner_eval_cards(
                 elif output_col not in {"Driver", "No. Plat", "Kontak Driver", "Tgl Muat"}:
                     red_output_columns.add(output_col)
 
-            if low_confidence:
-                low_confidence_count += 1
-                low_confidence_attrs.append(attr_name)
+            if low_f1:
+                low_f1_count += 1
+                low_f1_attrs.append(attr_name)
             if needs_check:
                 needs_check_count += 1
                 problem_attrs.add(attr_name)
@@ -6731,8 +7228,8 @@ def build_simple_ner_eval_cards(
                     "ner_value_items": ner_values,
                     "ner_values": " | ".join(ner_values) if ner_values else "-",
                     "output_values": " | ".join(output_values) if output_values else "-",
-                    "confidence": confidence,
-                    "confidence_bucket": confidence_bucket(confidence, captured),
+                    "f1_score": f1_score,  # Ganti dari confidence
+                    "f1_bucket": f1_score_bucket(f1_score, captured),  # Ganti dari confidence_bucket
                     "status": status,
                     "status_class": status_class,
                 }
@@ -6749,7 +7246,7 @@ def build_simple_ner_eval_cards(
             problem_attrs.add(output_attr_map.get(col, col))
 
         total_attrs = len(NER_EVAL_ATTRIBUTES)
-        avg_confidence = sum(confidence_values) / len(confidence_values) if confidence_values else 0.0
+        avg_f1 = sum(f1_scores) / len(f1_scores) if f1_scores else 0.0  # Ganti dari avg_confidence
         complete_units, total_units, order_status = block_unit_completion(block_rows)
         cards.append(
             {
@@ -6758,6 +7255,9 @@ def build_simple_ner_eval_cards(
                 "batch_label": str(audit.get("batch_label", "") or ""),
                 "batch_created_at": str(audit.get("batch_created_at", "") or ""),
                 "batch_id": str(audit.get("batch_id", "") or ""),
+                "batch_elapsed_ms": float(audit.get("batch_elapsed_ms", 0.0) or 0.0),
+                "extraction_run_id": str(audit.get("extraction_run_id", "") or ""),
+                "extraction_run_elapsed_ms": float(audit.get("extraction_run_elapsed_ms", 0.0) or 0.0),
                 "source": str(audit.get("source", "") or ""),
                 "ner_input": str(audit.get("ner_input", "") or ""),
                 "rows_count": len(block_rows),
@@ -6768,14 +7268,193 @@ def build_simple_ner_eval_cards(
                 "captured_count": captured_count,
                 "ok_count": ok_count,
                 "total_attrs": total_attrs,
-                "avg_confidence": avg_confidence,
+                "avg_f1_score": avg_f1,  # Ganti dari avg_confidence
                 "needs_check": needs_check_count,
-                "low_confidence_count": low_confidence_count,
-                "low_confidence_attrs": low_confidence_attrs,
+                "low_f1_count": low_f1_count,  # Ganti dari low_confidence_count
+                "low_f1_attrs": low_f1_attrs,  # Ganti dari low_confidence_attrs
                 "red_output_columns": sorted(red_output_columns),
                 "red_output_cells": sorted(red_output_cells),
                 "problem_count": len(problem_attrs),
                 "problem_attrs": sorted(problem_attrs),
+                "attr_rows": attr_rows,
+            }
+        )
+
+    return cards
+
+
+def build_simple_ner_eval_cards(
+    excel_df: pd.DataFrame,
+    audits: Sequence[Dict[str, object]],
+) -> List[Dict[str, object]]:
+    if excel_df is None:
+        excel_df = pd.DataFrame()
+
+    cards: List[Dict[str, object]] = []
+    for audit in audits:
+        chunk_id = int(audit.get("chunk", 0) or 0)
+        spans = audit.get("spans", [])
+        if not isinstance(spans, list):
+            spans = []
+
+        block_rows = (
+            excel_df[excel_df["_chunk"] == chunk_id].copy()
+            if "_chunk" in excel_df.columns
+            else pd.DataFrame()
+        )
+        visible_rows = (
+            block_rows[[col for col in EXCEL_COLUMNS if col in block_rows.columns]]
+            .fillna("")
+            .to_dict("records")
+            if not block_rows.empty
+            else []
+        )
+
+        prepared_attrs = []
+        gt_by_attr: Dict[str, Counter] = {}
+        pred_by_attr: Dict[str, Counter] = {}
+
+        for attr_key, attr_name, labels, output_col in NER_EVAL_ATTRIBUTES:
+            raw_ner_values = (
+                loading_values_from_spans(spans)
+                if attr_key == "LOAD_DATE"
+                else span_values_for_labels(spans, labels)
+            )
+            ner_values = unique_clean_values(raw_ner_values)
+            gt_values = output_values_for_attribute(block_rows, audit, attr_key, output_col)
+            counts = strict_entity_counts(gt_values, ner_values, attr_key)
+            gt_by_attr[attr_key] = counts["gt_counter"]
+            pred_by_attr[attr_key] = counts["pred_counter"]
+            prepared_attrs.append(
+                {
+                    "attr_key": attr_key,
+                    "attribute": attr_name,
+                    "labels": labels,
+                    "ner_values": ner_values,
+                    "ground_truth_values": unique_clean_values(gt_values),
+                    "counts": counts,
+                }
+            )
+
+        attr_rows = []
+        card_tp = card_fp = card_fn = 0
+        captured_count = 0
+        correct_count = 0
+        problem_attrs = set()
+
+        for item in prepared_attrs:
+            attr_key = str(item["attr_key"])
+            counts = item["counts"]
+            tp = int(counts["tp"])
+            fp = int(counts["fp"])
+            fn = int(counts["fn"])
+            card_tp += tp
+            card_fp += fp
+            card_fn += fn
+
+            if int(counts["predicted"]):
+                captured_count += 1
+
+            other_gt = Counter()
+            other_pred = Counter()
+            for other_key, counter in gt_by_attr.items():
+                if other_key != attr_key:
+                    other_gt.update(counter)
+            for other_key, counter in pred_by_attr.items():
+                if other_key != attr_key:
+                    other_pred.update(counter)
+
+            unmatched_pred = counts["unmatched_pred"]
+            unmatched_gt = counts["unmatched_gt"]
+            label_swap = any(value in other_gt for value in unmatched_pred) or any(
+                value in other_pred for value in unmatched_gt
+            )
+            status, status_class = ner_eval_status_from_counts(
+                tp,
+                fp,
+                fn,
+                label_swap=label_swap,
+                duplicate_fp=int(counts["duplicate_fp"]),
+            )
+            evaluated = (tp + fp + fn) > 0
+            if status == "CORRECT":
+                correct_count += 1
+            elif status != "EMPTY":
+                problem_attrs.add(str(item["attribute"]))
+
+            attr_rows.append(
+                {
+                    "attr_key": attr_key,
+                    "attribute": str(item["attribute"]),
+                    "ner_label": "+".join(str(label) for label in item["labels"]),
+                    "ner_value_items": list(item["ner_values"]),
+                    "ner_values": " | ".join(item["ner_values"]) if item["ner_values"] else "-",
+                    "ground_truth_items": list(item["ground_truth_values"]),
+                    "ground_truth": (
+                        " | ".join(item["ground_truth_values"])
+                        if item["ground_truth_values"]
+                        else "-"
+                    ),
+                    "tp": tp,
+                    "fp": fp,
+                    "fn": fn,
+                    "precision": float(counts["precision"]),
+                    "recall": float(counts["recall"]),
+                    "f1": float(counts["f1"]),
+                    "support": int(counts["support"]),
+                    "predicted": int(counts["predicted"]),
+                    "duplicate_fp": int(counts["duplicate_fp"]),
+                    "label_swap": bool(label_swap),
+                    "evaluated": evaluated,
+                    "status": status,
+                    "status_label": ner_eval_status_label(status),
+                    "status_class": status_class,
+                }
+            )
+
+        total_attrs = len(NER_EVAL_ATTRIBUTES)
+        complete_units, total_units, order_status = block_unit_completion(block_rows)
+        card_scores = metric_scores_from_counts(card_tp, card_fp, card_fn)
+        problem_count = len(problem_attrs)
+        card_status = (
+            "CORRECT"
+            if card_tp > 0 and card_fp == 0 and card_fn == 0
+            else "EMPTY"
+            if card_tp == 0 and card_fp == 0 and card_fn == 0
+            else "NEEDS_REVIEW"
+        )
+
+        cards.append(
+            {
+                "chunk": chunk_id,
+                "batch_index": int(audit.get("batch_index", 0) or 0),
+                "batch_label": str(audit.get("batch_label", "") or ""),
+                "batch_created_at": str(audit.get("batch_created_at", "") or ""),
+                "batch_id": str(audit.get("batch_id", "") or ""),
+                "batch_elapsed_ms": float(audit.get("batch_elapsed_ms", 0.0) or 0.0),
+                "extraction_run_id": str(audit.get("extraction_run_id", "") or ""),
+                "extraction_run_elapsed_ms": float(audit.get("extraction_run_elapsed_ms", 0.0) or 0.0),
+                "source": str(audit.get("source", "") or ""),
+                "ner_input": str(audit.get("ner_input", "") or ""),
+                "rows_count": len(block_rows),
+                "output_rows": visible_rows,
+                "complete_units": complete_units,
+                "total_units": total_units,
+                "order_status": order_status,
+                "captured_count": captured_count,
+                "ok_count": correct_count,
+                "total_attrs": total_attrs,
+                "tp": card_tp,
+                "fp": card_fp,
+                "fn": card_fn,
+                "precision": card_scores["precision"],
+                "recall": card_scores["recall"],
+                "f1": card_scores["f1"],
+                "avg_f1_score": card_scores["f1"],
+                "needs_check": problem_count,
+                "problem_count": problem_count,
+                "problem_attrs": sorted(problem_attrs),
+                "eval_status": card_status,
                 "attr_rows": attr_rows,
             }
         )
@@ -6964,9 +7643,9 @@ def render_simple_ner_block_evaluation(
         )
 
     def block_stage_html(card: Dict[str, object], stage_label: str | None = None) -> str:
-        avg_conf = float(card.get("avg_confidence", 0.0) or 0.0)
+        avg_f1 = float(card.get("avg_f1_score", 0.0) or 0.0)  # Ganti dari avg_confidence
         problem_count = int(card.get("problem_count", card.get("needs_check", 0)) or 0)
-        quality_class = "good" if problem_count == 0 else "warn" if avg_conf >= 0.70 else "bad"
+        quality_class = "good" if problem_count == 0 else "warn" if avg_f1 >= 0.70 else "bad"
         batch_label = str(card.get("batch_label", "") or "")
         order_status = str(card.get("order_status", "BELUM LENGKAP") or "BELUM LENGKAP")
         status_class = "complete" if order_status == "LENGKAP" else "incomplete"
@@ -7014,8 +7693,8 @@ def render_simple_ner_block_evaluation(
     def order_group_html(group: Dict[str, object]) -> str:
         group_cards = list(group.get("cards", []) or [])
         final_card = group_cards[-1] if group_cards else {}
-        avg_values = [float(card.get("avg_confidence", 0.0) or 0.0) for card in group_cards]
-        avg_conf = sum(avg_values) / len(avg_values) if avg_values else 0.0
+        avg_f1_values = [float(card.get("avg_f1_score", 0.0) or 0.0) for card in group_cards]  # Ganti dari avg_confidence
+        avg_f1 = sum(avg_f1_values) / len(avg_f1_values) if avg_f1_values else 0.0
         total_units = int(final_card.get("total_units", 0) or 0)
         complete_units = int(final_card.get("complete_units", 0) or 0)
         status = "LENGKAP" if total_units and complete_units == total_units else "BELUM LENGKAP"
@@ -7090,17 +7769,33 @@ def render_simple_ner_block_evaluation(
         display_items = display_items[: max(0, int(max_items))]
 
     cards_html = []
-    for item_type, item in display_items:
+    for display_index, (item_type, item) in enumerate(display_items, start=1):
         if item_type == "group":
-            cards_html.append(order_group_html(item))
+            card_html = order_group_html(item)
+            card_title = f"Order gabungan NER #{item.get('index', display_index)}"
+            card_id = analytics_card_control_id(
+                "ner-order",
+                display_index,
+                item.get("key", ""),
+            )
         else:
-            cards_html.append(block_stage_html(item))
+            card_html = block_stage_html(item)
+            card_title = f"Blok chat #{item.get('chunk', display_index)}"
+            card_id = analytics_card_control_id(
+                "ner-block",
+                display_index,
+                ner_eval_card_identity(item),
+            )
+        cards_html.append(
+            wrap_expandable_analytics_card(card_html, card_id, card_title)
+        )
 
     html = f"""
     <style>
     .simple-ner-eval {{
-        height: {height}px;
-        overflow: auto;
+        height: auto;
+        max-height: none;
+        overflow: visible;
         border: 1px solid #d6dee8;
         border-radius: 8px;
         background: #eef2f7;
@@ -7403,7 +8098,689 @@ def render_simple_ner_block_evaluation(
         .ner-block-grid {{ grid-template-columns: 1fr; }}
     }}
     </style>
+    {analytics_expandable_css()}
     <div class="simple-ner-eval">{''.join(cards_html)}</div>
+    """
+    st.html(html)
+
+
+def render_simple_ner_block_evaluation(
+    cards: Sequence[Dict[str, object]],
+    height: int = 760,
+    grouped_orders: Sequence[Dict[str, object]] | None = None,
+    max_items: int | None = None,
+) -> None:
+    if not cards:
+        st.info("Belum ada blok chat untuk dievaluasi.")
+        return
+
+    def values_html(values: Sequence[object]) -> str:
+        items = [
+            clean_cell_value(str(value))
+            for value in values
+            if clean_cell_value(str(value))
+        ]
+        if not items:
+            return "<span class='ner-empty'>-</span>"
+        return "<div class='ner-chip-list'>" + "".join(
+            f"<span>{escape(item)}</span>" for item in items
+        ) + "</div>"
+
+    def metric_text(row: Dict[str, object], key: str) -> str:
+        return pct_or_dash(
+            float(row.get(key, 0.0) or 0.0),
+            bool(row.get("evaluated", False)),
+        )
+
+    def attr_table_html(rows: Sequence[Dict[str, object]]) -> str:
+        body = []
+        for row in rows:
+            status = str(row.get("status", "") or "")
+            cls = escape(str(row.get("status_class", "")))
+            body.append(
+                f"<tr class='{cls}'>"
+                f"<td class='field-name'>{escape(str(row.get('attribute', '')))}</td>"
+                f"<td class='ner-label'>{escape(str(row.get('ner_label', '')))}</td>"
+                f"<td>{values_html(row.get('ground_truth_items', []))}</td>"
+                f"<td>{values_html(row.get('ner_value_items', []))}</td>"
+                f"<td class='num'>{int(row.get('tp', 0) or 0)}</td>"
+                f"<td class='num'>{int(row.get('fp', 0) or 0)}</td>"
+                f"<td class='num'>{int(row.get('fn', 0) or 0)}</td>"
+                f"<td class='num'>{metric_text(row, 'precision')}</td>"
+                f"<td class='num'>{metric_text(row, 'recall')}</td>"
+                f"<td class='num f1'>{metric_text(row, 'f1')}</td>"
+                f"<td><span class='status-badge {escape(status.lower())}'>{escape(str(row.get('status_label', status)))}</span></td>"
+                "</tr>"
+            )
+        if not body:
+            body.append(
+                "<tr><td colspan='11' class='empty-cell'>Tidak ada atribut yang cocok dengan filter.</td></tr>"
+            )
+        return (
+            "<div class='attr-table-wrap'>"
+            "<table class='attr-check'>"
+            "<thead><tr>"
+            "<th>Entitas</th><th>Label NER</th><th>Ground Truth</th>"
+            "<th>Hasil NER</th><th>TP</th><th>FP</th><th>FN</th>"
+            "<th>Precision</th><th>Recall</th><th>F1-score</th><th>Status</th>"
+            "</tr></thead>"
+            f"<tbody>{''.join(body)}</tbody>"
+            "</table>"
+            "</div>"
+        )
+
+    def card_quality_class(tp: int, fp: int, fn: int) -> str:
+        if tp == 0 and fp == 0 and fn == 0:
+            return "neutral"
+        if fp == 0 and fn == 0:
+            return "good"
+        if tp > 0:
+            return "warn"
+        return "bad"
+
+    def block_stage_html(card: Dict[str, object], stage_label: str | None = None) -> str:
+        tp = int(card.get("tp", 0) or 0)
+        fp = int(card.get("fp", 0) or 0)
+        fn = int(card.get("fn", 0) or 0)
+        precision = float(card.get("precision", 0.0) or 0.0)
+        recall = float(card.get("recall", 0.0) or 0.0)
+        f1 = float(card.get("f1", 0.0) or 0.0)
+        quality_class = card_quality_class(tp, fp, fn)
+        batch_label = str(card.get("batch_label", "") or "")
+        source_text = str(card.get("source", "") or "")
+        title_text = stage_label or f"Blok chat #{card.get('chunk', '')}"
+        problem_count = int(card.get("problem_count", card.get("needs_check", 0)) or 0)
+        return f"""
+            <section class="ner-block-card {quality_class}">
+                <div class="ner-block-head">
+                    <div>
+                        <div class="block-title-row">
+                            <span class="block-title">{escape(str(title_text))}</span>
+                            <span class="block-type">Strict entity-level NER</span>
+                        </div>
+                        <div class="block-subtitle">Skor dihitung dari TP, FP, dan FN terhadap ground truth/pembanding per atribut.</div>
+                    </div>
+                    <div class="block-pills">
+                        {f"<span>{escape(batch_label)}</span>" if batch_label else ""}
+                        <span>P {pct_text(precision)}</span>
+                        <span>R {pct_text(recall)}</span>
+                        <span>F1 {pct_text(f1)}</span>
+                        <span>TP {tp}</span>
+                        <span>FP {fp}</span>
+                        <span>FN {fn}</span>
+                        <span class="problem-status {'problem' if problem_count else 'ok'}">{'PERLU CEK ' + escape(str(problem_count)) if problem_count else 'VALID'}</span>
+                    </div>
+                </div>
+                <div class="ner-block-grid">
+                    <div class="panel">
+                        <div class="panel-title section-title">Chat asli</div>
+                        <pre class="chat-original">{escape(source_text)}</pre>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-title model-title">indolem/indobert-base-uncased</div>
+                        {attr_table_html(card.get("attr_rows", []))}
+                    </div>
+                </div>
+            </section>
+            """
+
+    def order_group_html(group: Dict[str, object]) -> str:
+        group_cards = [
+            card for card in (group.get("cards", []) or []) if isinstance(card, dict)
+        ]
+        tp = sum(int(card.get("tp", 0) or 0) for card in group_cards)
+        fp = sum(int(card.get("fp", 0) or 0) for card in group_cards)
+        fn = sum(int(card.get("fn", 0) or 0) for card in group_cards)
+        scores = metric_scores_from_counts(tp, fp, fn)
+        problem_count = sum(
+            int(card.get("problem_count", card.get("needs_check", 0)) or 0)
+            for card in group_cards
+        )
+        order_class = card_quality_class(tp, fp, fn)
+
+        stage_details = []
+        for stage_idx, card in enumerate(group_cards, start=1):
+            batch_label = str(card.get("batch_label", "") or "")
+            stage_title = f"Tahap {stage_idx} - Blok chat #{card.get('chunk', '')}"
+            stage_details.append(
+                f"""
+                <details class="ner-stage-detail"{' open' if stage_idx == len(group_cards) else ''}>
+                    <summary>{escape(stage_title)}{f" <span>{escape(batch_label)}</span>" if batch_label else ""}</summary>
+                    <div class="ner-block-grid ner-stage-grid">
+                        <div class="panel">
+                            <div class="panel-title section-title">Chat asli tahap {stage_idx}</div>
+                            <pre class="chat-original">{escape(str(card.get("source", "") or ""))}</pre>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-title model-title">indolem/indobert-base-uncased</div>
+                            {attr_table_html(card.get("attr_rows", []))}
+                        </div>
+                    </div>
+                </details>
+                """
+            )
+
+        return f"""
+        <section class="ner-order-card {order_class}">
+            <div class="ner-block-head">
+                <div>
+                    <div class="block-title-row">
+                        <span class="block-title">Order gabungan NER #{escape(str(group.get('index', '')))}</span>
+                        <span class="block-type">Gabungan tahap chat</span>
+                    </div>
+                    <div class="block-subtitle">{escape(str(group.get('summary', '') or 'Order gabungan'))}</div>
+                </div>
+                <div class="block-pills">
+                    <span>{len(group_cards)} tahap chat</span>
+                    <span>P {pct_text(scores['precision'])}</span>
+                    <span>R {pct_text(scores['recall'])}</span>
+                    <span>F1 {pct_text(scores['f1'])}</span>
+                    <span>TP {tp}</span>
+                    <span>FP {fp}</span>
+                    <span>FN {fn}</span>
+                    <span class="problem-status {'problem' if problem_count else 'ok'}">{'PERLU CEK ' + escape(str(problem_count)) if problem_count else 'VALID'}</span>
+                </div>
+            </div>
+            <div class="ner-order-timeline">
+                {''.join(stage_details)}
+            </div>
+        </section>
+        """
+
+    grouped_orders = list(grouped_orders or [])
+    grouped_card_ids = {
+        str(card_id)
+        for group in grouped_orders
+        for card_id in (group.get("card_ids", []) or [])
+    }
+
+    display_items: List[tuple[str, object]] = []
+    for group in grouped_orders:
+        display_items.append(("group", group))
+    for card in cards:
+        if ner_eval_card_identity(card) not in grouped_card_ids:
+            display_items.append(("card", card))
+
+    if max_items is not None:
+        display_items = display_items[: max(0, int(max_items))]
+
+    cards_html = []
+    for display_index, (item_type, item) in enumerate(display_items, start=1):
+        if item_type == "group":
+            card_html = order_group_html(item)
+            card_title = f"Order gabungan NER #{item.get('index', display_index)}"
+            card_id = analytics_card_control_id(
+                "ner-order-new",
+                item.get("index", display_index),
+                item.get("key", display_index),
+            )
+            cards_html.append(wrap_expandable_analytics_card(card_html, card_id, card_title))
+        else:
+            card_html = block_stage_html(item)
+            card_title = f"Blok chat #{item.get('chunk', display_index)}"
+            card_id = analytics_card_control_id(
+                "ner-block-new",
+                display_index,
+                ner_eval_card_identity(item),
+            )
+            cards_html.append(wrap_expandable_analytics_card(card_html, card_id, card_title))
+
+    html = f"""
+    <style>
+    .simple-ner-eval {{
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #0f172a;
+    }}
+    .ner-block-card,
+    .ner-order-card {{
+        border: 1px solid #cbd5e1;
+        border-radius: 7px;
+        background: #fff;
+        overflow: hidden;
+    }}
+    .ner-block-head {{
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 10px 12px;
+        border-bottom: 1px solid #d6dee8;
+        background: #f8fafc;
+    }}
+    .ner-block-card.good .ner-block-head,
+    .ner-order-card.good .ner-block-head {{ background: #f0fdf4; }}
+    .ner-block-card.warn .ner-block-head,
+    .ner-order-card.warn .ner-block-head {{ background: #fffbeb; }}
+    .ner-block-card.bad .ner-block-head,
+    .ner-order-card.bad .ner-block-head {{ background: #fef2f2; }}
+    .ner-block-card.neutral .ner-block-head,
+    .ner-order-card.neutral .ner-block-head {{ background: #f8fafc; }}
+    .block-title-row {{
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }}
+    .block-title {{
+        font-weight: 800;
+        font-size: 15px;
+    }}
+    .block-type {{
+        border: 1px solid #cbd5e1;
+        border-radius: 999px;
+        padding: 2px 8px;
+        background: #fff;
+        font-size: 11px;
+        color: #334155;
+    }}
+    .block-subtitle {{
+        margin-top: 3px;
+        font-size: 12px;
+        color: #475569;
+    }}
+    .block-pills {{
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }}
+    .block-pills span {{
+        border: 1px solid #cbd5e1;
+        border-radius: 999px;
+        padding: 3px 8px;
+        background: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+    }}
+    .problem-status.ok {{ color: #166534; }}
+    .problem-status.problem {{ color: #991b1b; }}
+    .ner-block-grid {{
+        display: grid;
+        grid-template-columns: minmax(280px, 0.72fr) minmax(460px, 1.28fr);
+        gap: 12px;
+        padding: 12px;
+    }}
+    .panel {{
+        border: 1px solid #d6dee8;
+        border-radius: 7px;
+        overflow: hidden;
+        background: #fff;
+    }}
+    .panel-title {{
+        padding: 8px 10px;
+        border-bottom: 1px solid #d6dee8;
+        background: #f8fafc;
+        font-weight: 800;
+        font-size: 13px;
+    }}
+    .model-title {{
+        text-align: center;
+        font-size: 15px;
+    }}
+    .chat-original {{
+        min-height: 320px;
+        max-height: 360px;
+        overflow: auto;
+        margin: 0;
+        padding: 10px 12px;
+        background: #fbfdff;
+        color: #000;
+        font-size: 11px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+    }}
+    .attr-table-wrap {{
+        overflow: auto;
+        max-height: 380px;
+    }}
+    table.attr-check {{
+        width: 100%;
+        min-width: 1080px;
+        border-collapse: collapse;
+        table-layout: fixed;
+        font-size: 11px;
+    }}
+    table.attr-check th {{
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        border: 1px solid #334155;
+        background: #f3f4f6;
+        padding: 6px 5px;
+        text-align: center;
+        font-weight: 800;
+        white-space: nowrap;
+    }}
+    table.attr-check td {{
+        border: 1px solid #334155;
+        padding: 5px 6px;
+        vertical-align: top;
+        background: #fff;
+        word-break: break-word;
+    }}
+    table.attr-check th:nth-child(1), table.attr-check td:nth-child(1) {{ width: 110px; }}
+    table.attr-check th:nth-child(2), table.attr-check td:nth-child(2) {{ width: 118px; }}
+    table.attr-check th:nth-child(3), table.attr-check td:nth-child(3),
+    table.attr-check th:nth-child(4), table.attr-check td:nth-child(4) {{ width: 205px; }}
+    table.attr-check th:nth-child(5), table.attr-check td:nth-child(5),
+    table.attr-check th:nth-child(6), table.attr-check td:nth-child(6),
+    table.attr-check th:nth-child(7), table.attr-check td:nth-child(7) {{ width: 48px; }}
+    table.attr-check th:nth-child(8), table.attr-check td:nth-child(8),
+    table.attr-check th:nth-child(9), table.attr-check td:nth-child(9),
+    table.attr-check th:nth-child(10), table.attr-check td:nth-child(10) {{ width: 72px; }}
+    table.attr-check th:nth-child(11), table.attr-check td:nth-child(11) {{ width: 94px; }}
+    table.attr-check .field-name {{ font-weight: 800; }}
+    table.attr-check .ner-label {{
+        color: #334155;
+        font-size: 10px;
+        overflow-wrap: anywhere;
+    }}
+    table.attr-check .num {{
+        text-align: center;
+        font-weight: 700;
+        white-space: nowrap;
+    }}
+    table.attr-check .f1 {{ color: #111827; }}
+    table.attr-check tr.ok td {{ background: #f8fffb; }}
+    table.attr-check tr.warn td {{ background: #fffdf4; }}
+    table.attr-check tr.bad td {{ background: #fff7f7; }}
+    table.attr-check tr.miss td {{ background: #fff7f7; }}
+    table.attr-check tr.empty td {{ color: #64748b; }}
+    .ner-chip-list {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }}
+    .ner-chip-list span {{
+        display: inline-block;
+        border: 1px solid #d1d5db;
+        border-radius: 5px;
+        padding: 2px 5px;
+        background: #fff;
+        color: #111827;
+        overflow-wrap: anywhere;
+    }}
+    .ner-empty {{ color: #94a3b8; }}
+    .status-badge {{
+        display: inline-block;
+        border: 1px solid #cbd5e1;
+        border-radius: 999px;
+        padding: 2px 7px;
+        background: #fff;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.2;
+        max-width: 88px;
+        text-align: center;
+    }}
+    .status-badge.correct {{ color: #166534; border-color: #86efac; }}
+    .status-badge.partial,
+    .status-badge.duplicate,
+    .status-badge.spurious {{ color: #92400e; border-color: #facc15; }}
+    .status-badge.missing,
+    .status-badge.wrong,
+    .status-badge.label_swap {{ color: #991b1b; border-color: #fca5a5; }}
+    .empty-cell {{
+        text-align: center;
+        color: #64748b;
+        padding: 14px !important;
+    }}
+    .ner-order-timeline {{
+        padding: 12px;
+    }}
+    .ner-stage-detail {{
+        border: 1px solid #d6dee8;
+        border-radius: 7px;
+        background: #fff;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }}
+    .ner-stage-detail summary {{
+        cursor: pointer;
+        padding: 9px 11px;
+        background: #f8fafc;
+        border-bottom: 1px solid #d6dee8;
+        font-size: 13px;
+        font-weight: 800;
+        color: #0f172a;
+    }}
+    .ner-stage-detail summary span {{
+        margin-left: 8px;
+        border: 1px solid #cbd5e1;
+        border-radius: 999px;
+        padding: 2px 7px;
+        font-size: 10px;
+        color: #475569;
+        background: #fff;
+    }}
+    .ner-stage-grid {{
+        padding: 10px;
+    }}
+    @media (max-width: 900px) {{
+        .ner-block-head {{ align-items: flex-start; flex-direction: column; }}
+        .block-pills {{ justify-content: flex-start; }}
+        .ner-block-grid {{ grid-template-columns: 1fr; }}
+    }}
+    </style>
+    {analytics_expandable_css()}
+    <div class="simple-ner-eval">{''.join(cards_html)}</div>
+    """
+    st.html(html)
+
+
+def aggregate_ner_attribute_scores(cards: Sequence[Dict[str, object]]) -> List[Dict[str, object]]:
+    stats: Dict[str, Dict[str, object]] = {}
+    for attr_key, attr_name, labels, _ in NER_EVAL_ATTRIBUTES:
+        stats[attr_key] = {
+            "attr_key": attr_key,
+            "attribute": attr_name,
+            "ner_label": "+".join(labels),
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "support": 0,
+            "predicted": 0,
+            "duplicate_fp": 0,
+            "label_swap": 0,
+        }
+
+    for card in cards:
+        for row in card.get("attr_rows", []) or []:
+            attr_key = str(row.get("attr_key", "") or "")
+            if attr_key not in stats:
+                continue
+            bucket = stats[attr_key]
+            bucket["tp"] = int(bucket["tp"]) + int(row.get("tp", 0) or 0)
+            bucket["fp"] = int(bucket["fp"]) + int(row.get("fp", 0) or 0)
+            bucket["fn"] = int(bucket["fn"]) + int(row.get("fn", 0) or 0)
+            bucket["support"] = int(bucket["support"]) + int(row.get("support", 0) or 0)
+            bucket["predicted"] = int(bucket["predicted"]) + int(row.get("predicted", 0) or 0)
+            bucket["duplicate_fp"] = int(bucket["duplicate_fp"]) + int(row.get("duplicate_fp", 0) or 0)
+            if row.get("label_swap"):
+                bucket["label_swap"] = int(bucket["label_swap"]) + 1
+
+    rows = []
+    for attr_key, _, _, _ in NER_EVAL_ATTRIBUTES:
+        item = dict(stats[attr_key])
+        scores = metric_scores_from_counts(
+            int(item["tp"]),
+            int(item["fp"]),
+            int(item["fn"]),
+        )
+        item.update(scores)
+        rows.append(item)
+    return rows
+
+
+def format_duration_ms(value: object) -> str:
+    try:
+        ms = float(value or 0.0)
+    except Exception:
+        ms = 0.0
+    if ms <= 0:
+        return "-"
+    if ms < 1000:
+        return f"{ms:.0f} ms"
+    seconds = ms / 1000.0
+    if seconds < 60:
+        return f"{seconds:.0f} dtk"
+    minutes = int(seconds // 60)
+    remainder = int(round(seconds - (minutes * 60)))
+    return f"{minutes}m {remainder}d"
+
+
+def ner_extraction_duration_summary(cards: Sequence[Dict[str, object]]) -> Dict[str, float]:
+    batches: Dict[str, float] = {}
+    for card in cards:
+        try:
+            run_elapsed_ms = float(card.get("extraction_run_elapsed_ms", 0.0) or 0.0)
+        except Exception:
+            run_elapsed_ms = 0.0
+        try:
+            elapsed_ms = run_elapsed_ms or float(card.get("batch_elapsed_ms", 0.0) or 0.0)
+        except Exception:
+            elapsed_ms = 0.0
+        if elapsed_ms <= 0:
+            continue
+        run_id = str(card.get("extraction_run_id", "") or "").strip()
+        batch_key = run_id or "|".join(
+            [
+                str(card.get("batch_id", "") or ""),
+                str(card.get("batch_index", "") or ""),
+                str(card.get("batch_label", "") or ""),
+            ]
+        )
+        if not batch_key.strip("|"):
+            batch_key = str(card.get("chunk", "") or len(batches) + 1)
+        batches[batch_key] = max(float(batches.get(batch_key, 0.0)), elapsed_ms)
+
+    total_ms = sum(batches.values())
+    batch_count = len(batches)
+    block_count = len(cards)
+    return {
+        "total_ms": total_ms,
+        "avg_batch_ms": total_ms / batch_count if batch_count else 0.0,
+        "avg_block_ms": total_ms / block_count if block_count else 0.0,
+        "batch_count": float(batch_count),
+        "block_count": float(block_count),
+    }
+
+
+def render_ner_attribute_score_table(cards: Sequence[Dict[str, object]]) -> None:
+    rows = aggregate_ner_attribute_scores(cards)
+    total_tp = sum(int(row.get("tp", 0) or 0) for row in rows)
+    total_fp = sum(int(row.get("fp", 0) or 0) for row in rows)
+    total_fn = sum(int(row.get("fn", 0) or 0) for row in rows)
+    total_scores = metric_scores_from_counts(total_tp, total_fp, total_fn)
+
+    def score_row(row: Dict[str, object], is_total: bool = False) -> str:
+        tp = int(row.get("tp", 0) or 0)
+        fp = int(row.get("fp", 0) or 0)
+        fn = int(row.get("fn", 0) or 0)
+        evaluated = (tp + fp + fn) > 0
+        cls = "total" if is_total else "ok" if fp == 0 and fn == 0 and tp > 0 else "warn" if tp > 0 else "bad" if evaluated else "empty"
+        return (
+            f"<tr class='{cls}'>"
+            f"<td>{escape(str(row.get('attribute', 'TOTAL')))}</td>"
+            f"<td>{escape(str(row.get('ner_label', '-')))}</td>"
+            f"<td class='num'>{tp}</td>"
+            f"<td class='num'>{fp}</td>"
+            f"<td class='num'>{fn}</td>"
+            f"<td class='num'>{pct_or_dash(float(row.get('precision', 0.0) or 0.0), evaluated)}</td>"
+            f"<td class='num'>{pct_or_dash(float(row.get('recall', 0.0) or 0.0), evaluated)}</td>"
+            f"<td class='num f1'>{pct_or_dash(float(row.get('f1', 0.0) or 0.0), evaluated)}</td>"
+            "</tr>"
+        )
+
+    total_row = {
+        "attribute": "TOTAL",
+        "ner_label": "Micro average",
+        "tp": total_tp,
+        "fp": total_fp,
+        "fn": total_fn,
+        "precision": total_scores["precision"],
+        "recall": total_scores["recall"],
+        "f1": total_scores["f1"],
+    }
+    body = "".join(score_row(row) for row in rows) + score_row(total_row, True)
+    html = f"""
+    <style>
+    .ner-score-summary {{
+        border: 1px solid #cbd5e1;
+        border-radius: 7px;
+        overflow: hidden;
+        background: #fff;
+        margin: 12px 0;
+        font-family: Arial, Helvetica, sans-serif;
+    }}
+    .ner-score-title {{
+        padding: 9px 12px;
+        background: #f8fafc;
+        border-bottom: 1px solid #d6dee8;
+        font-weight: 800;
+        color: #0f172a;
+    }}
+    .ner-score-scroll {{ overflow: auto; }}
+    table.ner-score-table {{
+        width: 100%;
+        min-width: 860px;
+        border-collapse: collapse;
+        font-size: 11px;
+    }}
+    table.ner-score-table th {{
+        border: 1px solid #334155;
+        background: #f3f4f6;
+        padding: 6px 5px;
+        text-align: center;
+        white-space: nowrap;
+    }}
+    table.ner-score-table td {{
+        border: 1px solid #334155;
+        padding: 5px 6px;
+        background: #fff;
+    }}
+    table.ner-score-table .num {{
+        text-align: center;
+        font-weight: 700;
+        white-space: nowrap;
+    }}
+    table.ner-score-table th:first-child,
+    table.ner-score-table td:first-child {{
+        min-width: 160px;
+        font-weight: 700;
+    }}
+    table.ner-score-table th:nth-child(2),
+    table.ner-score-table td:nth-child(2) {{
+        min-width: 150px;
+        color: #334155;
+    }}
+    table.ner-score-table tr.ok td {{ background: #f8fffb; }}
+    table.ner-score-table tr.warn td {{ background: #fffdf4; }}
+    table.ner-score-table tr.bad td {{ background: #fff7f7; }}
+    table.ner-score-table tr.empty td {{ color: #64748b; }}
+    table.ner-score-table tr.total td {{
+        background: #eef2ff;
+        font-weight: 800;
+    }}
+    </style>
+    <section class="ner-score-summary">
+        <div class="ner-score-title">Rekap strict entity-level score per atribut</div>
+        <div class="ner-score-scroll">
+            <table class="ner-score-table">
+                <thead>
+                    <tr>
+                        <th>Entitas</th><th>Label NER</th><th>TP</th><th>FP</th><th>FN</th>
+                        <th>Precision</th><th>Recall</th><th>F1-score</th>
+                    </tr>
+                </thead>
+                <tbody>{body}</tbody>
+            </table>
+        </div>
+    </section>
     """
     st.html(html)
 
@@ -7611,12 +8988,14 @@ def render_ner_analytics_section(
                 ]
             return [item]
 
-        def metric_item_avg_confidence(item_type: str, item: Dict[str, object]) -> float:
+        def metric_item_avg_f1(item_type: str, item: Dict[str, object]) -> float:
+            """Hitung rata-rata F1 Score untuk satu item (order/blok)"""
             cards = metric_item_cards(item_type, item)
             values = [
-                float(card.get("avg_confidence", 0.0) or 0.0)
+                float(card.get("avg_f1_score", 0.0) or 0.0)  # Ganti dari avg_confidence
                 for card in cards
             ]
+            return sum(values) / len(values) if values else 0.0
             return sum(values) / len(values) if values else 0.0
 
         def metric_item_complete(item_type: str, item: Dict[str, object]) -> bool:
@@ -7629,8 +9008,8 @@ def render_ner_analytics_section(
         def metric_item_problematic(item_type: str, item: Dict[str, object]) -> bool:
             return any(card_problematic(card) for card in metric_item_cards(item_type, item))
 
-        avg_block_conf = (
-            sum(metric_item_avg_confidence(item_type, item) for item_type, item in metric_items)
+        avg_block_f1 = (
+            sum(metric_item_avg_f1(item_type, item) for item_type, item in metric_items)  # Ganti dari metric_item_avg_confidence
             / len(metric_items)
             if metric_items
             else 0.0
@@ -7645,7 +9024,7 @@ def render_ner_analytics_section(
             1 for item_type, item in metric_items if metric_item_problematic(item_type, item)
         )
         eval_metrics = st.columns(5)
-        eval_metrics[0].metric("Avg confidence NER", pct_text(avg_block_conf))
+        eval_metrics[0].metric("Avg F1 Score NER", pct_text(avg_block_f1))  # Ganti dari "Avg confidence NER"
         eval_metrics[1].metric("Total Order", len(metric_items))
         eval_metrics[2].metric("Order Terpenuhi", complete_orders)
         eval_metrics[3].metric("Analitik OK", ok_blocks)
@@ -7664,6 +9043,261 @@ def render_ner_analytics_section(
         )
     else:
         st.info("Belum ada hasil NER untuk dievaluasi.")
+
+
+def render_ner_analytics_section(
+    excel_df: pd.DataFrame,
+    ner_audits: Sequence[Dict[str, object]],
+    title: str = "Evaluasi NER per blok chat",
+    key_prefix: str = "ner_eval",
+    match_history: Sequence[Dict[str, object]] | None = None,
+) -> None:
+    st.subheader(title)
+    simple_eval_cards = build_simple_ner_eval_cards(excel_df, ner_audits)
+    if not simple_eval_cards:
+        st.info("Belum ada hasil NER untuk dievaluasi.")
+        return
+
+    def card_batch_label(card: Dict[str, object]) -> str:
+        batch_index = int(card.get("batch_index", 0) or 0)
+        batch_label = str(card.get("batch_label", "") or "").strip()
+        if batch_label:
+            return batch_label
+        return f"Batch {batch_index}" if batch_index else "Batch manual"
+
+    batch_entries = []
+    seen_batches = set()
+    for card in simple_eval_cards:
+        batch_index = int(card.get("batch_index", 0) or 0)
+        batch_label = card_batch_label(card)
+        batch_key = batch_index if batch_index else batch_label
+        if batch_key in seen_batches:
+            continue
+        seen_batches.add(batch_key)
+        batch_entries.append((batch_key, batch_label, batch_index))
+
+    latest_batch_index = max(
+        [int(card.get("batch_index", 0) or 0) for card in simple_eval_cards],
+        default=0,
+    )
+    batch_options = ["Semua batch"]
+    if latest_batch_index:
+        batch_options.append("Batch terbaru")
+    batch_options.extend(label for _, label, _ in batch_entries)
+
+    available_groups = build_ner_stage2_card_groups(simple_eval_cards, match_history)
+    view_options = ["Per blok chat"]
+    if available_groups:
+        view_options.insert(0, "Per order gabungan")
+
+    attr_options = ["Semua atribut"] + [attr_name for _, attr_name, _, _ in NER_EVAL_ATTRIBUTES]
+    eval_options = [
+        "Semua hasil",
+        "Benar",
+        "Ada masalah",
+        "Tidak terekstrak",
+        "Salah / berlebih",
+        "Parsial",
+        "Atribut tertukar",
+        "Duplikasi",
+        "Kosong",
+    ]
+
+    filter_cols = st.columns([1.08, 1.08, 1.08, 1.16])
+    selected_view = filter_cols[0].selectbox(
+        "Mode tampilan",
+        options=view_options,
+        index=0,
+        key=f"{key_prefix}_view_mode",
+    )
+    selected_batch = filter_cols[1].selectbox(
+        "Batch ekstraksi",
+        options=batch_options,
+        index=0,
+        key=f"{key_prefix}_batch_filter",
+    )
+    selected_attr = filter_cols[2].selectbox(
+        "Atribut",
+        options=attr_options,
+        index=0,
+        key=f"{key_prefix}_attribute_filter",
+    )
+    selected_eval = filter_cols[3].selectbox(
+        "Hasil evaluasi",
+        options=eval_options,
+        index=0,
+        key=f"{key_prefix}_eval_filter",
+    )
+
+    def row_matches_filter(row: Dict[str, object]) -> bool:
+        if selected_attr != "Semua atribut" and str(row.get("attribute", "")) != selected_attr:
+            return False
+        status = str(row.get("status", "") or "").upper()
+        tp = int(row.get("tp", 0) or 0)
+        fp = int(row.get("fp", 0) or 0)
+        fn = int(row.get("fn", 0) or 0)
+        duplicate_fp = int(row.get("duplicate_fp", 0) or 0)
+        label_swap = bool(row.get("label_swap", False))
+        if selected_eval == "Semua hasil":
+            return True
+        if selected_eval == "Benar":
+            return status == "CORRECT"
+        if selected_eval == "Ada masalah":
+            return status not in {"CORRECT", "EMPTY"}
+        if selected_eval == "Tidak terekstrak":
+            return fn > 0 and fp == 0
+        if selected_eval == "Salah / berlebih":
+            return fp > 0
+        if selected_eval == "Parsial":
+            return status == "PARTIAL"
+        if selected_eval == "Atribut tertukar":
+            return label_swap
+        if selected_eval == "Duplikasi":
+            return duplicate_fp > 0
+        if selected_eval == "Kosong":
+            return status == "EMPTY"
+        return True
+
+    def recompute_card_from_rows(card: Dict[str, object], rows: List[Dict[str, object]]) -> Dict[str, object]:
+        updated = dict(card)
+        tp = sum(int(row.get("tp", 0) or 0) for row in rows)
+        fp = sum(int(row.get("fp", 0) or 0) for row in rows)
+        fn = sum(int(row.get("fn", 0) or 0) for row in rows)
+        scores = metric_scores_from_counts(tp, fp, fn)
+        problem_attrs = {
+            str(row.get("attribute", ""))
+            for row in rows
+            if str(row.get("status", "") or "").upper() not in {"CORRECT", "EMPTY"}
+        }
+        updated["attr_rows"] = rows
+        updated["tp"] = tp
+        updated["fp"] = fp
+        updated["fn"] = fn
+        updated["precision"] = scores["precision"]
+        updated["recall"] = scores["recall"]
+        updated["f1"] = scores["f1"]
+        updated["avg_f1_score"] = scores["f1"]
+        updated["problem_count"] = len(problem_attrs)
+        updated["needs_check"] = len(problem_attrs)
+        updated["problem_attrs"] = sorted(problem_attrs)
+        return updated
+
+    filtered_cards = list(simple_eval_cards)
+    if selected_batch == "Batch terbaru" and latest_batch_index:
+        filtered_cards = [
+            card
+            for card in filtered_cards
+            if int(card.get("batch_index", 0) or 0) == latest_batch_index
+        ]
+    elif selected_batch != "Semua batch":
+        filtered_cards = [
+            card for card in filtered_cards if card_batch_label(card) == selected_batch
+        ]
+
+    filtered_with_rows = []
+    for card in filtered_cards:
+        matched_rows = [
+            row for row in (card.get("attr_rows", []) or []) if row_matches_filter(row)
+        ]
+        if matched_rows:
+            filtered_with_rows.append(recompute_card_from_rows(card, matched_rows))
+    filtered_cards = filtered_with_rows
+
+    if not filtered_cards:
+        st.info("Tidak ada blok chat yang cocok dengan filter analitik saat ini.")
+        return
+
+    grouped_orders: List[Dict[str, object]] = []
+    if selected_view == "Per order gabungan":
+        candidate_groups = build_ner_stage2_card_groups(filtered_cards, match_history)
+        candidate_grouped_card_ids = {
+            str(card_id)
+            for group in candidate_groups
+            for card_id in (group.get("card_ids", []) or [])
+        }
+        grouped_orders = list(candidate_groups)
+        selected_group_card_ids = {
+            str(card_id)
+            for group in grouped_orders
+            for card_id in (group.get("card_ids", []) or [])
+        }
+        ungrouped_cards = [
+            card
+            for card in filtered_cards
+            if ner_eval_card_identity(card) not in candidate_grouped_card_ids
+        ]
+        ungrouped_card_ids = {ner_eval_card_identity(card) for card in ungrouped_cards}
+        filtered_cards = [
+            card
+            for card in filtered_cards
+            if ner_eval_card_identity(card) in selected_group_card_ids
+            or ner_eval_card_identity(card) in ungrouped_card_ids
+        ]
+    else:
+        grouped_orders = []
+
+    grouped_card_ids = {
+        str(card_id)
+        for group in grouped_orders
+        for card_id in (group.get("card_ids", []) or [])
+    }
+    display_count = len(grouped_orders) + sum(
+        1 for card in filtered_cards if ner_eval_card_identity(card) not in grouped_card_ids
+    )
+
+    total_tp = sum(int(card.get("tp", 0) or 0) for card in filtered_cards)
+    total_fp = sum(int(card.get("fp", 0) or 0) for card in filtered_cards)
+    total_fn = sum(int(card.get("fn", 0) or 0) for card in filtered_cards)
+    total_scores = metric_scores_from_counts(total_tp, total_fp, total_fn)
+    problem_blocks = sum(
+        1 for card in filtered_cards if int(card.get("problem_count", 0) or 0) > 0
+    )
+    valid_blocks = len(filtered_cards) - problem_blocks
+    duration_summary = ner_extraction_duration_summary(filtered_cards)
+
+    eval_metrics = st.columns(7)
+    eval_metrics[0].metric("Precision", pct_text(total_scores["precision"]))
+    eval_metrics[1].metric("Recall", pct_text(total_scores["recall"]))
+    eval_metrics[2].metric("F1-score", pct_text(total_scores["f1"]))
+    eval_metrics[3].metric("TP / FP / FN", f"{total_tp} / {total_fp} / {total_fn}")
+    eval_metrics[4].metric(
+        "Waktu ekstraksi",
+        format_duration_ms(duration_summary["avg_batch_ms"]),
+        delta=f"{int(duration_summary['batch_count'])} batch tercatat" if duration_summary["batch_count"] else None,
+    )
+    eval_metrics[5].metric("Blok valid", valid_blocks)
+    eval_metrics[6].metric("Perlu cek", problem_blocks)
+
+    render_ner_attribute_score_table(filtered_cards)
+
+    if len(filtered_cards) != len(simple_eval_cards):
+        st.caption(
+            f"Filter aktif: menampilkan {len(filtered_cards)} dari {len(simple_eval_cards)} blok chat."
+        )
+    if selected_view == "Per order gabungan" and grouped_orders:
+        st.caption(
+            f"Mode gabungan aktif: {len(grouped_orders)} order gabungan ditampilkan tanpa tabel output akhir."
+        )
+
+    if display_count <= 1:
+        eval_limit = 1
+        st.caption("1 item analitik tersedia, evaluasi langsung ditampilkan.")
+    else:
+        eval_limit = st.slider(
+            "Jumlah item yang ditampilkan",
+            min_value=1,
+            max_value=display_count,
+            value=min(10, display_count),
+            step=1,
+            key=f"{key_prefix}_limit_{display_count}",
+        )
+
+    render_simple_ner_block_evaluation(
+        filtered_cards,
+        height=760,
+        grouped_orders=grouped_orders,
+        max_items=int(eval_limit),
+    )
 
 
 def render_ner_audit_html(audits: Sequence[Dict[str, object]], max_items: int = 8) -> None:
@@ -7740,6 +9374,111 @@ def render_ner_audit_html(audits: Sequence[Dict[str, object]], max_items: int = 
     st.html(html)
 
 
+def render_research_proof_downloads(
+    raw_text: str,
+    table_df: pd.DataFrame,
+    ner_audits: Sequence[Dict[str, object]],
+    stage2_preview_rows: Sequence[Dict[str, object]],
+    key_prefix: str,
+) -> None:
+    st.markdown("**Bukti teknis raw untuk skripsi (dev)**")
+    st.caption(
+        "File ini diambil langsung dari hasil runtime test case terakhir: raw NER, tabel ekstraksi, "
+        "dan raw pencocokan SPC jika kandidat tersedia."
+    )
+
+    safe_table_df = table_df if isinstance(table_df, pd.DataFrame) else pd.DataFrame()
+    table_cols = [col for col in EXCEL_COLUMNS if col in safe_table_df.columns]
+    table_export_df = safe_table_df[table_cols].copy() if table_cols else safe_table_df.copy()
+
+    ner_payload = build_ner_raw_proof_payload(raw_text, ner_audits)
+    stage2_payload = build_stage2_raw_proof_payload(stage2_preview_rows)
+    post_processing_payload = {
+        "proof_type": "ner_post_processing_output",
+        "description": "Bukti hasil post-processing: entitas NER sudah dipetakan menjadi row/kolom operasional sementara.",
+        "row_count": int(len(table_export_df.index)) if isinstance(table_export_df, pd.DataFrame) else 0,
+        "rows": table_export_df.to_dict(orient="records") if not table_export_df.empty else [],
+    }
+    pipeline_payload = build_pipeline_proof_payload(
+        raw_text,
+        table_export_df,
+        ner_audits,
+        stage2_preview_rows,
+    )
+
+    proof_cols = st.columns([1.05, 1.2, 1.1, 1.05, 1.15])
+    proof_cols[0].download_button(
+        "Raw NER JSON",
+        data=proof_json_bytes(ner_payload),
+        file_name="proof_ner_raw_output.json",
+        mime="application/json",
+        key=f"{key_prefix}_download_ner_raw_json",
+        disabled=not bool(ner_audits),
+        width="stretch",
+    )
+    proof_cols[1].download_button(
+        "Post-processing JSON",
+        data=proof_json_bytes(post_processing_payload),
+        file_name="proof_ner_post_processing_output.json",
+        mime="application/json",
+        key=f"{key_prefix}_download_ner_post_processing_json",
+        disabled=table_export_df.empty,
+        width="stretch",
+    )
+    proof_cols[2].download_button(
+        "Post-processing CSV",
+        data=table_export_df.to_csv(index=False).encode("utf-8"),
+        file_name="proof_ner_table_output.csv",
+        mime="text/csv",
+        key=f"{key_prefix}_download_ner_table_csv",
+        disabled=table_export_df.empty,
+        width="stretch",
+    )
+    proof_cols[3].download_button(
+        "Raw SPC JSON",
+        data=proof_json_bytes(stage2_payload),
+        file_name="proof_stage2_match_raw_output.json",
+        mime="application/json",
+        key=f"{key_prefix}_download_stage2_raw_json",
+        disabled=not bool(stage2_preview_rows),
+        width="stretch",
+    )
+    proof_cols[4].download_button(
+        "Paket Pipeline JSON",
+        data=proof_json_bytes(pipeline_payload),
+        file_name="proof_pipeline_runtime_output.json",
+        mime="application/json",
+        key=f"{key_prefix}_download_pipeline_json",
+        disabled=not bool(ner_audits) and table_export_df.empty and not bool(stage2_preview_rows),
+        width="stretch",
+    )
+
+    with st.expander("Lihat bukti post-processing hasil NER", expanded=True):
+        st.caption(
+            "Bagian ini membuktikan perubahan dari entitas/token NER menjadi baris tabel operasional "
+            "sebelum masuk tahap identifikasi jenis pesanan."
+        )
+        if table_export_df.empty:
+            st.info("Belum ada row hasil post-processing untuk run ini.")
+        else:
+            st.dataframe(table_export_df, width="stretch", hide_index=True)
+            st.markdown("**Contoh JSON hasil post-processing**")
+            st.code(
+                json.dumps(
+                    proof_json_safe(table_export_df.head(5).to_dict(orient="records")),
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                language="json",
+            )
+
+    if not stage2_preview_rows:
+        st.caption(
+            "Raw SPC belum tersedia untuk run ini. Biasanya perlu ada pesanan induk/state DB lebih dulu, "
+            "lalu jalankan pesanan susulan agar kandidat pencocokan terbentuk."
+        )
+
+
 def css() -> None:
     st.markdown(
         """
@@ -7805,213 +9544,13 @@ def css() -> None:
     )
 
 
-SESSION_TRANSIENT_PREFIXES = (
-    "ner_",
-    "stage2_",
-    "model_eval_",
-)
-SESSION_TRANSIENT_KEYS = {
-    "live_text_a",
-    "live_text_b",
-    "live_expected",
-    "live_template_case",
-    "live_expected_mode",
-}
-
-
-def clear_session_runtime_state() -> None:
-    for key in list(st.session_state.keys()):
-        key_text = str(key)
-        if key_text in SESSION_TRANSIENT_KEYS or key_text.startswith(SESSION_TRANSIENT_PREFIXES):
-            del st.session_state[key]
-
-
-def activate_session_and_rerun(session_id: str) -> None:
-    db_set_active_extraction_session(session_id)
-    st.query_params["session"] = session_id
-    clear_session_runtime_state()
-    st.session_state["_workspace_bound_session_id"] = session_id
-    st.rerun()
-
-
-def session_download_name(active_session: Dict[str, object]) -> str:
-    name = re.sub(
-        r"[^A-Za-z0-9_-]+",
-        "_",
-        str(active_session.get("name", "session") or "session"),
-    ).strip("_")
-    return f"{name or 'session'}_backup.zip"
-
-
-def bootstrap_active_session() -> Dict[str, object]:
-    if (
-        not DB_PERSISTENCE_ENABLED
-        or db_ensure_default_extraction_session is None
-        or db_set_active_extraction_session is None
-    ):
-        return {}
-    requested_session = str(st.query_params.get("session", "") or "").strip()
-    active_session = db_ensure_default_extraction_session(requested_session)
-    active_session_id = str(active_session.get("id", "") or "")
-    if active_session_id:
-        db_set_active_extraction_session(active_session_id)
-        previous_session_id = str(
-            st.session_state.get("_workspace_bound_session_id", "") or ""
-        )
-        if previous_session_id != active_session_id:
-            clear_session_runtime_state()
-            st.session_state["_workspace_bound_session_id"] = active_session_id
-        if requested_session != active_session_id:
-            st.query_params["session"] = active_session_id
-    return active_session
-
-
-def render_session_workspace_sidebar(active_session: Dict[str, object]) -> None:
-    st.markdown("### Sesi Ekstraksi")
-    if st.button("+ Sesi baru", width="stretch", key="workspace_new_session"):
-        created = db_create_extraction_session()
-        activate_session_and_rerun(str(created.get("id", "")))
-
-    search_text = st.text_input(
-        "Cari sesi",
-        placeholder="Cari sesi...",
-        label_visibility="collapsed",
-        key="workspace_search",
-    )
-    show_archived = st.toggle(
-        "Tampilkan arsip",
-        value=False,
-        key="workspace_show_archived",
-    )
-    sessions = db_list_extraction_sessions(include_archived=show_archived)
-    search_key = str(search_text or "").strip().casefold()
-    if search_key:
-        sessions = [
-            item
-            for item in sessions
-            if search_key in str(item.get("name", "") or "").casefold()
-        ]
-
-    active_id = str(active_session.get("id", "") or "")
-    with st.container(height=245, border=False):
-        if not sessions:
-            st.caption("Tidak ada sesi yang cocok.")
-        for item in sessions:
-            item_id = str(item.get("id", "") or "")
-            item_name = str(item.get("name", "Sesi tanpa nama") or "Sesi tanpa nama")
-            status = str(item.get("status", "active") or "active")
-            row_count = int(item.get("row_count", 0) or 0)
-            chat_count = int(item.get("chat_count", 0) or 0)
-            if status == "archived":
-                archive_cols = st.columns([3.5, 1.0])
-                archive_cols[0].caption(
-                    f"{item_name}\n\nArsip | {row_count} row | {chat_count} chat"
-                )
-                if archive_cols[1].button(
-                    "Pulih",
-                    key=f"workspace_restore_{item_id}",
-                    width="stretch",
-                ):
-                    db_restore_extraction_session(item_id)
-                    activate_session_and_rerun(item_id)
-                continue
-
-            button_label = (
-                f"{item_name} [aktif]"
-                if item_id == active_id
-                else item_name
-            )
-            if st.button(
-                button_label,
-                key=f"workspace_select_{item_id}",
-                width="stretch",
-                type="primary" if item_id == active_id else "secondary",
-                disabled=item_id == active_id,
-                help=f"{row_count} row | {chat_count} chat",
-            ):
-                activate_session_and_rerun(item_id)
-
-    if not active_session:
-        st.error("Sesi aktif tidak tersedia.")
-        return
-
-    st.caption(
-        f"{int(active_session.get('row_count', 0) or 0)} row | "
-        f"{int(active_session.get('chat_count', 0) or 0)} chat | "
-        f"{int(active_session.get('audit_count', 0) or 0)} audit"
-    )
-    backup_bytes = db_export_active_session_bundle()
-    st.download_button(
-        "Download sesi",
-        data=backup_bytes,
-        file_name=session_download_name(active_session),
-        mime="application/zip",
-        width="stretch",
-        key=f"workspace_download_{active_id}",
-        disabled=not backup_bytes,
-    )
-
-    with st.expander("Kelola sesi", expanded=False):
-        rename_value = st.text_input(
-            "Nama sesi",
-            value=str(active_session.get("name", "") or ""),
-            max_chars=120,
-            key=f"workspace_rename_value_{active_id}",
-        )
-        if st.button(
-            "Simpan nama",
-            key=f"workspace_rename_{active_id}",
-            width="stretch",
-        ):
-            db_rename_extraction_session(active_id, rename_value)
-            st.rerun()
-
-        if st.button(
-            "Arsipkan sesi",
-            key=f"workspace_archive_{active_id}",
-            width="stretch",
-        ):
-            db_archive_extraction_session(active_id)
-            replacement = db_ensure_default_extraction_session("")
-            activate_session_and_rerun(str(replacement.get("id", "")))
-
-        confirm_delete = st.checkbox(
-            "Saya memahami data sesi akan dihapus",
-            key=f"workspace_delete_confirm_{active_id}",
-        )
-        if st.button(
-            "Hapus sesi",
-            key=f"workspace_delete_{active_id}",
-            width="stretch",
-            disabled=not confirm_delete,
-        ):
-            db_delete_extraction_session(active_id)
-            replacement = db_ensure_default_extraction_session("")
-            activate_session_and_rerun(str(replacement.get("id", "")))
-
-    st.divider()
-
-
 def main() -> None:
     st.set_page_config(
-        page_title="Session Feature Test - IndoBERT",
+        page_title="Stage 2 IndoBERT Pair Test",
         layout="wide",
         initial_sidebar_state="expanded",
     )
     css()
-    active_session = bootstrap_active_session()
-    if not active_session:
-        st.error(
-            "Workspace sesi gagal diinisialisasi. "
-            "Pastikan aplikasi dijalankan melalui run_session_test.ps1."
-        )
-        st.stop()
-    st.warning(
-        "MODE PENGUJIAN TERISOLASI | "
-        f"Database: {SESSION_TEST_DB_NAME} | "
-        f"Port: {SESSION_TEST_PORT} | "
-        f"Sesi: {str(active_session.get('name', '') or '-')}"
-    )
 
     model_dirs = discover_model_dirs()
     default_index = 0
@@ -8019,8 +9558,6 @@ def main() -> None:
         default_index = model_dirs.index(str(DEFAULT_MODEL_PATH))
 
     with st.sidebar:
-        render_session_workspace_sidebar(active_session)
-        st.caption(f"TEST ENV | {SESSION_TEST_DB_NAME} | :{SESSION_TEST_PORT}")
         st.subheader("Model")
         selected_model = st.selectbox("Folder model", model_dirs, index=default_index)
         model_path = st.text_input("Path aktif", selected_model)
@@ -8038,12 +9575,10 @@ def main() -> None:
     dev_mode = dev_param in {"1", "true", "on"}
     next_dev_param = "0" if dev_mode else "1"
     dev_label = "dev: on" if dev_mode else "dev: off"
-    active_session_id = str(active_session.get("id", "") or "")
     dev_control_cols = st.columns([12, 1])
     with dev_control_cols[1]:
         st.markdown(
-            f'<div class="dev-mode-link"><a href="?dev={next_dev_param}'
-            f'&session={active_session_id}" '
+            f'<div class="dev-mode-link"><a href="?dev={next_dev_param}" '
             f'target="_self">{dev_label}</a></div>',
             unsafe_allow_html=True,
         )
@@ -8367,13 +9902,11 @@ def main() -> None:
                 st.session_state.ner_saved_db_df = pd.DataFrame(columns=EXCEL_COLUMNS + ["status_unit"])
                 st.session_state.ner_last_auto_db_signature = ""
                 st.session_state.ner_db_status_message = (
-                    "Data dan output sesi aktif berhasil direset "
+                    "DB dan output berhasil direset "
                     f"(order_dataset: {reset_info.get('order_dataset_deleted', 0)}, "
                     f"raw_chats: {reset_info.get('raw_chats_deleted', 0)}, "
                     f"stage2_audit: {reset_info.get('stage2_match_audits_deleted', 0)})."
                 )
-                if db_touch_active_extraction_session is not None:
-                    db_touch_active_extraction_session()
             except Exception as e:
                 st.session_state.ner_db_status_message = f"Gagal reset DB/output: {e}"
             st.session_state.ner_normalized_output = False
@@ -8437,7 +9970,7 @@ def main() -> None:
             key="ner_start_extraction",
         )
 
-        should_run_ner = bool(raw_new_order_text.strip())
+        should_run_ner = bool(run_ner_now and raw_new_order_text.strip())
         if not should_run_ner:
             saved_df = load_db_excel_df() if db_ready else pd.DataFrame(columns=EXCEL_COLUMNS + ["status_unit"])
             status_message = str(st.session_state.get("ner_db_status_message", "") or "")
@@ -8468,13 +10001,36 @@ def main() -> None:
                 st.error("CUDA tidak aktif untuk NER. App dihentikan karena opsi Wajib GPU menyala.")
                 st.stop()
 
-            excel_df, ner_audits = rows_from_new_order_text(
-                ner_tokenizer,
-                ner_model,
-                ner_device,
-                raw_new_order_text,
-                int(ner_max_seq_len),
-            )
+            extraction_run_id = uuid.uuid4().hex
+            input_chunks = split_new_order_messages(raw_new_order_text)
+            use_intra_batch_sync = bool(db_ready and len(input_chunks) > 1)
+            if use_intra_batch_sync:
+                excel_df = pd.DataFrame(columns=EXCEL_COLUMNS)
+                ner_audits = []
+                live_ner_elapsed_ms = 0.0
+            else:
+                live_ner_started_at = time.perf_counter()
+                excel_df, ner_audits = rows_from_new_order_text(
+                    ner_tokenizer,
+                    ner_model,
+                    ner_device,
+                    raw_new_order_text,
+                    int(ner_max_seq_len),
+                )
+                live_ner_elapsed_ms = (time.perf_counter() - live_ner_started_at) * 1000.0
+                for audit in ner_audits:
+                    audit.setdefault("batch_index", 1)
+                    audit.setdefault("batch_label", "Batch 1")
+                    audit["batch_elapsed_ms"] = live_ner_elapsed_ms
+                    audit["extraction_run_id"] = extraction_run_id
+                    audit["extraction_run_elapsed_ms"] = live_ner_elapsed_ms
+                if not excel_df.empty:
+                    excel_df = excel_df.copy()
+                    excel_df["_batch_index"] = 1
+                    excel_df["_batch_label"] = "Batch 1"
+                    excel_df["_batch_elapsed_ms"] = live_ner_elapsed_ms
+                    excel_df["_extraction_run_id"] = extraction_run_id
+                    excel_df["_extraction_run_elapsed_ms"] = live_ner_elapsed_ms
             result_signature = (
                 f"{len(raw_new_order_text)}|{raw_new_order_text[:120]}|"
                 f"{raw_new_order_text[-120:]}|{ner_model_path}|{ner_max_seq_len}"
@@ -8483,11 +10039,9 @@ def main() -> None:
                 st.session_state.ner_result_signature = result_signature
                 st.session_state.ner_normalized_output = False
 
-            if excel_df.empty:
+            if excel_df.empty and not use_intra_batch_sync:
                 st.warning("Tidak ada baris hasil ekstraksi NER.")
             else:
-                input_chunks = split_new_order_messages(raw_new_order_text)
-                use_intra_batch_sync = bool(db_ready and len(input_chunks) > 1)
                 existing_df_before_sync = (
                     load_db_excel_df()
                     if db_ready
@@ -8532,6 +10086,9 @@ def main() -> None:
                                 raw_new_order_text,
                                 excel_df,
                                 stage2_apply_row,
+                                extraction_elapsed_ms=live_ner_elapsed_ms,
+                                extraction_run_id=extraction_run_id,
+                                extraction_run_elapsed_ms=live_ner_elapsed_ms,
                             )
                         st.session_state.ner_last_auto_db_signature = auto_db_signature
                         st.session_state.ner_saved_db_df = db_display_df
@@ -8564,6 +10121,7 @@ def main() -> None:
                     else excel_df
                 )
                 raw_chats = load_all_raw_chat_records_from_db() if db_ready else []
+                cumulative_df = pd.DataFrame(columns=EXCEL_COLUMNS)
                 cumulative_audits: List[Dict[str, object]] = []
                 if raw_chats:
                     with st.spinner("Membangun output dan analitik kumulatif dari semua batch DB..."):
@@ -8593,8 +10151,12 @@ def main() -> None:
                     st.session_state.get("ner_live_output_completion_filter", "Semua"),
                 )
                 render_excel_like_table(table_view_df, height=int(excel_height))
-                st.session_state.ner_latest_eval_df = table_df
-                st.session_state.ner_latest_eval_audits = ner_audits
+                st.session_state.ner_latest_eval_df = (
+                    cumulative_df
+                    if cumulative_audits and isinstance(cumulative_df, pd.DataFrame) and not cumulative_df.empty
+                    else table_df
+                )
+                st.session_state.ner_latest_eval_audits = cumulative_audits if cumulative_audits else ner_audits
                 if stage2_preview_rows:
                     st.session_state.stage2_latest_preview_rows = stage2_preview_rows
 
@@ -8606,6 +10168,14 @@ def main() -> None:
                     file_name="ner_pesanan_baru_db_realtime.csv",
                     mime="text/csv",
                 )
+                if dev_mode:
+                    render_research_proof_downloads(
+                        raw_new_order_text,
+                        table_df,
+                        ner_audits,
+                        stage2_preview_rows,
+                        key_prefix="ner_live_research_proof",
+                    )
 
     with tab_model_eval:
         st.subheader("Evaluasi Performa Model")

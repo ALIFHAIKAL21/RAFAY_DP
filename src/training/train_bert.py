@@ -12,6 +12,7 @@ from transformers import (
     DataCollatorForTokenClassification
 )
 
+
 # --- 1. SETUP IMPORT PATH ---
 # Agar bisa import 'src.config' dari dalam folder training
 # Posisi: src/training/train_bert.py -> Mundur 3 langkah ke Root
@@ -165,10 +166,10 @@ def main():
     print("🔥 Mulai Training...")
     trainer.train()
     
-    print("✅ Training Selesai! Menyimpan model...")
+    print("Training Selesai! Menyimpan model...")
     trainer.save_model(str(BERT_OUTPUT_DIR / "final_model"))
     tokenizer.save_pretrained(str(BERT_OUTPUT_DIR / "final_model"))
-    print(f"💾 Model tersimpan di: {BERT_OUTPUT_DIR}/final_model")
+    print(f"Model tersimpan di: {BERT_OUTPUT_DIR}/final_model")
 
 if __name__ == "__main__":
     main()

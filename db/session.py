@@ -26,6 +26,22 @@ def _ensure_order_dataset_schema() -> None:
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_order_dataset_batch_row_order ON order_dataset(batch_row_order)"))
 
 
+def _ensure_raw_chat_schema() -> None:
+    inspector = inspect(engine)
+    if "raw_chats" not in inspector.get_table_names():
+        return
+
+    columns = {c["name"] for c in inspector.get_columns("raw_chats")}
+    with engine.begin() as conn:
+        if "extraction_elapsed_ms" not in columns:
+            conn.execute(text("ALTER TABLE raw_chats ADD COLUMN extraction_elapsed_ms FLOAT"))
+        if "extraction_run_id" not in columns:
+            conn.execute(text("ALTER TABLE raw_chats ADD COLUMN extraction_run_id VARCHAR(64)"))
+        if "extraction_run_elapsed_ms" not in columns:
+            conn.execute(text("ALTER TABLE raw_chats ADD COLUMN extraction_run_elapsed_ms FLOAT"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_raw_chats_extraction_run_id ON raw_chats(extraction_run_id)"))
+
+
 def _ensure_stage2_match_audit_schema() -> None:
     inspector = inspect(engine)
     if "stage2_match_audits" not in inspector.get_table_names():
@@ -65,6 +81,7 @@ def _ensure_stage2_match_audit_schema() -> None:
 def init_db() -> bool:
     try:
         Base.metadata.create_all(bind=engine)
+        _ensure_raw_chat_schema()
         _ensure_order_dataset_schema()
         _ensure_stage2_match_audit_schema()
         return True

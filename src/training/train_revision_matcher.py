@@ -134,8 +134,11 @@ def main():
     train_ds = Dataset.from_list(train_rows)
     test_ds = Dataset.from_list(test_rows)
 
+
     tokenizer = _load_tokenizer_with_fallback(REVISION_MATCH_MODEL_CHECKPOINT)
     try:
+        CANONICAL_LABELS = ["NO_MATCH", "MATCH"]
+        
         model = _load_model_with_fallback(
             checkpoint=REVISION_MATCH_MODEL_CHECKPOINT,
             num_labels=len(CANONICAL_LABELS),

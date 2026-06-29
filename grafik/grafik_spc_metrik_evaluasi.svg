@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="820" viewBox="0 0 1500 820">
+<rect width="100%" height="100%" fill="#FFFFFF"/>
+<style><![CDATA[
+text{font-family:Arial, Helvetica, sans-serif;}
+.title{font-size:36px;font-weight:700;fill:#111827;}
+.subtitle{font-size:21px;fill:#6B7280;}
+.axislabel{font-size:19px;fill:#374151;}
+.tick{font-size:17px;fill:#6B7280;}
+.value{font-size:21px;font-weight:700;fill:#111827;}
+.note{font-size:18px;fill:#374151;}
+.source{font-size:17px;fill:#6B7280;}
+.label{font-size:18px;font-weight:700;fill:#111827;}
+]]></style>
+<text x="750.0" y="52" text-anchor="middle" class="title">Evaluasi Model Sequence Pair Classification</text>
+<text x="750.0" y="86" text-anchor="middle" class="subtitle">Ringkasan metrik validasi terbaik pada epoch ke-4</text>
+
+<text x="1360" y="127" text-anchor="end" class="note">Validation loss: 0,3261 | Best metric F1 MATCH: 91,58%</text>
+<line x1="135" y1="645.0" x2="1360" y2="645.0" stroke="#E5E7EB" stroke-width="1.5"/>
+<text x="123" y="651.0" text-anchor="end" class="tick">0%</text>
+<line x1="135" y1="545.0" x2="1360" y2="545.0" stroke="#E5E7EB" stroke-width="1.5"/>
+<text x="123" y="551.0" text-anchor="end" class="tick">20%</text>
+<line x1="135" y1="445.0" x2="1360" y2="445.0" stroke="#E5E7EB" stroke-width="1.5"/>
+<text x="123" y="451.0" text-anchor="end" class="tick">40%</text>
+<line x1="135" y1="345.0" x2="1360" y2="345.0" stroke="#E5E7EB" stroke-width="1.5"/>
+<text x="123" y="351.0" text-anchor="end" class="tick">60%</text>
+<line x1="135" y1="245.0" x2="1360" y2="245.0" stroke="#E5E7EB" stroke-width="1.5"/>
+<text x="123" y="251.0" text-anchor="end" class="tick">80%</text>
+<line x1="135" y1="145.0" x2="1360" y2="145.0" stroke="#E5E7EB" stroke-width="1.5"/>
+<text x="123" y="151.0" text-anchor="end" class="tick">100%</text>
+<line x1="135" y1="645" x2="1360" y2="645" stroke="#374151" stroke-width="2"/>
+<line x1="135" y1="145" x2="135" y2="645" stroke="#374151" stroke-width="2"/>
+<rect x="201.5" y="187.7" width="112" height="457.3" fill="#1F4E79"/>
+<text x="257.5" y="173.7" text-anchor="middle" class="value">91,47%</text>
+<text x="257.5" y="679.0" text-anchor="middle" class="label">Accuracy</text>
+<rect x="446.5" y="193.3" width="112" height="451.7" fill="#C55A11"/>
+<text x="502.5" y="179.3" text-anchor="middle" class="value">90,34%</text>
+<text x="502.5" y="679.0" text-anchor="middle" class="label">Precision</text>
+<text x="502.5" y="703.0" text-anchor="middle" class="label">MATCH</text>
+<rect x="691.5" y="180.7" width="112" height="464.3" fill="#548235"/>
+<text x="747.5" y="166.7" text-anchor="middle" class="value">92,87%</text>
+<text x="747.5" y="679.0" text-anchor="middle" class="label">Recall</text>
+<text x="747.5" y="703.0" text-anchor="middle" class="label">MATCH</text>
+<rect x="936.5" y="187.1" width="112" height="457.9" fill="#7030A0"/>
+<text x="992.5" y="173.1" text-anchor="middle" class="value">91,58%</text>
+<text x="992.5" y="679.0" text-anchor="middle" class="label">F1</text>
+<text x="992.5" y="703.0" text-anchor="middle" class="label">MATCH</text>
+<rect x="1181.5" y="187.7" width="112" height="457.3" fill="#7F7F7F"/>
+<text x="1237.5" y="173.7" text-anchor="middle" class="value">91,46%</text>
+<text x="1237.5" y="679.0" text-anchor="middle" class="label">F1</text>
+<text x="1237.5" y="703.0" text-anchor="middle" class="label">Macro</text>
+<text x="747.5" y="765" text-anchor="middle" class="axislabel">Metrik evaluasi</text>
+<text x="53" y="395.0" transform="rotate(-90 53,395.0)" text-anchor="middle" class="axislabel">Nilai metrik validasi</text>
+<text x="1460" y="798" text-anchor="end" class="source">Sumber: models/indobenchmark/indobert-base-p2_15k/checkpoint-7500/trainer_state.json</text>
+</svg>
