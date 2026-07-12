@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="820" viewBox="0 0 1500 820">
+<rect width="100%" height="100%" fill="#FFFFFF"/>
+<style><![CDATA[
+text{font-family:Arial, Helvetica, sans-serif;}
+.title{font-size:38px;font-weight:700;fill:#111827;}
+.subtitle{font-size:21px;fill:#6B7280;}
+.tick{font-size:17px;fill:#6B7280;}
+.axislabel{font-size:19px;fill:#374151;}
+.legend{font-size:19px;fill:#111827;}
+.note{font-size:19px;fill:#374151;}
+.source{font-size:17px;fill:#6B7280;}
+]]></style>
+<text x="750.0" y="54" text-anchor="middle" class="title">Kurva F1 Evaluasi Model Sequence Pair Classification</text>
+<text x="750.0" y="88" text-anchor="middle" class="subtitle">F1 MATCH dan F1 Macro pada data validasi per epoch</text>
+<line x1="150" y1="650.0" x2="1340" y2="650.0" stroke="#E5E7EB" stroke-width="1.5"/>
+<text x="138" y="656.0" text-anchor="end" class="tick">74%</text>
+<line x1="150" y1="550.0" x2="1340" y2="550.0" stroke="#E5E7EB" stroke-width="1.5"/>
+<text x="138" y="556.0" text-anchor="end" class="tick">78%</text>
+<line x1="150" y1="450.0" x2="1340" y2="450.0" stroke="#E5E7EB" stroke-width="1.5"/>
+<text x="138" y="456.0" text-anchor="end" class="tick">82%</text>
+<line x1="150" y1="350.0" x2="1340" y2="350.0" stroke="#E5E7EB" stroke-width="1.5"/>
+<text x="138" y="356.0" text-anchor="end" class="tick">86%</text>
+<line x1="150" y1="250.0" x2="1340" y2="250.0" stroke="#E5E7EB" stroke-width="1.5"/>
+<text x="138" y="256.0" text-anchor="end" class="tick">90%</text>
+<line x1="150" y1="150.0" x2="1340" y2="150.0" stroke="#E5E7EB" stroke-width="1.5"/>
+<text x="138" y="156.0" text-anchor="end" class="tick">94%</text>
+<line x1="150.0" y1="150" x2="150.0" y2="650" stroke="#E5E7EB" stroke-width="1"/>
+<text x="150.0" y="681" text-anchor="middle" class="tick">1</text>
+<line x1="447.5" y1="150" x2="447.5" y2="650" stroke="#E5E7EB" stroke-width="1"/>
+<text x="447.5" y="681" text-anchor="middle" class="tick">2</text>
+<line x1="745.0" y1="150" x2="745.0" y2="650" stroke="#E5E7EB" stroke-width="1"/>
+<text x="745.0" y="681" text-anchor="middle" class="tick">3</text>
+<line x1="1042.5" y1="150" x2="1042.5" y2="650" stroke="#E5E7EB" stroke-width="1"/>
+<text x="1042.5" y="681" text-anchor="middle" class="tick">4</text>
+<line x1="1340.0" y1="150" x2="1340.0" y2="650" stroke="#E5E7EB" stroke-width="1"/>
+<text x="1340.0" y="681" text-anchor="middle" class="tick">5</text>
+<line x1="150" y1="650" x2="1340" y2="650" stroke="#374151" stroke-width="2"/>
+<line x1="150" y1="150" x2="150" y2="650" stroke="#374151" stroke-width="2"/>
+<polyline points="150.0,531.0 447.5,401.5 745.0,223.1 1042.5,210.4 1340.0,215.1" fill="none" stroke="#1F4E79" stroke-width="4.2"/>
+<circle cx="150.0" cy="531.0" r="6" fill="#1F4E79" stroke="#FFFFFF" stroke-width="2"/>
+<circle cx="447.5" cy="401.5" r="6" fill="#1F4E79" stroke="#FFFFFF" stroke-width="2"/>
+<circle cx="745.0" cy="223.1" r="6" fill="#1F4E79" stroke="#FFFFFF" stroke-width="2"/>
+<circle cx="1042.5" cy="210.4" r="6" fill="#1F4E79" stroke="#FFFFFF" stroke-width="2"/>
+<circle cx="1340.0" cy="215.1" r="6" fill="#1F4E79" stroke="#FFFFFF" stroke-width="2"/>
+<text x="1352.0" y="221.1" class="note">F1 MATCH 91,40%</text>
+<polyline points="150.0,626.1 447.5,369.4 745.0,228.5 1042.5,213.4 1340.0,219.2" fill="none" stroke="#C55A11" stroke-width="4.2"/>
+<circle cx="150.0" cy="626.1" r="6" fill="#C55A11" stroke="#FFFFFF" stroke-width="2"/>
+<circle cx="447.5" cy="369.4" r="6" fill="#C55A11" stroke="#FFFFFF" stroke-width="2"/>
+<circle cx="745.0" cy="228.5" r="6" fill="#C55A11" stroke="#FFFFFF" stroke-width="2"/>
+<circle cx="1042.5" cy="213.4" r="6" fill="#C55A11" stroke="#FFFFFF" stroke-width="2"/>
+<circle cx="1340.0" cy="219.2" r="6" fill="#C55A11" stroke="#FFFFFF" stroke-width="2"/>
+<text x="1352.0" y="225.2" class="note">F1 Macro 91,23%</text>
+<line x1="1042.5" y1="150" x2="1042.5" y2="650" stroke="#C00000" stroke-width="2" stroke-dasharray="8 6"/>
+<circle cx="1042.5" cy="210.4" r="8" fill="#C00000" stroke="#FFFFFF" stroke-width="2"/>
+<rect x="880" y="180" width="425" height="48" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+<text x="898" y="211" class="note">F1 MATCH terbaik: 91,58% | Loss: 0.3261</text>
+<line x1="180" y1="725" x2="226" y2="725" stroke="#1F4E79" stroke-width="5"/>
+<circle cx="203" cy="725" r="5" fill="#1F4E79"/>
+<text x="238" y="732" class="legend">F1 MATCH</text>
+<line x1="410" y1="725" x2="456" y2="725" stroke="#C55A11" stroke-width="5"/>
+<circle cx="433" cy="725" r="5" fill="#C55A11"/>
+<text x="468" y="732" class="legend">F1 Macro</text>
+<text x="745.0" y="772" text-anchor="middle" class="axislabel">Epoch</text>
+<text x="68" y="400.0" transform="rotate(-90 68,400.0)" text-anchor="middle" class="axislabel">Nilai F1 Validasi</text>
+<text x="1460" y="790" text-anchor="end" class="source">Sumber: models/indobenchmark/indobert-base-p2_15k/checkpoint-7500/trainer_state.json</text>
+</svg>

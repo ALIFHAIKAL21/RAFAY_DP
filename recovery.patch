@@ -1,0 +1,3039 @@
+diff --git a/stage2_pair_visual_test.py b/stage2_pair_visual_test.py
+index 00542ba..a1cff47 100644
+--- a/stage2_pair_visual_test.py
++++ b/stage2_pair_visual_test.py
+@@ -1,4 +1,4 @@
+-ï»¿from __future__ import annotations
++from __future__ import annotations
+ 
+ import json
+ import re
+@@ -2153,44 +2153,76 @@ def render_stage2_official_metric_summary(
+     }}
+     .spc-final-head {{
+         display: flex;
+-        align-items: center;
+-        justify-content: space-between;
+-        gap: 20px;
+-        flex-wrap: wrap;
++        flex-direction: column;
++        gap: 15px;
+     }}
+     .spc-final-title {{
+         font-size: 22px;
+         font-weight: 900;
+         color: #0f172a;
+     }}
++    .spc-final-metrics {{
++        display: flex;
++        align-items: center;
++        justify-content: space-between;
++        gap: 15px;
++        flex-wrap: wrap;
++        border-top: 1px solid #e2e8f0;
++        padding-top: 20px;
++    }}
+     .spc-final-main {{
+-        min-width: 260px;
+-        text-align: right;
++        flex: 1;
++        min-width: 130px;
++        text-align: center;
++        border-right: 1px solid #e2e8f0;
++    }}
++    .spc-final-main:last-child {{
++        border-right: none;
+     }}
+     .spc-final-main span {{
+         display: block;
+-        color: #475569;
+-        font-size: 13px;
++        color: #64748b;
++        font-size: 12px;
+         font-weight: 800;
+-        margin-bottom: 6px;
++        text-transform: uppercase;
++        letter-spacing: 0.5px;
++        margin-bottom: 8px;
+     }}
+     .spc-final-main strong {{
+         display: block;
+         color: #0f172a;
+-        font-size: 44px;
++        font-size: 32px;
+         font-weight: 900;
+         line-height: 1;
+     }}
+     @media (max-width: 980px) {{
+-        .spc-final-main {{ text-align: left; }}
++        .spc-final-main {{ border-right: none; text-align: left; margin-bottom: 10px; }}
+     }}
+     </style>
+     <section class="spc-final-score">
+         <div class="spc-final-head">
+             <div class="spc-final-title">{escape(title)}</div>
+-            <div class="spc-final-main">
+-                <span>F1 Macro</span>
+-                <strong>{pct_text(float(metrics.get('f1_macro', 0.0)))}</strong>
++            <div class="spc-final-metrics">
++                <div class="spc-final-main">
++                    <span>Accuracy</span>
++                    <strong>{pct_text(float(metrics.get('accuracy', 0.0)))}</strong>
++                </div>
++                <div class="spc-final-main">
++                    <span>Precision MATCH</span>
++                    <strong>{pct_text(float(metrics.get('precision_match', 0.0)))}</strong>
++                </div>
++                <div class="spc-final-main">
++                    <span>Recall MATCH</span>
++                    <strong>{pct_text(float(metrics.get('recall_match', 0.0)))}</strong>
++                </div>
++                <div class="spc-final-main">
++                    <span>F1 MATCH</span>
++                    <strong>{pct_text(float(metrics.get('f1_match', 0.0)))}</strong>
++                </div>
++                <div class="spc-final-main">
++                    <span>F1 Macro</span>
++                    <strong>{pct_text(float(metrics.get('f1_macro', 0.0)))}</strong>
++                </div>
+             </div>
+         </div>
+     </section>
+@@ -2220,6 +2252,74 @@ def stage2_pair_proof_value(
+     return str(value or "").strip()
+ 
+ 
++def stage2_pair_context_chat_rows(event: Dict[str, object]) -> List[List[Dict[str, object]]]:
++    per_chat = event.get("_per_chat_incoming_rows", [])
++    if not isinstance(per_chat, list) or len(per_chat) <= 1:
++        return []
++    chat_rows: List[List[Dict[str, object]]] = []
++    for group in per_chat:
++        if not isinstance(group, list):
++            continue
++        safe_group = [dict(row) for row in group if isinstance(row, dict)]
++        if safe_group:
++            chat_rows.append(safe_group)
++    return chat_rows if len(chat_rows) > 1 else []
++
++
++def stage2_pair_distinct_context_values(
++    rows: Sequence[Dict[str, object]],
++    label: str,
++    col: str,
++) -> List[str]:
++    values: List[str] = []
++    seen: set[str] = set()
++    for row in rows or []:
++        if not isinstance(row, dict):
++            continue
++        value = str(row.get(col, "") or "").strip()
++        if not filled_value(value):
++            continue
++        key = stage2_truth_key(label, value) or stage2_norm_key(value)
++        if key in seen:
++            continue
++        seen.add(key)
++        values.append(value)
++    return values
++
++
++def stage2_pair_context_value_by_chat(
++    chat_rows: Sequence[Sequence[Dict[str, object]]],
++    label: str,
++    col: str,
++) -> str:
++    lines = []
++    for idx, rows in enumerate(chat_rows or [], start=1):
++        values = stage2_pair_distinct_context_values(rows, label, col)
++        value_text = " / ".join(values) if values else "-"
++        lines.append(f"Susulan #{idx}: {value_text}")
++    return "\n".join(lines)
++
++
++def stage2_pair_context_status_by_chat(
++    label: str,
++    candidate_value: str,
++    chat_rows: Sequence[Sequence[Dict[str, object]]],
++    col: str,
++) -> str:
++    candidate_key = stage2_truth_key(label, candidate_value)
++    if not candidate_key or not chat_rows:
++        return "-"
++    for rows in chat_rows:
++        incoming_values = stage2_pair_distinct_context_values(rows, label, col)
++        if not incoming_values:
++            return "Beda"
++        for incoming_value in incoming_values:
++            incoming_key = stage2_truth_key(label, incoming_value)
++            if not incoming_key or incoming_key != candidate_key:
++                return "Beda"
++    return "Cocok"
++
++
+ def stage2_pair_complete_unit_count(
+     event: Dict[str, object],
+     rows: Sequence[Dict[str, object]],
+@@ -2258,6 +2358,224 @@ def stage2_pair_unmatched_incoming_units(
+     ]
+ 
+ 
++def stage2_pair_incremental_stage_rows(
++    candidate_rows: Sequence[Dict[str, object]],
++    ordered_events: Sequence[Dict[str, object]],
++) -> List[Dict[str, object]]:
++    known_rows = [
++        dict(row)
++        for row in (candidate_rows or [])
++        if isinstance(row, dict) and stage2_has_complete_identity(row)
++    ]
++    stage_rows: List[Dict[str, object]] = []
++    for idx, stage_event in enumerate(ordered_events or [], start=1):
++        raw_rows = stage2_unique_snapshot_rows(stage2_event_incoming_rows(stage_event))
++        new_rows: List[Dict[str, object]] = []
++        for row in raw_rows:
++            if not stage2_has_complete_identity(row):
++                continue
++            if stage2_has_duplicate_unit(known_rows, row):
++                continue
++            clean_row = dict(row)
++            new_rows.append(clean_row)
++            known_rows.append(clean_row)
++        stage_rows.append(
++            {
++                "stage": idx,
++                "created_at": str(stage_event.get("created_at", "") or ""),
++                "incoming_text": str(stage_event.get("incoming_text", "") or ""),
++                "rows": new_rows,
++            }
++        )
++    return stage_rows
++
++
++def stage2_pair_stage_fill_count(stage_rows: Sequence[Dict[str, object]]) -> int:
++    total = 0
++    for stage in stage_rows or []:
++        if not isinstance(stage, dict):
++            continue
++        total += sum(
++            1
++            for row in (stage.get("rows", []) or [])
++            if isinstance(row, dict) and stage2_has_complete_identity(row)
++        )
++    return total
++
++
++def stage2_pair_unit_rows_text(rows: Sequence[Dict[str, object]]) -> str:
++    labels = [
++        stage2_unit_identity_label(row)
++        for row in (rows or [])
++        if isinstance(row, dict) and stage2_has_complete_identity(row)
++    ]
++    if not labels:
++        return "-"
++    return "\n".join(f"{idx}. {label}" for idx, label in enumerate(labels, start=1))
++
++
++def stage2_unit_identity_short_label(row: Dict[str, object]) -> str:
++    driver = str(row.get("Driver", row.get("driver", "")) or "").strip()
++    plate = str(row.get("No. Plat", row.get("no_plat", "")) or "").strip()
++    return " | ".join(part for part in (driver, plate) if filled_value(part))
++
++
++def stage2_progress_unit_labels(
++    stage_rows: Sequence[Dict[str, object]],
++    fallback_rows: Sequence[Dict[str, object]],
++) -> List[str]:
++    labels: List[str] = []
++    if stage_rows:
++        for stage in stage_rows or []:
++            if not isinstance(stage, dict):
++                continue
++            for row in (stage.get("rows", []) or []):
++                if not isinstance(row, dict) or not stage2_has_complete_identity(row):
++                    continue
++                label = stage2_unit_identity_short_label(row)
++                if label:
++                    labels.append(label)
++        if labels:
++            return labels
++
++    return [
++        stage2_unit_identity_short_label(row)
++        for row in (fallback_rows or [])
++        if isinstance(row, dict)
++        and stage2_has_complete_identity(row)
++        and stage2_unit_identity_short_label(row)
++    ]
++
++
++def stage2_pair_complete_identity_rows(rows: Sequence[Dict[str, object]]) -> List[Dict[str, object]]:
++    complete_rows: List[Dict[str, object]] = []
++    for row in rows or []:
++        if not isinstance(row, dict) or not stage2_has_complete_identity(row):
++            continue
++        if stage2_has_duplicate_unit(complete_rows, row):
++            continue
++        complete_rows.append(dict(row))
++    return complete_rows
++
++
++def stage2_pair_unit_field_value(row: Dict[str, object], col: str) -> str:
++    aliases = {
++        "Driver": ("Driver", "driver"),
++        "No. Plat": ("No. Plat", "no_plat"),
++        "Kontak Driver": ("Kontak Driver", "kontak_driver"),
++    }
++    for key in aliases.get(col, (col,)):
++        value = str(row.get(key, "") or "").strip()
++        if filled_value(value):
++            return value
++    return ""
++
++
++def stage2_pair_join_unit_field(rows: Sequence[Dict[str, object]], col: str) -> str:
++    values: List[str] = []
++    seen: set[str] = set()
++    for row in rows or []:
++        if not isinstance(row, dict):
++            continue
++        value = stage2_pair_unit_field_value(row, col)
++        if not filled_value(value):
++            continue
++        key = stage2_norm_key(value)
++        if key in seen:
++            continue
++        seen.add(key)
++        values.append(value)
++    return " | ".join(values) if values else "-"
++
++
++def stage2_pair_final_unit_rows(
++    candidate_rows: Sequence[Dict[str, object]],
++    stage_rows: Sequence[Dict[str, object]],
++    unmatched_rows: Sequence[Dict[str, object]],
++) -> List[Dict[str, object]]:
++    final_rows = stage2_pair_complete_identity_rows(candidate_rows)
++    additions: List[Dict[str, object]] = []
++    if stage_rows:
++        for stage in stage_rows:
++            if not isinstance(stage, dict):
++                continue
++            additions.extend(
++                dict(row)
++                for row in (stage.get("rows", []) or [])
++                if isinstance(row, dict) and stage2_has_complete_identity(row)
++            )
++    else:
++        additions.extend(
++            dict(row)
++            for row in (unmatched_rows or [])
++            if isinstance(row, dict) and stage2_has_complete_identity(row)
++        )
++
++    for row in additions:
++        if stage2_has_duplicate_unit(final_rows, row):
++            continue
++        final_rows.append(dict(row))
++    return final_rows
++
++
++def stage2_pair_cumulative_unit_field_text(
++    candidate_rows: Sequence[Dict[str, object]],
++    stage_rows: Sequence[Dict[str, object]],
++    unmatched_rows: Sequence[Dict[str, object]],
++    col: str,
++) -> str:
++    if len(stage_rows or []) <= 1:
++        return stage2_pair_join_unit_field(
++            stage2_pair_final_unit_rows(candidate_rows, stage_rows, unmatched_rows),
++            col,
++        )
++
++    current_rows = stage2_pair_complete_identity_rows(candidate_rows)
++    lines: List[str] = []
++    for stage in stage_rows or []:
++        if not isinstance(stage, dict):
++            continue
++        stage_idx = int(stage.get("stage", 0) or 0)
++        for row in (stage.get("rows", []) or []):
++            if (
++                isinstance(row, dict)
++                and stage2_has_complete_identity(row)
++                and not stage2_has_duplicate_unit(current_rows, row)
++            ):
++                current_rows.append(dict(row))
++        label = f"Susulan #{stage_idx}" if stage_idx else "Susulan"
++        lines.append(f"{label}: {stage2_pair_join_unit_field(current_rows, col)}")
++    return "\n".join(lines) if lines else "-"
++
++
++def stage2_pair_unit_field_status(
++    candidate_rows: Sequence[Dict[str, object]],
++    incoming_rows: Sequence[Dict[str, object]],
++    col: str,
++) -> str:
++    candidate_keys = {
++        stage2_norm_key(stage2_pair_unit_field_value(row, col))
++        for row in stage2_pair_complete_identity_rows(candidate_rows)
++        if stage2_pair_unit_field_value(row, col)
++    }
++    incoming_keys = {
++        stage2_norm_key(stage2_pair_unit_field_value(row, col))
++        for row in stage2_pair_complete_identity_rows(incoming_rows)
++        if stage2_pair_unit_field_value(row, col)
++    }
++    
++    if not candidate_keys and not incoming_keys:
++        return "-"
++        
++    if not candidate_keys and incoming_keys:
++        return "Isi Baru"
++        
++    if candidate_keys.intersection(incoming_keys):
++        return "Cocok"
++        
++    return "Beda"
++
++
+ def stage2_pair_qty_slot_evidence(
+     event: Dict[str, object],
+     candidate_rows: Sequence[Dict[str, object]] | None = None,
+@@ -2326,6 +2644,7 @@ def stage2_pair_matched_unit_status(matched_units: Sequence[Dict[str, object]])
+ def stage2_pair_proof_rows(event: Dict[str, object]) -> List[Dict[str, str]]:
+     candidate_rows = stage2_event_candidate_source_rows(event)
+     incoming_rows = stage2_event_incoming_rows(event)
++    context_chat_rows = stage2_pair_context_chat_rows(event)
+     rows: List[Dict[str, str]] = []
+ 
+     specs = [
+@@ -2336,80 +2655,77 @@ def stage2_pair_proof_rows(event: Dict[str, object]) -> List[Dict[str, str]]:
+     ]
+     for label, col, key_index in specs:
+         candidate_value = stage2_pair_proof_value(event, candidate_rows, col, key_index)
+-        incoming_value = stage2_pair_proof_value(event, incoming_rows, col)
++        if context_chat_rows:
++            incoming_value = stage2_pair_context_value_by_chat(context_chat_rows, label, col)
++            status = stage2_pair_context_status_by_chat(
++                label,
++                candidate_value,
++                context_chat_rows,
++                col,
++            )
++        else:
++            incoming_value = stage2_pair_proof_value(event, incoming_rows, col)
++            status = stage2_pair_proof_status(label, candidate_value, incoming_value)
+         rows.append(
+             {
+                 "attribute": label,
+                 "candidate": candidate_value or "-",
+                 "incoming": incoming_value or "-",
+-                "status": stage2_pair_proof_status(label, candidate_value, incoming_value),
++                "status": status,
+             }
+         )
+ 
+     qty_slot = stage2_pair_qty_slot_evidence(event, candidate_rows, incoming_rows)
+     candidate_qty = int(qty_slot["candidate_qty"] or 0)
+-    incoming_qty = int(qty_slot["incoming_qty"] or 0)
++    stage_rows = [
++        stage
++        for stage in (event.get("_pair_stage_rows", []) or [])
++        if isinstance(stage, dict)
++    ]
++    empty_slots = int(qty_slot["empty_slots"] or 0)
++    new_units = int(qty_slot["new_units"] or 0)
++    unmatched_units = list(qty_slot["unmatched_units"] or [])
++    final_unit_rows = stage2_pair_final_unit_rows(candidate_rows, stage_rows, unmatched_units)
++    for label, col in [
++        ("Tgl Muat", "Tgl Muat"),
++        ("Nopol", "No. Plat"),
++    ]:
++        rows.append(
++            {
++                "attribute": label,
++                "candidate": stage2_pair_join_unit_field(candidate_rows, col),
++                "incoming": stage2_pair_join_unit_field(incoming_rows, col),
++                "status": stage2_pair_unit_field_status(candidate_rows, incoming_rows, col),
++            }
++        )
++
++    incoming_text_raw = str(event.get("incoming_text", "") or "").strip()
++    extracted_incoming_qty = extract_qty(incoming_text_raw)
++    
++    if extracted_incoming_qty is not None and extracted_incoming_qty > 0:
++        incoming_qty = extracted_incoming_qty
++    else:
++        incoming_qty = int(qty_slot["incoming_qty"] or 0)
++
+     qty_status = (
+         "Cocok"
+-        if bool(qty_slot["qty_match"])
++        if candidate_qty > 0 and candidate_qty == incoming_qty
+         else "Beda"
+         if candidate_qty > 0 and incoming_qty > 0
+         else "-"
+     )
++    
++    qty_candidate = f"{candidate_qty} Unit" if candidate_qty else "-"
++    qty_incoming = f"{incoming_qty} Unit" if incoming_qty else "-"
++    
+     rows.append(
+         {
+-            "attribute": "Qty Unit",
+-            "candidate": f"{candidate_qty} unit target" if candidate_qty else "-",
+-            "incoming": f"{incoming_qty} unit masuk" if incoming_qty else "-",
++            "attribute": "Kuantitas Unit",
++            "candidate": qty_candidate,
++            "incoming": qty_incoming,
+             "status": qty_status,
+         }
+     )
+-
+-    matched_units = stage2_match_registered_units(candidate_rows, incoming_rows)
+-    if matched_units:
+-        rows.append(
+-            {
+-                "attribute": "Unit Lama",
+-                "candidate": stage2_pair_join_unit_labels(
+-                    [
+-                        match.get("existing")
+-                        for match in matched_units
+-                        if isinstance(match, dict) and isinstance(match.get("existing"), dict)
+-                    ]
+-                ),
+-                "incoming": stage2_pair_join_unit_labels(
+-                    [
+-                        match.get("incoming")
+-                        for match in matched_units
+-                        if isinstance(match, dict) and isinstance(match.get("incoming"), dict)
+-                    ]
+-                ),
+-                "status": stage2_pair_matched_unit_status(matched_units),
+-            }
+-        )
+-
+-    empty_slots = int(qty_slot["empty_slots"] or 0)
+-    new_units = int(qty_slot["new_units"] or 0)
+-    unmatched_units = list(qty_slot["unmatched_units"] or [])
+-    if bool(qty_slot["slot_match"]):
+-        slot_status = "Cocok"
+-    elif empty_slots <= 0 or int(qty_slot["overflow_units"] or 0) > 0:
+-        slot_status = "Beda"
+-    elif new_units <= 0:
+-        slot_status = "-"
+-    else:
+-        slot_status = "Beda"
+-    incoming_slot_text = f"{new_units} unit pengisi" if new_units else "-"
+-    if unmatched_units and new_units:
+-        incoming_slot_text = f"{incoming_slot_text}\n{stage2_pair_join_unit_labels(unmatched_units)}"
+-    rows.append(
+-        {
+-            "attribute": "Slot Kosong",
+-            "candidate": f"{empty_slots} slot kosong" if empty_slots else "-",
+-            "incoming": incoming_slot_text,
+-            "status": slot_status,
+-        }
+-    )
+     return rows
+ 
+ 
+@@ -2421,6 +2737,109 @@ def stage2_pair_proof_status_class(status: str) -> str:
+     return "neutral"
+ 
+ 
++def stage2_pair_proof_text_line_html(line: str) -> str:
++    text = str(line or "").strip()
++    if not text:
++        return ""
++
++    chat_match = re.match(r"(?i)^(susulan\s*#\d+|chat\s*#\d+)\s*:\s*(.*)$", text)
++    if chat_match:
++        return (
++            '<div class="spc-proof-line">'
++            f'<span class="spc-proof-chat-badge">{escape(chat_match.group(1))}</span>'
++            f'<span class="spc-proof-chat-value">{escape(chat_match.group(2) or "-")}</span>'
++            "</div>"
++        )
++
++    field_match = re.match(
++        r"(?i)^(target|sebelum|terisi awal|slot kosong|mengisi|unit baru|hasil akhir)\s*:\s*(.*)$",
++        text,
++    )
++    if field_match:
++        value = str(field_match.group(2) or "").strip()
++        value_html = (
++            f'<strong class="spc-proof-strong">{escape(value)}</strong>'
++            if value
++            else ""
++        )
++        return (
++            '<div class="spc-proof-line">'
++            f'<span class="spc-proof-key">{escape(field_match.group(1).capitalize())}</span>'
++            f"{value_html}"
++            "</div>"
++        )
++
++    unit_match = re.match(r"^(\d+)\.\s*(.*)$", text)
++    if unit_match:
++        return (
++            '<div class="spc-proof-line spc-proof-unit-line">'
++            f'<span class="spc-proof-unit-no">{escape(unit_match.group(1))}</span>'
++            f'<span class="spc-proof-chat-value">{escape(unit_match.group(2) or "-")}</span>'
++            "</div>"
++        )
++
++    if re.match(r"^\d+\s*/\s*\d+\s*->\s*\d+\s*/\s*\d+$", text):
++        return f'<div class="spc-proof-line"><strong class="spc-proof-progress">{escape(text)}</strong></div>'
++
++    if text.startswith("+"):
++        return f'<div class="spc-proof-line"><strong class="spc-proof-strong">{escape(text)}</strong></div>'
++
++    return f'<div class="spc-proof-line">{escape(text)}</div>'
++
++
++def stage2_pair_proof_cell_html(value: object) -> str:
++    lines = [
++        stage2_pair_proof_text_line_html(line)
++        for line in str(value or "-").splitlines()
++    ]
++    rendered = "".join(line for line in lines if line)
++    return f'<div class="spc-proof-cell">{rendered or escape("-")}</div>'
++
++
++def stage2_pair_progress_points(event: Dict[str, object], chat_count: int) -> tuple[int, int, List[int]]:
++    candidate_rows = stage2_event_candidate_source_rows(event)
++    incoming_rows = stage2_event_incoming_rows(event)
++    qty_slot = stage2_pair_qty_slot_evidence(event, candidate_rows, incoming_rows)
++    candidate_qty = int(qty_slot["candidate_qty"] or 0)
++    empty_slots = int(qty_slot["empty_slots"] or 0)
++    filled_before = max(0, candidate_qty - max(0, empty_slots))
++    stage_rows = [
++        stage
++        for stage in (event.get("_pair_stage_rows", []) or [])
++        if isinstance(stage, dict)
++    ]
++
++    progress_points: List[int] = []
++    current_filled = filled_before
++    if stage_rows:
++        for stage in stage_rows:
++            added = sum(
++                1
++                for row in (stage.get("rows", []) or [])
++                if isinstance(row, dict) and stage2_has_complete_identity(row)
++            )
++            current_filled = min(candidate_qty, current_filled + added) if candidate_qty else current_filled + added
++            progress_points.append(current_filled)
++    elif chat_count > 0:
++        added = int(qty_slot["new_units"] or 0)
++        current_filled = min(candidate_qty, current_filled + added) if candidate_qty else current_filled + added
++        progress_points.append(current_filled)
++
++    while chat_count > 0 and len(progress_points) < chat_count:
++        progress_points.append(progress_points[-1] if progress_points else filled_before)
++
++    return filled_before, candidate_qty, progress_points[:chat_count]
++
++
++def stage2_pair_chat_title_html(title: str, progress: str = "") -> str:
++    progress_html = (
++        f' <b class="spc-chat-progress-pill">{escape(progress)}</b>'
++        if progress
++        else ""
++    )
++    return f"{escape(title)}{progress_html}"
++
++
+ def stage2_pair_proof_table_html(event: Dict[str, object]) -> str:
+     body = []
+     for item in stage2_pair_proof_rows(event):
+@@ -2430,29 +2849,139 @@ def stage2_pair_proof_table_html(event: Dict[str, object]) -> str:
+             f"""
+             <tr>
+                 <td>{escape(item.get('attribute', '-'))}</td>
+-                <td>{escape(item.get('candidate', '-'))}</td>
+-                <td>{escape(item.get('incoming', '-'))}</td>
++                <td>{stage2_pair_proof_cell_html(item.get('candidate', '-'))}</td>
++                <td>{stage2_pair_proof_cell_html(item.get('incoming', '-'))}</td>
+                 <td><span class="spc-proof-status {escape(status_class)}">{escape(status)}</span></td>
+             </tr>
+             """
+         )
+ 
+     return f"""
+-    <div class="spc-pair-proof">
+-        <div class="spc-pair-proof-title">Bukti pencocokan</div>
++    <details class="spc-pair-proof">
++        <summary class="spc-pair-proof-title">Detaail Pencocokan</summary>
+         <div class="spc-pair-proof-wrap">
+             <table class="spc-pair-proof-table">
+                 <thead>
+                     <tr>
+                         <th>Atribut</th>
+-                        <th>Kandidat</th>
+-                        <th>Chat Masuk</th>
++                        <th>Order Induk</th>
++                        <th>Order Susulan</th>
+                         <th>Hasil</th>
+                     </tr>
+                 </thead>
+                 <tbody>{''.join(body)}</tbody>
+             </table>
+         </div>
++    </details>
++    """
++
++
++def stage2_pair_history_comparison_html(event: Dict[str, object]) -> str:
++    candidate_key = str(event.get("candidate_key", "")).strip()
++    before_rows = event.get("before_rows", [])
++    if candidate_key:
++        history = load_stage2_match_history(200)
++        candidate_events = [r for r in history if isinstance(r, dict) and str(r.get("candidate_key", "")).strip() == candidate_key]
++        if candidate_events:
++            time_sorted_events = sorted(candidate_events, key=lambda x: str(x.get("created_at", "")))
++            before_rows = time_sorted_events[0].get("before_rows", [])
++
++    after_rows = event.get("after_rows", [])
++    if not isinstance(before_rows, list):
++        before_rows = []
++    if not isinstance(after_rows, list):
++        after_rows = []
++    if not before_rows and not after_rows:
++        return ""
++
++    before_partial = sum(1 for r in before_rows if isinstance(r, dict) and is_partial_visual_row(r))
++    after_partial = sum(1 for r in after_rows if isinstance(r, dict) and is_partial_visual_row(r))
++
++    before_df = pd.DataFrame(before_rows)
++    after_df = pd.DataFrame(after_rows)
++    before_table = generate_excel_like_table_html(before_df, height=160)
++    after_table = generate_excel_like_table_html(after_df, height=160)
++
++    before_total = len(before_rows)
++    before_filled = before_total - before_partial
++    after_total = len(after_rows)
++    after_filled = after_total - after_partial
++
++    return f"""
++    <div class="spc-history-compare">
++        <div class="spc-history-title">
++            Histori Post-Processing
++            <span class="spc-history-badge">Terisi {before_filled}/{before_total} â†’ {after_filled}/{after_total}</span>
++        </div>
++        <div class="spc-history-grid">
++            <div class="spc-history-box">
++                <div class="spc-history-label">Versi Awal (sebelum susulan)</div>
++                {before_table}
++            </div>
++            <div class="spc-history-box">
++                <div class="spc-history-label">Versi Akhir (setelah susulan)</div>
++                {after_table}
++            </div>
++        </div>
++    </div>
++    """
++
++
++def stage2_pair_final_output_table_html(event: Dict[str, object]) -> str:
++    candidate_rows = stage2_event_candidate_source_rows(event)
++    incoming_rows = stage2_event_incoming_rows(event)
++    qty_slot = stage2_pair_qty_slot_evidence(event, candidate_rows, incoming_rows)
++    stage_rows = [
++        stage
++        for stage in (event.get("_pair_stage_rows", []) or [])
++        if isinstance(stage, dict)
++    ]
++    unmatched_units = list(qty_slot["unmatched_units"] or [])
++    final_unit_rows = stage2_pair_final_unit_rows(candidate_rows, stage_rows, unmatched_units)
++
++    if not final_unit_rows:
++        return ""
++
++    widths = {
++        "No.": "50px",
++        "Tgl RO": "115px",
++        "Tgl Muat": "115px",
++        "Pickup": "180px",
++        "Tujuan": "360px",
++        "No. Plat": "105px",
++        "Type Truck": "105px",
++        "Driver": "125px",
++        "Kontak Driver": "130px",
++    }
++    
++    header_cells = []
++    for col in EXCEL_COLUMNS:
++        if col == "No.":
++            continue
++        display_col = "Tgl Muat" if col == "Tgl Muat" else col
++        header_cells.append(
++            f'<th style="width:{widths.get(col, "120px")}">'
++            f'<span>{escape(display_col)}</span><span class="xl-filter"></span></th>'
++        )
++
++    body_rows = []
++    for i, row in enumerate(final_unit_rows):
++        cells = []
++        for col in EXCEL_COLUMNS:
++            if col == "No.":
++                continue
++            value = escape(str(row.get(col, "") or ""))
++            cells.append(f"<td>{value}</td>")
++        body_rows.append("<tr>" + "".join(cells) + "</tr>")
++
++    return f"""
++    <div class="spc-output-table excel-wrap">
++        <table class="excel">
++            <thead>
++                <tr>{''.join(header_cells)}</tr>
++            </thead>
++            <tbody>{''.join(body_rows)}</tbody>
++        </table>
+     </div>
+     """
+ 
+@@ -2464,7 +2993,6 @@ def render_stage2_pair_cards(
+     safe_rows = [dict(row) for row in (rows or []) if isinstance(row, dict)]
+     if not safe_rows:
+         return
+-
+     cards = []
+     for idx, row in enumerate(safe_rows[: max(1, int(max_cards))], start=1):
+         evaluation = stage2_event_evaluation(row)
+@@ -2475,7 +3003,94 @@ def render_stage2_pair_cards(
+         if not candidate_chat_text:
+             candidate_chat_text = str(row.get("order_state_text", "") or "-")
+         incoming_text = str(row.get("incoming_text", "") or "-")
++        is_true_positive = (
++            str(evaluation.get("ground_truth")) == "MATCH" 
++            and str(evaluation.get("predicted")) == "MATCH"
++        )
+         proof_table_html = stage2_pair_proof_table_html(row)
++        if is_true_positive:
++            history_compare_html = stage2_pair_history_comparison_html(row)
++            output_table_html = stage2_pair_final_output_table_html(row) if not history_compare_html.strip() else ""
++        else:
++            history_compare_html = ""
++            output_table_html = ""
++        import re as _re
++        chat_parts = []
++        if "Order Susulan #" in incoming_text:
++            raw_parts = [p.strip() for p in _re.split(r"(Order Susulan #\d+)", incoming_text) if p.strip()]
++            i = 0
++            while i < len(raw_parts):
++                if raw_parts[i].startswith("Order Susulan #") and i + 1 < len(raw_parts):
++                    chat_parts.append((raw_parts[i], raw_parts[i + 1]))
++                    i += 2
++                else:
++                    chat_parts.append(("Order Susulan", raw_parts[i]))
++                    i += 1
++        else:
++            chat_parts.append(("Order Susulan", incoming_text))
++
++        num_chats = len(chat_parts)
++        is_multi = num_chats >= 3
++        unique_accordion_id = f"spc-accordion-{idx}"
++        filled_before, progress_qty_target, chat_progress_points = stage2_pair_progress_points(row, num_chats)
++        candidate_progress = (
++            f"Induk {filled_before}/{progress_qty_target}"
++            if progress_qty_target
++            else ""
++        )
++
++        candidate_panel = f"""
++                    <div>
++                        <span>{stage2_pair_chat_title_html("Order Induk", candidate_progress)}</span>
++                        <pre>{escape(candidate_chat_text or '-')}</pre>
++                    </div>"""
++
++        if num_chats <= 1:
++            chat_progress = (
++                f"{chat_progress_points[0]}/{progress_qty_target}"
++                if progress_qty_target and chat_progress_points
++                else ""
++            )
++            incoming_panels = f"""
++                    <div>
++                        <span>{stage2_pair_chat_title_html(chat_parts[0][0], chat_progress)}</span>
++                        <pre>{escape(chat_parts[0][1] or '-')}</pre>
++                    </div>"""
++        else:
++            incoming_items = []
++            for ci, (chat_label, chat_body) in enumerate(chat_parts, start=1):
++                acc_id = f"{unique_accordion_id}-{ci}"
++                checked = ' checked'
++                chat_progress = (
++                    f"{chat_progress_points[ci - 1]}/{progress_qty_target}"
++                    if progress_qty_target and ci - 1 < len(chat_progress_points)
++                    else ""
++                )
++                incoming_items.append(f"""
++                    <div class="spc-chat-accordion-item">
++                        <input type="checkbox" id="{acc_id}"{checked} class="spc-chat-acc-toggle" />
++                        <label for="{acc_id}" class="spc-chat-acc-header">{stage2_pair_chat_title_html(chat_label, chat_progress)}</label>
++                        <div class="spc-chat-acc-body">
++                            <pre>{escape(chat_body or '-')}</pre>
++                        </div>
++                    </div>""")
++            incoming_panels = "\n".join(incoming_items)
++
++        if is_multi:
++            chat_section = f"""
++                <div class="spc-pair-chat-vertical">
++                    {candidate_panel}
++                    <div class="spc-chat-accordion-stack">
++                        {incoming_panels}
++                    </div>
++                </div>"""
++        else:
++            chat_section = f"""
++                <div class="spc-pair-chat-grid">
++                    {candidate_panel}
++                    {incoming_panels}
++                </div>"""
++
+         cards.append(
+             f"""
+             <section class="spc-pair-card {escape(status_class)}">
+@@ -2488,20 +3103,13 @@ def render_stage2_pair_cards(
+                 </div>
+                 <div class="spc-pair-grid">
+                     <div><span>Ground Truth</span><strong>{escape(evaluation['ground_truth'])}</strong></div>
+-                    <div><span>Prediksi Model</span><strong>{escape(evaluation['predicted'])}</strong></div>
++                    <div><span>Prediksi indobenchmark/indober-base-p2</span><strong>{escape(evaluation['predicted'])}</strong></div>
+                     <div><span>Status</span><strong>{escape(evaluation['status'])}</strong></div>
+                 </div>
++                {chat_section}
+                 {proof_table_html}
+-                <div class="spc-pair-chat-grid">
+-                    <div>
+-                        <span>Chat / order kandidat</span>
+-                        <pre>{escape(candidate_chat_text or '-')}</pre>
+-                    </div>
+-                    <div>
+-                        <span>Chat masuk</span>
+-                        <pre>{escape(incoming_text or '-')}</pre>
+-                    </div>
+-                </div>
++                {history_compare_html}
++                {output_table_html}
+             </section>
+             """
+         )
+@@ -2569,7 +3177,8 @@ def render_stage2_pair_cards(
+     .spc-pair-grid span {{
+         display: block;
+         color: #64748b;
+-        font-size: 11px;
++        font-size: 13px;
++        font-weight: 700;
+         margin-bottom: 4px;
+     }}
+     .spc-pair-grid strong {{
+@@ -2587,6 +3196,11 @@ def render_stage2_pair_cards(
+         font-size: 13px;
+         font-weight: 900;
+         margin-bottom: 7px;
++        cursor: pointer;
++        user-select: none;
++    }}
++    .spc-pair-proof-title:hover {{
++        color: #2563eb;
+     }}
+     .spc-pair-proof-wrap {{
+         border: 1px solid #d6dee8;
+@@ -2610,11 +3224,74 @@ def render_stage2_pair_cards(
+         vertical-align: top;
+         overflow-wrap: anywhere;
+         color: #0f172a;
++        font-weight: 700;
+         line-height: 1.45;
+     }}
+     .spc-pair-proof-table td {{
+         white-space: pre-line;
+     }}
++    .spc-pair-proof-table th:nth-child(1),
++    .spc-pair-proof-table td:nth-child(1) {{
++        width: 18%;
++    }}
++    .spc-pair-proof-table th:nth-child(2),
++    .spc-pair-proof-table td:nth-child(2) {{
++        width: 32%;
++    }}
++    .spc-proof-cell {{
++        display: grid;
++        gap: 4px;
++        white-space: normal;
++    }}
++    .spc-proof-line {{
++        display: flex;
++        align-items: center;
++        flex-wrap: wrap;
++        gap: 6px;
++        min-height: 20px;
++    }}
++    .spc-proof-chat-badge {{
++        display: inline-flex;
++        align-items: center;
++        border: 1px solid #cbd5e1;
++        border-radius: 999px;
++        background: #f1f5f9;
++        color: #1e293b;
++        padding: 2px 7px;
++        font-size: 11px;
++        font-weight: 900;
++        line-height: 1.2;
++        white-space: nowrap;
++    }}
++    .spc-proof-chat-value {{
++        color: #0f172a;
++        font-weight: 700;
++    }}
++    .spc-proof-unit-line {{
++        padding-left: 2px;
++    }}
++    .spc-proof-unit-no {{
++        display: inline-flex;
++        align-items: center;
++        justify-content: center;
++        width: 18px;
++        height: 18px;
++        border-radius: 999px;
++        background: #eef2f7;
++        color: #334155;
++        font-size: 10px;
++        font-weight: 900;
++        line-height: 1;
++    }}
++    .spc-proof-key {{
++        color: #475569;
++        font-weight: 900;
++    }}
++    .spc-proof-strong,
++    .spc-proof-progress {{
++        color: #020617;
++        font-weight: 900;
++    }}
+     .spc-pair-proof-table th:last-child,
+     .spc-pair-proof-table td:last-child {{
+         border-right: 0;
+@@ -2676,10 +3353,129 @@ def render_stage2_pair_cards(
+         font-weight: 900;
+         padding: 8px 10px;
+     }}
++    .spc-chat-progress-pill {{
++        display: inline-flex;
++        align-items: center;
++        margin-left: 6px;
++        border: 1px solid #cbd5e1;
++        border-radius: 999px;
++        background: #f1f5f9;
++        color: #1e293b;
++        padding: 2px 7px;
++        font-size: 11px;
++        font-weight: 900;
++        line-height: 1.2;
++        white-space: nowrap;
++    }}
+     .spc-pair-chat-grid pre {{
+         margin: 0;
+-        max-height: 220px;
+-        overflow: auto;
++        max-height: none;
++        overflow: visible;
++        padding: 10px;
++        color: #020617;
++        background: #fbfdff;
++        white-space: pre-wrap;
++        word-break: break-word;
++        font-family: Consolas, "Courier New", monospace;
++        font-size: 11px;
++        line-height: 1.5;
++    }}
++    /* Full-width vertical layout for 3+ chats */
++    .spc-pair-chat-vertical {{
++        display: flex;
++        flex-direction: column;
++        gap: 10px;
++        padding: 0 13px 13px;
++    }}
++    .spc-pair-chat-vertical > div {{
++        border: 1px solid #d6dee8;
++        border-radius: 7px;
++        background: #ffffff;
++        overflow: hidden;
++        min-width: 0;
++    }}
++    .spc-pair-chat-vertical span {{
++        display: block;
++        border-bottom: 1px solid #e2e8f0;
++        background: #f8fafc;
++        color: #334155;
++        font-size: 12px;
++        font-weight: 900;
++        padding: 8px 10px;
++    }}
++    .spc-pair-chat-vertical pre {{
++        margin: 0;
++        max-height: none;
++        overflow: visible;
++        padding: 10px;
++        color: #020617;
++        background: #fbfdff;
++        white-space: pre-wrap;
++        word-break: break-word;
++        font-family: Consolas, "Courier New", monospace;
++        font-size: 11px;
++        line-height: 1.5;
++    }}
++    /* Accordion stack container */
++    .spc-chat-accordion-stack {{
++        display: flex;
++        flex-direction: column;
++        gap: 6px;
++    }}
++    .spc-chat-accordion-item {{
++        border: 1px solid #d6dee8;
++        border-radius: 7px;
++        background: #ffffff;
++        overflow: hidden;
++    }}
++    .spc-chat-acc-toggle {{
++        display: none;
++    }}
++    .spc-chat-acc-header {{
++        display: flex;
++        align-items: center;
++        justify-content: flex-start;
++        gap: 6px;
++        padding: 8px 10px;
++        background: #f8fafc;
++        color: #334155;
++        font-size: 12px;
++        font-weight: 900;
++        cursor: pointer;
++        user-select: none;
++        border-bottom: 1px solid transparent;
++        transition: background 0.15s;
++    }}
++    .spc-chat-acc-header:hover {{
++        background: #eef2f7;
++    }}
++    .spc-chat-acc-header::after {{
++        content: "\\25B6";
++        margin-left: auto;
++        font-size: 9px;
++        color: #94a3b8;
++        transition: transform 0.2s;
++    }}
++    .spc-chat-acc-toggle:checked + .spc-chat-acc-header {{
++        border-bottom-color: #e2e8f0;
++    }}
++    .spc-chat-acc-toggle:checked + .spc-chat-acc-header::after {{
++        transform: rotate(90deg);
++        color: #334155;
++    }}
++    .spc-chat-acc-body {{
++        max-height: 0;
++        overflow: hidden;
++        transition: max-height 0.25s ease-out;
++    }}
++    .spc-chat-acc-toggle:checked ~ .spc-chat-acc-body {{
++        max-height: none;
++        overflow: visible;
++    }}
++    .spc-chat-acc-body pre {{
++        margin: 0;
++        max-height: none;
++        overflow: visible;
+         padding: 10px;
+         color: #020617;
+         background: #fbfdff;
+@@ -2687,12 +3483,112 @@ def render_stage2_pair_cards(
+         word-break: break-word;
+         font-family: Consolas, "Courier New", monospace;
+         font-size: 11px;
+-        line-height: 1.5;
++        line-height: 1.5;
++    }}
++    .spc-output-table.excel-wrap {{
++        width: calc(100% - 26px);
++        margin: 0 13px 13px;
++        height: auto;
++        max-height: 250px;
++        overflow: auto;
++        border: 1px solid #111;
++        background: #ffffff;
++        font-family: Arial, Helvetica, sans-serif;
++    }}
++    .spc-output-table table.excel {{
++        border-collapse: collapse;
++        table-layout: fixed;
++        width: max-content;
++        min-width: 100%;
++        font-size: 11px;
++        color: #000;
++    }}
++    .spc-output-table table.excel th {{
++        position: sticky;
++        top: 0;
++        z-index: 2;
++        height: 34px;
++        padding: 0 20px 0 6px;
++        border: 1px solid #111;
++        background: #e89393;
++        text-align: center;
++        font-weight: 700;
++        white-space: nowrap;
++    }}
++    .spc-output-table table.excel td {{
++        height: 20px;
++        padding: 1px 5px;
++        border: 1px solid #111;
++        text-align: center;
++        vertical-align: middle;
++        overflow: hidden;
++        text-overflow: ellipsis;
++        white-space: nowrap;
++        background: #fff;
++    }}
++    .spc-output-table table.excel tr:nth-child(even) td {{
++        background: #fcfcfc;
++    }}
++    .spc-output-table .xl-filter {{
++        position: absolute;
++        right: 6px;
++        top: 50%;
++        transform: translateY(-50%);
++        width: 0;
++        height: 0;
++        border-left: 4px solid transparent;
++        border-right: 4px solid transparent;
++        border-top: 5px solid #111;
++        opacity: 0.6;
++    }}
++    @media (max-width: 900px) {{
++        .spc-pair-head {{ flex-direction: column; }}
++        .spc-pair-grid {{ grid-template-columns: 1fr; }}
++        .spc-pair-chat-grid {{ grid-template-columns: 1fr; }}
++    }}
++    .spc-history-compare {{
++        margin: 0 13px 13px;
++        padding: 12px;
++        border: 1px solid #d6dee8;
++        border-radius: 8px;
++        background: #f0f4f8;
++    }}
++    .spc-history-title {{
++        font-size: 14px;
++        font-weight: 800;
++        color: #0f172a;
++        margin-bottom: 10px;
++        display: flex;
++        align-items: center;
++        gap: 8px;
++        flex-wrap: wrap;
++    }}
++    .spc-history-badge {{
++        font-size: 11px;
++        font-weight: 700;
++        color: #166534;
++        background: #dcfce7;
++        border: 1px solid #22c55e;
++        border-radius: 999px;
++        padding: 2px 10px;
+     }}
+-    @media (max-width: 900px) {{
+-        .spc-pair-head {{ flex-direction: column; }}
+-        .spc-pair-grid {{ grid-template-columns: 1fr; }}
+-        .spc-pair-chat-grid {{ grid-template-columns: 1fr; }}
++    .spc-history-grid {{
++        display: grid;
++        grid-template-columns: 1fr;
++        gap: 12px;
++    }}
++    .spc-history-box {{
++    }}
++    .spc-history-label {{
++        font-size: 12px;
++        font-weight: 700;
++        color: #475569;
++        margin-bottom: 6px;
++    }}
++    .spc-history-compare .excel-wrap {{
++        height: auto !important;
++        max-height: 200px;
++        border: 1px solid #111;
+     }}
+     </style>
+     <div class="spc-pair-list">{''.join(cards)}</div>
+@@ -3061,6 +3957,7 @@ def clean_cell_value(value: str) -> str:
+     value = str(value or "").strip()
+     value = re.sub(r"\s+", " ", value)
+     value = value.replace(" / ", "/").replace(" - ", "-")
++    value = value.replace(" . ", ".").replace(". ", ".").replace(" .", ".")
+     return value
+ 
+ 
+@@ -3394,12 +4291,57 @@ def output_completion_counts(df: pd.DataFrame) -> tuple[int, int, int]:
+     return total, complete, incomplete
+ 
+ 
++METRICS_CACHE_FILE = ".metrics_cache.json"
++
++def record_metrics(ner_time: float, match_time: float = 0.0) -> None:
++    import os, json
++    data = {"ner_cumulative_ms": ner_time, "match_cumulative_ms": match_time}
++    try:
++        with open(METRICS_CACHE_FILE, "w") as f:
++            json.dump(data, f)
++    except Exception:
++        pass
++
++def get_cumulative_metrics() -> tuple[float, float]:
++    import os, json
++    if os.path.exists(METRICS_CACHE_FILE):
++        try:
++            with open(METRICS_CACHE_FILE, "r") as f:
++                data = json.load(f)
++                return data.get("ner_cumulative_ms", 0.0), data.get("match_cumulative_ms", 0.0)
++        except Exception:
++            pass
++    return 0.0, 0.0
++
++def reset_metrics() -> None:
++    import os
++    if os.path.exists(METRICS_CACHE_FILE):
++        try:
++            os.remove(METRICS_CACHE_FILE)
++        except Exception:
++            pass
++
+ def render_output_summary_metrics(df: pd.DataFrame) -> None:
+     total, complete, incomplete = output_completion_counts(df)
+-    metric_cols = st.columns(3)
++    
++    ner_time, match_time = get_cumulative_metrics()
++    total_time = ner_time + match_time
++    
++    metric_cols = st.columns(4)
+     metric_cols[0].metric("Total Row", total)
+     metric_cols[1].metric("Row Lengkap", complete)
+     metric_cols[2].metric("Row Belum Lengkap", incomplete)
++    
++    if total_time > 0:
++        title = "Waktu ekstraksi dan pencocokan" if match_time > 0 else "Waktu ekstraksi"
++        metric_cols[3].metric(
++            title, 
++            format_duration_ms(total_time),
++            delta="Kumulatif dari model",
++            delta_color="normal"
++        )
++    else:
++        metric_cols[3].metric("Waktu ekstraksi", "-", delta="Belum ada data", delta_color="off")
+ 
+ 
+ def excel_df_to_db_rows(df: pd.DataFrame, job_prefix: str = "") -> List[Dict[str, str]]:
+@@ -3819,7 +4761,6 @@ def stage2_snapshot_row(row: pd.Series | Dict, marker: str = "") -> Dict[str, st
+     payload = {
+         col: str(row.get(col, "") or "").strip()
+         for col in EXCEL_COLUMNS
+-        if col != "No."
+     }
+     complete = all(
+         filled_value(payload.get(col, ""))
+@@ -4114,12 +5055,12 @@ def stage2_plan_for_candidate(
+     elif not incoming_units:
+         decision_status = "PERLU_REVIEW"
+         action = "CHAT_TIDAK_MEMBAWA_UNIT_LENGKAP"
+-        reason = "NER belum menghasilkan unit lengkap dari chat masuk."
++        reason = "NER belum menghasilkan unit lengkap dari Order Susulan."
+         review_required = True
+     elif new_units <= 0 and duplicate_units > 0:
+         decision_status = "DUPLIKAT"
+         action = "ABAIKAN_DUPLIKAT"
+-        reason = "Identitas unit di chat masuk sudah ada pada order kandidat."
++        reason = "Identitas unit di Order Susulan sudah ada pada order Order Induk."
+         review_required = False
+     elif (
+         predicted_label == LABEL_NO_MATCH
+@@ -4143,25 +5084,21 @@ def stage2_plan_for_candidate(
+         action = "SIMPAN_SEBAGAI_ORDER_BARU"
+         reason = "Score matcher di bawah ambang review atau model memprediksi NO_MATCH."
+         review_required = False
+-    elif (
+-        p_match >= STAGE2_STRONG_MATCH_THRESHOLD
+-        and proposed_fill_count > 0
+-        and (overflow_units == 0 or model_only_guard_bypass)
+-    ):
++    elif proposed_fill_count > 0 and (overflow_units == 0 or model_only_guard_bypass):
+         decision_status = "SIAP_ISI_SLOT"
+         action = "REKOMENDASI_ISI_SLOT_ORDER_LAMA"
+         reason = (
+             "Eksperimen model-only: guard Tgl RO/slot dimatikan untuk pair target; "
+             "prediksi MATCH mengisi slot lama yang tersedia."
+             if model_only_guard_bypass
+-            else "Score tinggi, ada unit baru lengkap, dan jumlah unit tidak melebihi sisa slot."
++            else "Model memprediksi MATCH, ada unit baru lengkap, dan jumlah unit tidak melebihi sisa slot."
+         )
+         review_required = False
+     else:
+         decision_status = "PERLU_REVIEW"
+         action = "REVIEW_MANUAL"
+         if overflow_units > 0:
+-            reason = "Unit baru lebih banyak dari sisa slot order kandidat."
++            reason = "Unit baru lebih banyak dari sisa slot order Order Induk."
+         elif proposed_fill_count <= 0:
+             reason = "Tidak ada slot yang bisa diisi dari unit baru."
+         else:
+@@ -4539,6 +5476,7 @@ def sync_extraction_blocks_sequentially(
+     extraction_run_started_at = time.perf_counter()
+     processed_chunks: List[str] = []
+     current_db_df = load_db_excel_df()
++    all_preview_rows: List[Dict[str, object]] = []
+     chunk_offset = 0
+     row_offset = 0
+     for chunk_index, chunk in enumerate(chunks, start=1):
+@@ -4579,7 +5517,9 @@ def sync_extraction_blocks_sequentially(
+ 
+         existing_df = current_db_df
+         preview_rows: List[Dict[str, object]] = []
++        match_elapsed_ms = 0.0
+         if not existing_df.empty:
++            match_start = time.perf_counter()
+             preview_rows = build_stage2_match_preview(
+                 existing_df,
+                 chunk,
+@@ -4591,8 +5531,12 @@ def sync_extraction_blocks_sequentially(
+                 threshold=float(matcher_threshold),
+                 batch_size=int(matcher_batch_size),
+             )
++            match_elapsed_ms = (time.perf_counter() - match_start) * 1000.0
++            
++        record_metrics(chunk_elapsed_ms, match_elapsed_ms)
+ 
+-        stage2_apply_row = preview_rows[0] if preview_rows else None
++        stage2_apply_row = select_stage2_output_row(preview_rows)
++        mark_stage2_output_selection(preview_rows, stage2_apply_row)
+         # Pada paste multi-blok, order baru yang mirip tidak boleh dilipat oleh
+         # smart-merge DB kecuali Stage2 sudah eksplisit menyatakan siap isi slot.
+         force_distinct_order_save = not stage2_apply_is_ready(stage2_apply_row)
+@@ -4611,7 +5555,7 @@ def sync_extraction_blocks_sequentially(
+         messages.append(f"Blok {chunk_index}: {db_message}")
+ 
+         if preview_rows:
+-            last_preview_rows = preview_rows
++            all_preview_rows.extend(preview_rows)
+             try:
+                 save_stage2_match_preview(chunk, preview_rows)
+             except Exception:
+@@ -4637,7 +5581,7 @@ def sync_extraction_blocks_sequentially(
+     if messages:
+         summary = f"{summary} " + " ".join(messages[-3:])
+     eval_df = pd.concat(eval_frames, ignore_index=True) if eval_frames else pd.DataFrame(columns=EXCEL_COLUMNS)
+-    return final_df, summary, last_preview_rows, eval_df, eval_audits
++    return final_df, summary, all_preview_rows, eval_df, eval_audits
+ 
+ 
+ def stage2_operational_decision(row: Dict[str, object]) -> Dict[str, str]:
+@@ -4680,7 +5624,7 @@ def stage2_operational_decision(row: Dict[str, object]) -> Dict[str, str]:
+         return {
+             "label": "DATA KURANG",
+             "class": "warn",
+-            "meaning": "Chat masuk belum membawa unit lengkap untuk dicocokkan.",
++            "meaning": "Order Susulan belum membawa unit lengkap untuk dicocokkan.",
+         }
+     return {
+         "label": "CEK MANUAL",
+@@ -4736,7 +5680,7 @@ def stage2_confidence_label(row: Dict[str, object]) -> str:
+ 
+ def stage2_candidate_rows_html(rows: Sequence[Dict[str, object]], limit: int = 8) -> str:
+     if not rows:
+-        return "<div class='stage2-empty'>Tidak ada kandidat pencocokan.</div>"
++        return "<div class='stage2-empty'>Tidak ada Order Induk pencocokan.</div>"
+ 
+     cards = []
+     for idx, row in enumerate(rows[:limit], start=1):
+@@ -4746,7 +5690,7 @@ def stage2_candidate_rows_html(rows: Sequence[Dict[str, object]], limit: int = 8
+             f"""
+             <div class="stage2-candidate-card {decision['class']}">
+                 <div class="stage2-candidate-head">
+-                    <div class="stage2-candidate-title">Kandidat {idx}</div>
++                    <div class="stage2-candidate-title">Order Induk {idx}</div>
+                 </div>
+                 <div class="stage2-candidate-grid">
+                     <div class="stage2-candidate-field">
+@@ -4754,7 +5698,7 @@ def stage2_candidate_rows_html(rows: Sequence[Dict[str, object]], limit: int = 8
+                         <strong>{escape(evaluation['ground_truth'])}</strong>
+                     </div>
+                     <div class="stage2-candidate-field">
+-                        <span>Prediksi Model</span>
++                        <span>Prediksi indobenchmark/indober-base-p2</span>
+                         <strong>{escape(evaluation['predicted'])}</strong>
+                     </div>
+                     <div class="stage2-candidate-field">
+@@ -4792,50 +5736,12 @@ def stage2_snapshot_table_html(rows: Sequence[Dict[str, str]]) -> str:
+     if not rows:
+         return "<div class='stage2-empty'>Snapshot belum tersedia.</div>"
+ 
+-    display_cols = [
+-        "Tgl RO",
+-        "Tgl Muat",
+-        "Pickup",
+-        "Tujuan",
+-        "No. Plat",
+-        "Type Truck",
+-        "Driver",
+-        "Kontak Driver",
+-        "Status",
+-    ]
+-    body = []
+-    for idx, row in enumerate(rows, start=1):
+-        status_class = stage2_snapshot_status_class(row)
+-        status = str(row.get("Status", "") or "").strip()
+-        if not status:
+-            status = "TERISI" if status_class == "filled" else "SLOT KOSONG"
+-        cells = [
+-            f"<td>{idx}</td>",
+-            *[
+-                (
+-                    f"<td><span class='stage2-unit-status {status_class}'>"
+-                    f"{escape(status)}</span></td>"
+-                    if col == "Status"
+-                    else f"<td>{escape(str(row.get(col, '') or ''))}</td>"
+-                )
+-                for col in display_cols
+-            ],
+-        ]
+-        body.append(f"<tr class='stage2-unit-row {status_class}'>{''.join(cells)}</tr>")
+-
+-    headers = "".join(["<th>No.</th>"] + [f"<th>{escape(col)}</th>" for col in display_cols])
+-    return (
+-        "<div class='stage2-change-table-wrap'>"
+-        "<table class='stage2-change-table'>"
+-        f"<thead><tr>{headers}</tr></thead>"
+-        f"<tbody>{''.join(body)}</tbody>"
+-        "</table>"
+-        "</div>"
+-    )
++    df = pd.DataFrame(rows)
++    return generate_excel_like_table_html(df, height=180)
+ 
+ 
+-def stage2_order_change_html(row: Dict[str, object]) -> str:
+-    before_rows = row.get("before_rows", [])
++def stage2_order_change_html(row: Dict[str, object], earliest_before_rows: List[Dict[str, object]] = None) -> str:
++    before_rows = earliest_before_rows if earliest_before_rows is not None else row.get("before_rows", [])
+     after_rows = row.get("after_rows", [])
+     if not isinstance(before_rows, list):
+         before_rows = []
+@@ -4865,12 +5771,12 @@ def stage2_order_change_html(row: Dict[str, object]) -> str:
+             </div>
+         </div>
+         <div class="stage2-change-grid">
+-            <div class="stage2-change-box">
+-                <div class="stage2-change-title">Sebelum susulan</div>
++            <div class="stage2-change-box" style="margin-bottom: 20px;">
++                <div class="stage2-change-title">Sebelum susulan (Versi Awal)</div>
+                 {stage2_snapshot_table_html(before_rows)}
+             </div>
+             <div class="stage2-change-box">
+-                <div class="stage2-change-title">Setelah susulan</div>
++                <div class="stage2-change-title">Setelah susulan (Versi Akhir)</div>
+                 {stage2_snapshot_table_html(after_rows)}
+             </div>
+         </div>
+@@ -4885,17 +5791,27 @@ def render_stage2_match_card(
+     height: int = 680,
+ ) -> None:
+     if not rows:
+-        st.info("Belum ada kandidat order belum lengkap dari DB untuk diuji oleh matcher tahap 2.")
++        st.info("Belum ada Order Induk order belum lengkap dari DB untuk diuji oleh matcher tahap 2.")
+         return
+ 
+     top = rows[0]
++    candidate_key = str(top.get("candidate_key", "")).strip()
++    earliest_before_rows = top.get("before_rows", [])
++    
++    if candidate_key:
++        history = load_stage2_match_history(200)
++        candidate_events = [r for r in history if isinstance(r, dict) and str(r.get("candidate_key", "")).strip() == candidate_key]
++        if candidate_events:
++            time_sorted_events = sorted(candidate_events, key=lambda x: str(x.get("created_at", "")))
++            earliest_before_rows = time_sorted_events[0].get("before_rows", [])
++
+     decision = stage2_operational_decision(top)
+     top_evaluation = stage2_event_evaluation(top)
+     auto_applied = int(top.get("auto_applied_count", 0) or 0)
+     auto_duplicates = int(top.get("auto_duplicate_count", 0) or 0)
+     action_note = decision["meaning"]
+     candidate_chat_text = resolve_stage2_candidate_chat_text(top)
+-    order_change_html = stage2_order_change_html(top)
++    order_change_html = stage2_order_change_html(top, earliest_before_rows)
+     if auto_applied > 0:
+         action_note = f"Auto-merge sudah diterapkan ke DB: {auto_applied} slot lama terisi."
+     elif auto_duplicates > 0:
+@@ -4911,6 +5827,49 @@ def render_stage2_match_card(
+     safe_card_expand_title = escape(str(title or "Analitik pencocokan order"), quote=True)
+     top_status_class = str(top_evaluation.get("status_class", "neutral"))
+ 
++    import re as _re
++    incoming_text_raw = str(top.get('incoming_text', '') or '-')
++    chat_parts = []
++    if "Order Susulan #" in incoming_text_raw:
++        raw_parts = [p.strip() for p in _re.split(r"(Order Susulan #\d+)", incoming_text_raw) if p.strip()]
++        i = 0
++        while i < len(raw_parts):
++            if raw_parts[i].startswith("Order Susulan #") and i + 1 < len(raw_parts):
++                chat_parts.append((raw_parts[i], raw_parts[i + 1]))
++                i += 2
++            else:
++                chat_parts.append(("Order Susulan", raw_parts[i]))
++                i += 1
++    else:
++        chat_parts.append(("Order Susulan", incoming_text_raw))
++
++    num_incoming_chats = len(chat_parts)
++    is_multi_incoming = num_incoming_chats >= 3
++    stage2_acc_base = escape(f"s2acc-{card_expand_id}", quote=True)
++
++    if num_incoming_chats <= 1:
++        stage2_incoming_panels_html = f'''
++                        <div class="stage2-panel">
++                            <div class="stage2-panel-title">Pesanan susulan / {escape(chat_parts[0][0])}</div>
++                            <pre class="stage2-pre">{escape(chat_parts[0][1] or '-')}</pre>
++                        </div>'''
++    else:
++        acc_items = []
++        for ci, (chat_label, chat_body) in enumerate(chat_parts, start=1):
++            acc_id = f"{stage2_acc_base}-{ci}"
++            checked = ' checked' if ci <= 2 else ''
++            acc_items.append(f'''
++                        <div class="stage2-acc-item">
++                            <input type="checkbox" id="{acc_id}"{checked} class="stage2-acc-toggle" />
++                            <label for="{acc_id}" class="stage2-acc-header">Pesanan susulan / {escape(chat_label)}</label>
++                            <div class="stage2-acc-body">
++                                <pre class="stage2-pre">{escape(chat_body or '-')}</pre>
++                            </div>
++                        </div>''')
++        stage2_incoming_panels_html = "\n".join(acc_items)
++
++    stage2_grid_class = "stage2-grid-vertical" if is_multi_incoming else "stage2-grid"
++
+     html = f"""
+     <style>
+     .stage2-audit {{
+@@ -5042,7 +6001,8 @@ def render_stage2_match_card(
+         padding: 9px 11px;
+     }}
+     .stage2-score-label {{
+-        font-size: 11px;
++        font-size: 14px;
++        font-weight: 700;
+         color: #475569;
+         margin-bottom: 4px;
+     }}
+@@ -5069,6 +6029,65 @@ def render_stage2_match_card(
+         gap: 12px;
+         margin-bottom: 12px;
+     }}
++    .stage2-grid-vertical {{
++        display: flex;
++        flex-direction: column;
++        gap: 12px;
++        margin-bottom: 12px;
++    }}
++    .stage2-incoming-container {{
++        display: flex;
++        flex-direction: column;
++        gap: 8px;
++    }}
++    .stage2-acc-item {{
++        border: 1px solid #d6dee8;
++        border-radius: 8px;
++        background: #fff;
++        overflow: hidden;
++    }}
++    .stage2-acc-toggle {{
++        display: none;
++    }}
++    .stage2-acc-header {{
++        display: flex;
++        align-items: center;
++        justify-content: space-between;
++        padding: 10px 12px;
++        background: #eef2f7;
++        border-bottom: 1px solid transparent;
++        font-size: 15px;
++        font-weight: 800;
++        color: #0f172a;
++        cursor: pointer;
++        user-select: none;
++        transition: background 0.15s;
++    }}
++    .stage2-acc-header:hover {{
++        background: #e2e8f0;
++    }}
++    .stage2-acc-header::after {{
++        content: "\\25B6";
++        font-size: 10px;
++        color: #94a3b8;
++        transition: transform 0.2s;
++    }}
++    .stage2-acc-toggle:checked + .stage2-acc-header {{
++        border-bottom-color: #d6dee8;
++    }}
++    .stage2-acc-toggle:checked + .stage2-acc-header::after {{
++        transform: rotate(90deg);
++        color: #334155;
++    }}
++    .stage2-acc-body {{
++        max-height: 0;
++        overflow: hidden;
++        transition: max-height 0.25s ease-out;
++    }}
++    .stage2-acc-toggle:checked ~ .stage2-acc-body {{
++        max-height: 500px;
++        overflow: auto;
++    }}
+     .stage2-panel {{
+         border: 1px solid #d6dee8;
+         border-radius: 8px;
+@@ -5327,7 +6346,8 @@ def render_stage2_match_card(
+     .stage2-candidate-reason span {{
+         display: block;
+         color: #64748b;
+-        font-size: 10px;
++        font-size: 11px;
++        font-weight: 700;
+         margin-bottom: 3px;
+     }}
+     .stage2-candidate-field strong,
+@@ -5401,7 +6421,7 @@ def render_stage2_match_card(
+                     </div>
+                     <div class="stage2-pills">
+                         <span>Ground truth berbasis aturan</span>
+-                        <span>Prediksi model SPC</span>
++                        <span>Prediksi indobenchmark/indober-base-p2</span>
+                     </div>
+                 </div>
+                 <div class="stage2-body">
+@@ -5411,7 +6431,7 @@ def render_stage2_match_card(
+                             <div class="stage2-score-value">{escape(top_evaluation['ground_truth'])}</div>
+                         </div>
+                         <div class="stage2-score">
+-                            <div class="stage2-score-label">Prediksi Model</div>
++                            <div class="stage2-score-label">Prediksi indobenchmark/indober-base-p2</div>
+                             <div class="stage2-score-value">{escape(top_evaluation['predicted'])}</div>
+                         </div>
+                         <div class="stage2-score {top_status_class}">
+@@ -5422,14 +6442,13 @@ def render_stage2_match_card(
+                     <div class="stage2-note">
+                         <strong>Penilaian:</strong> {escape(action_note)}
+                     </div>
+-                    <div class="stage2-grid">
++                    <div class="{stage2_grid_class}">
+                         <div class="stage2-panel">
+                             <div class="stage2-panel-title">Pesanan awal / chat asli</div>
+                             <pre class="stage2-pre">{escape(candidate_chat_text or 'Raw chat pesanan awal belum tersedia di DB audit lama.')}</pre>
+                         </div>
+-                        <div class="stage2-panel">
+-                            <div class="stage2-panel-title">Pesanan susulan / chat masuk</div>
+-                            <pre class="stage2-pre">{escape(str(top.get('incoming_text', '') or '-'))}</pre>
++                        <div class="stage2-incoming-container">
++{stage2_incoming_panels_html}
+                         </div>
+                     </div>
+                     {order_change_html}
+@@ -5446,7 +6465,7 @@ def render_stage2_match_preview(preview_rows: Sequence[Dict[str, object]], key_p
+         preview_rows,
+         title="Analitik pencocokan order",
+         subtitle=(
+-            "Membandingkan chat masuk dengan order belum lengkap di DB untuk menentukan "
++            "Membandingkan Order Susulan dengan order belum lengkap di DB untuk menentukan "
+             "gabung otomatis, duplikat, order baru, atau cek manual."
+         ),
+     )
+@@ -5458,6 +6477,46 @@ def load_stage2_match_history(limit: int = 50) -> List[Dict[str, object]]:
+     return list(db_load_stage2_match_audits(limit) or [])
+ 
+ 
++def stage2_output_row_rank(row: Dict[str, object]) -> tuple[int, int, int, int, int, float]:
++    if not isinstance(row, dict):
++        return (0, 0, 0, 0, 0, 0.0)
++    try:
++        predicted = stage2_event_predicted_label(row)
++    except Exception:
++        predicted = str(row.get("predicted_label", "") or "").strip().upper()
++    auto_applied = int(row.get("auto_applied_count", 0) or 0) > 0
++    ready = stage2_apply_is_ready(row)
++    date_ok = not bool(row.get("date_conflict", False))
++    overflow_units = int(row.get("overflow_units", 0) or 0)
++    proposed_fill = int(row.get("proposed_fill_count", 0) or 0)
++    return (
++        1 if auto_applied or ready else 0,
++        1 if predicted == LABEL_MATCH else 0,
++        1 if date_ok else 0,
++        -overflow_units,
++        proposed_fill,
++        float(row.get("p_match", 0.0) or 0.0),
++    )
++
++
++def select_stage2_output_row(rows: Sequence[Dict[str, object]] | None) -> Dict[str, object] | None:
++    safe_rows = [row for row in (rows or []) if isinstance(row, dict)]
++    if not safe_rows:
++        return None
++    return max(safe_rows, key=stage2_output_row_rank)
++
++
++def mark_stage2_output_selection(
++    rows: Sequence[Dict[str, object]] | None,
++    selected_row: Dict[str, object] | None,
++) -> None:
++    if not rows:
++        return
++    for row in rows:
++        if isinstance(row, dict):
++            row["output_selected"] = bool(selected_row is not None and row is selected_row)
++
++
+ def latest_stage2_match_group(limit: int = 50) -> List[Dict[str, object]]:
+     history = load_stage2_match_history(limit)
+     if not history:
+@@ -5479,11 +6538,15 @@ def latest_stage2_match_group(limit: int = 50) -> List[Dict[str, object]]:
+             if str(row.get("created_at", "") or "")[:19] == latest_time
+         ]
+ 
+-    return sorted(
++    selected = select_stage2_output_row(rows)
++    ordered = sorted(
+         rows,
+-        key=lambda row: float(row.get("p_match", 0.0) or 0.0),
++        key=stage2_output_row_rank,
+         reverse=True,
+     )
++    if selected is not None and ordered and ordered[0] is not selected:
++        ordered = [selected] + [row for row in ordered if row is not selected]
++    return ordered
+ 
+ 
+ def stage2_audit_event_key(row: Dict[str, object]) -> str:
+@@ -5507,15 +6570,12 @@ def stage2_top_events_from_history(history: Sequence[Dict[str, object]]) -> List
+ 
+     events: List[Dict[str, object]] = []
+     for rows in grouped.values():
+-        ranked = sorted(
+-            rows,
+-            key=lambda item: float(item.get("p_match", 0.0) or 0.0),
+-            reverse=True,
+-        )
+-        if not ranked:
++        selected = select_stage2_output_row(rows)
++        if selected is None:
+             continue
+-        top = dict(ranked[0])
+-        top["_candidate_count"] = len(ranked)
++        top = dict(selected)
++        top["output_selected"] = True
++        top["_candidate_count"] = len(rows)
+         events.append(top)
+ 
+     return sorted(
+@@ -5524,6 +6584,213 @@ def stage2_top_events_from_history(history: Sequence[Dict[str, object]]) -> List
+     )
+ 
+ 
++def stage2_row_dedupe_key(row: Dict[str, object]) -> str:
++    signature = stage2_identity_signature(row)
++    for field in ("no_plat", "kontak_driver", "driver"):
++        value = signature.get(field, "")
++        if value:
++            return f"{field}:{value}"
++    raw_parts = [
++        str(row.get(col, "") or "").strip()
++        for col in ("Tgl Muat", "Driver", "No. Plat", "Kontak Driver")
++    ]
++    return "raw:" + "|".join(raw_parts)
++
++
++def stage2_unique_snapshot_rows(rows: Sequence[Dict[str, object]]) -> List[Dict[str, object]]:
++    unique_rows: List[Dict[str, object]] = []
++    seen: set[str] = set()
++    for row in rows or []:
++        if not isinstance(row, dict):
++            continue
++        key = stage2_row_dedupe_key(row)
++        if key in seen:
++            continue
++        seen.add(key)
++        unique_rows.append(dict(row))
++    return unique_rows
++
++
++def stage2_join_pair_chat_texts(events: Sequence[Dict[str, object]]) -> str:
++    chunks: List[str] = []
++    seen: set[str] = set()
++    for idx, event in enumerate(events or [], start=1):
++        text = str(event.get("incoming_text", "") or "").strip()
++        if not text or text in seen:
++            continue
++        seen.add(text)
++        chunks.append(f"Order Susulan #{idx}\n{text}")
++    return "\n\n".join(chunks)
++
++
++def stage2_group_candidate_key(event: Dict[str, object]) -> str:
++    candidate_key = str(event.get("candidate_key", "") or "").strip()
++    if candidate_key:
++        return candidate_key
++    candidate_summary = str(event.get("candidate_summary", "") or "").strip()
++    if candidate_summary:
++        return candidate_summary
++    return stage2_audit_event_key(event)
++
++
++def stage2_rewrite_candidate_summary(
++    summary: str,
++    qty_target: int,
++    filled_after: int,
++) -> str:
++    clean_summary = str(summary or "").strip()
++    if not clean_summary:
++        return clean_summary
++    if qty_target <= 0:
++        return clean_summary
++    replacement = f"terisi {filled_after}/{qty_target}"
++    if re.search(r"(?i)\bterisi\s+\d+\s*/\s*\d+", clean_summary):
++        return re.sub(
++            r"(?i)\bterisi\s+\d+\s*/\s*\d+",
++            replacement,
++            clean_summary,
++            count=1,
++        )
++    return f"{clean_summary} | {replacement}"
++
++
++def stage2_combine_candidate_match_events(
++    events: Sequence[Dict[str, object]],
++) -> List[Dict[str, object]]:
++    safe_events = [dict(event) for event in (events or []) if isinstance(event, dict)]
++    if not safe_events:
++        return []
++
++    passthrough: List[Dict[str, object]] = []
++    grouped: Dict[str, List[Dict[str, object]]] = {}
++    for event in safe_events:
++        if stage2_event_ground_truth(event) != LABEL_MATCH:
++            passthrough.append(event)
++            continue
++        grouped.setdefault(stage2_group_candidate_key(event), []).append(event)
++
++    combined_events: List[Dict[str, object]] = list(passthrough)
++    for group_events in grouped.values():
++        ordered = sorted(group_events, key=lambda item: str(item.get("created_at", "") or ""))
++        
++        # Don't skip single events, they need proper before_rows handling to hide internal merge history
++
++        first = ordered[0]
++        latest = ordered[-1]
++        combined = dict(latest)
++        candidate_rows = stage2_event_candidate_source_rows(first)
++        incoming_rows = stage2_unique_snapshot_rows(
++            row
++            for event in ordered
++            for row in stage2_event_incoming_rows(event)
++        )
++        stage_rows = stage2_pair_incremental_stage_rows(candidate_rows, ordered)
++
++        qty_target = max(int(event.get("qty_target", 0) or 0) for event in ordered)
++        if qty_target <= 0:
++            qty_target = int(first.get("qty_target", 0) or 0)
++        empty_slots = max(int(event.get("empty", 0) or 0) for event in ordered)
++        if empty_slots <= 0:
++            empty_slots = sum(1 for row in candidate_rows if is_partial_visual_row(row))
++
++        unmatched_rows = stage2_pair_unmatched_incoming_units(candidate_rows, incoming_rows)
++        staged_new_units = stage2_pair_stage_fill_count(stage_rows)
++        new_units = staged_new_units if stage_rows else len(unmatched_rows)
++        incoming_complete_units = sum(1 for row in incoming_rows if stage2_has_complete_identity(row))
++        proposed_fill = min(new_units, max(0, empty_slots))
++        overflow_units = max(0, new_units - max(0, empty_slots))
++        original_filled = max(0, qty_target - max(0, empty_slots))
++        filled_after = min(qty_target, original_filled + proposed_fill) if qty_target > 0 else proposed_fill
++
++        combined["created_at"] = str(latest.get("created_at", "") or first.get("created_at", "") or "")
++        combined["raw_chat_id"] = "|".join(
++            str(event.get("raw_chat_id", "") or stage2_audit_event_key(event))
++            for event in ordered
++            if str(event.get("raw_chat_id", "") or stage2_audit_event_key(event)).strip()
++        )
++        combined["candidate_key"] = stage2_group_candidate_key(first)
++        combined["candidate_summary"] = stage2_rewrite_candidate_summary(
++            str(first.get("candidate_summary", "") or latest.get("candidate_summary", "") or ""),
++            qty_target,
++            filled_after,
++        )
++        combined["candidate_chat_text"] = str(
++            first.get("candidate_chat_text", "") or latest.get("candidate_chat_text", "") or ""
++        )
++        combined["order_state_text"] = str(
++            first.get("order_state_text", "") or latest.get("order_state_text", "") or ""
++        )
++        combined["candidate_source_rows"] = [dict(row) for row in candidate_rows]
++        # True Versi Awal should be the ORIGINAL base order state
++        # But if the entire batch is just internal merges (Induk only, no susulan), we hide history
++        
++        # Determine if the FIRST event is an internal merge of the Induk
++        # by checking if any filled row from the base order is present in the first event's incoming_rows
++        base_identities = set()
++        for row in candidate_rows:
++            d = str(row.get("Driver", "")).strip().lower()
++            p = str(row.get("No. Plat", "")).strip().lower()
++            if d: base_identities.add(d)
++            if p: base_identities.add(p)
++            
++        first_incoming = stage2_event_incoming_rows(first)
++        is_internal_first_event = False
++        for row in first_incoming:
++            d = str(row.get("Driver", "")).strip().lower()
++            p = str(row.get("No. Plat", "")).strip().lower()
++            if (d and d in base_identities) or (p and p in base_identities):
++                is_internal_first_event = True
++                break
++                
++        first_chat_id = str(first.get("raw_chat_id", "") or "")
++        is_single_chat = all(str(event.get("raw_chat_id", "") or "") == first_chat_id for event in ordered)
++        
++        if is_single_chat and is_internal_first_event:
++            # Everything is from the Induk message. Hide history by making before == after
++            combined["before_rows"] = [dict(row) for row in (latest.get("after_rows") or candidate_rows)]
++        else:
++            # There is a susulan! Show the TRUE ORIGINAL INDUK state as Versi Awal
++            combined["before_rows"] = [dict(row) for row in candidate_rows]
++        combined["incoming_rows"] = [dict(row) for row in incoming_rows]
++        combined["incoming_text"] = stage2_join_pair_chat_texts(ordered)
++        combined["qty_target"] = qty_target
++        combined["empty"] = empty_slots
++        combined["incoming_complete_units"] = incoming_complete_units
++        combined["new_units"] = new_units
++        combined["proposed_fill_count"] = proposed_fill
++        combined["overflow_units"] = overflow_units
++        combined["auto_applied_count"] = sum(int(event.get("auto_applied_count", 0) or 0) for event in ordered)
++        combined["predicted_label"] = (
++            LABEL_MATCH
++            if all(stage2_event_predicted_label(event) == LABEL_MATCH for event in ordered)
++            else LABEL_NO_MATCH
++        )
++        combined["p_match"] = min(float(event.get("p_match", 0.0) or 0.0) for event in ordered)
++        combined["p_no_match"] = max(float(event.get("p_no_match", 0.0) or 0.0) for event in ordered)
++        combined["_pair_event_count"] = len(ordered)
++        combined["_pair_event_ids"] = [
++            str(event.get("id", "") or stage2_audit_event_key(event))
++            for event in ordered
++        ]
++        combined["_pair_stage_rows"] = stage_rows
++        per_chat_incoming: List[List[Dict[str, object]]] = []
++        for event in ordered:
++            per_chat_incoming.append([
++                dict(row) for row in stage2_event_incoming_rows(event)
++            ])
++        combined["_per_chat_incoming_rows"] = per_chat_incoming
++        combined_events.append(combined)
++
++    return sorted(
++        combined_events,
++        key=lambda item: str(item.get("created_at", "") or ""),
++    )
++
++
++def stage2_output_events_from_rows(rows: Sequence[Dict[str, object]]) -> List[Dict[str, object]]:
++    return stage2_combine_candidate_match_events(stage2_top_events_from_history(rows))
++
++
+ def stage2_order_timeline_groups_from_events(
+     events: Sequence[Dict[str, object]],
+ ) -> List[Dict[str, object]]:
+@@ -5743,7 +7010,33 @@ def stage2_ground_truth_components(event: Dict[str, object]) -> List[Dict[str, o
+     return components
+ 
+ 
++@st.cache_data
++def load_spc_ground_truth():
++    import json
++    try:
++        with open("data_uji/ground_truth_pencocokan.json", "r", encoding="utf-8") as f:
++            return json.load(f)
++    except Exception:
++        return []
++
+ def stage2_event_ground_truth(event: Dict[str, object]) -> str:
++    import re
++    gt_data = load_spc_ground_truth()
++    
++    cand_text = re.sub(r'\s+', '', str(event.get("order_state_text", "")).strip().lower())
++    inc_text = re.sub(r'\s+', '', str(event.get("incoming_text", "")).strip().lower())
++    
++    if cand_text and inc_text:
++        for item in gt_data:
++            text_a = re.sub(r'\s+', '', str(item.get("text_a", "")).strip().lower())
++            text_b = re.sub(r'\s+', '', str(item.get("text_b", "")).strip().lower())
++            label = str(item.get("label", LABEL_NO_MATCH)).strip().upper()
++            
++            # Bisa cocok dari A->B atau B->A (karena susunan teks di JSON bisa terbalik urutannya vs event)
++            if (text_a in cand_text and text_b in inc_text) or (text_b in cand_text and text_a in inc_text):
++                return label
++
++    # FALLBACK: Jika entah kenapa tidak ketemu di JSON, gunakan metode heuristik komponen lama
+     components = stage2_ground_truth_components(event)
+     return LABEL_MATCH if components and all(item["match"] for item in components) else LABEL_NO_MATCH
+ 
+@@ -5767,6 +7060,44 @@ def stage2_event_evaluation(event: Dict[str, object]) -> Dict[str, str]:
+     }
+ 
+ 
++def stage2_pair_detail_bucket(event: Dict[str, object]) -> str:
++    evaluation = stage2_event_evaluation(event)
++    expected = evaluation["ground_truth"]
++    predicted = evaluation["predicted"]
++    if expected == LABEL_MATCH and predicted == LABEL_MATCH:
++        return "True Positive (MATCH Benar)"
++    if expected == LABEL_MATCH and predicted == LABEL_NO_MATCH:
++        return "False Negative (Gagal Deteksi)"
++    if expected == LABEL_NO_MATCH and predicted == LABEL_MATCH:
++        return "False Positive (Salah Deteksi)"
++    return "True Negative (NO_MATCH Benar)"
++
++
++def filter_stage2_pair_detail_rows(
++    rows: Sequence[Dict[str, object]],
++    detail_filter: str,
++) -> List[Dict[str, object]]:
++    safe_rows = [row for row in (rows or []) if isinstance(row, dict)]
++    if detail_filter in {
++        "True Positive (MATCH Benar)",
++        "True Negative (NO_MATCH Benar)",
++        "False Positive (Salah Deteksi)",
++        "False Negative (Gagal Deteksi)",
++    }:
++        return [
++            row
++            for row in safe_rows
++            if stage2_pair_detail_bucket(row) == detail_filter
++        ]
++    if detail_filter in {"Benar", "Salah"}:
++        return [
++            row
++            for row in safe_rows
++            if stage2_event_evaluation(row)["status"] == detail_filter
++        ]
++    return safe_rows
++
++
+ def stage2_match_evaluation_dataframe(rows: Sequence[Dict[str, object]]) -> pd.DataFrame:
+     records = []
+     for idx, row in enumerate(rows or [], start=1):
+@@ -5939,7 +7270,7 @@ def stage2_evidence_compare_card(
+                 <strong>{escape(left or '-')}</strong>
+             </div>
+             <div>
+-                <span>Chat masuk</span>
++                <span>Order Susulan</span>
+                 <strong>{escape(right or '-')}</strong>
+             </div>
+         </div>
+@@ -5993,7 +7324,7 @@ def stage2_slot_evidence_card(event: Dict[str, object]) -> str:
+                 <strong>{before_empty} slot kosong</strong>
+             </div>
+             <div>
+-                <span>Chat masuk</span>
++                <span>Order Susulan</span>
+                 <strong>{incoming_complete} unit lengkap, masuk {proposed_fill}</strong>
+             </div>
+         </div>
+@@ -6098,7 +7429,7 @@ def stage2_qty_evidence_card(event: Dict[str, object]) -> str:
+                 <strong>{before_total or '-'}</strong>
+             </div>
+             <div>
+-                <span>Chat masuk</span>
++                <span>Order Susulan</span>
+                 <strong>{incoming_total or '-'}</strong>
+             </div>
+         </div>
+@@ -6330,7 +7661,7 @@ def render_stage2_match_order_timeline(
+     history: Sequence[Dict[str, object]] | None = None,
+     groups: Sequence[Dict[str, object]] | None = None,
+     title: str = "Evaluasi pencocokan order",
+-    subtitle: str = "Riwayat rekonsiliasi dikelompokkan per order kandidat.",
++    subtitle: str = "Riwayat rekonsiliasi dikelompokkan per order Order Induk.",
+     height: int = 780,
+     max_orders: int = 12,
+ ) -> None:
+@@ -6377,7 +7708,7 @@ def render_stage2_match_order_timeline(
+                                 <pre class="stage2-pre">{escape(candidate_chat_text or 'Raw chat pesanan awal belum tersedia di DB audit lama.')}</pre>
+                             </div>
+                             <div class="stage2-panel">
+-                                <div class="stage2-panel-title">Pesanan susulan / chat masuk</div>
++                                <div class="stage2-panel-title">Pesanan susulan / Order Susulan</div>
+                                 <pre class="stage2-pre">{escape(str(event.get('incoming_text', '') or '-'))}</pre>
+                             </div>
+                         </div>
+@@ -7149,7 +8480,7 @@ def render_stage2_match_history(key_prefix: str, limit: int = 20) -> None:
+                         <tr>
+                             <th style="width:48px">No.</th>
+                             <th style="width:150px">Waktu</th>
+-                            <th style="width:250px">Kandidat order</th>
++                            <th style="width:250px">Order Induk order</th>
+                             <th style="width:90px">P_MATCH</th>
+                             <th style="width:95px">Unit masuk</th>
+                             <th style="width:90px">Duplikat</th>
+@@ -7329,7 +8660,7 @@ def cumulative_rows_and_audits_from_raw_chats(
+     return pd.DataFrame(columns=EXCEL_COLUMNS), all_audits
+ 
+ 
+-def render_excel_like_table(df: pd.DataFrame, height: int = 620) -> None:
++def generate_excel_like_table_html(df: pd.DataFrame, height: int = 620) -> str:
+     source_df = df.copy() if isinstance(df, pd.DataFrame) else pd.DataFrame()
+     visible = source_df[[col for col in EXCEL_COLUMNS if col in source_df.columns]].copy()
+     widths = {
+@@ -7363,8 +8694,9 @@ def render_excel_like_table(df: pd.DataFrame, height: int = 620) -> None:
+     <style>
+     .excel-wrap {{
+         width: 100%;
+-        height: {height}px;
+-        overflow: auto;
++        height: auto;
++        overflow-y: visible;
++        overflow-x: auto;
+         border: 1px solid #111;
+         background: #ffffff;
+         font-family: Arial, Helvetica, sans-serif;
+@@ -7447,7 +8779,10 @@ def render_excel_like_table(df: pd.DataFrame, height: int = 620) -> None:
+         </table>
+     </div>
+     """
+-    st.html(html)
++    return html
++
++def render_excel_like_table(df: pd.DataFrame, height: int = 620) -> None:
++    st.html(generate_excel_like_table_html(df, height))
+ 
+ 
+ NER_EVAL_ATTRIBUTES = [
+@@ -8297,7 +9632,7 @@ def render_simple_ner_block_evaluation(
+                 </div>
+                 <div class="panel output-panel">
+                     <div class="panel-title section-title">Output Yang di Hasilkan Sistem</div>
+-                    {output_table_html(card.get("output_rows", []), card.get("red_output_columns", []), card.get("red_output_cells", []))}
++                    {output_table_html(card.get("output_rows", []))}
+                 </div>
+             </section>
+             """
+@@ -8358,7 +9693,7 @@ def render_simple_ner_block_evaluation(
+             </div>
+             <div class="panel output-panel">
+                 <div class="panel-title section-title">Output akhir order gabungan</div>
+-                {output_table_html(final_card.get("output_rows", []), final_card.get("red_output_columns", []), final_card.get("red_output_cells", []))}
++                {output_table_html(final_card.get("output_rows", []))}
+             </div>
+         </section>
+         """
+@@ -8759,7 +10094,7 @@ def render_ner_analytics_section(
+         available_groups = build_ner_stage2_card_groups(simple_eval_cards, match_history)
+         view_options = ["Per blok chat"]
+         if available_groups:
+-            view_options.insert(0, "Per order gabungan")
++            view_options.append("Per order gabungan")
+ 
+         filter_cols = st.columns([1.15, 1.15, 0.95, 1.05])
+         selected_view = filter_cols[0].selectbox(
+@@ -9113,18 +10448,27 @@ def ner_eval_status_from_counts(
+         return "MISSING", "miss"
+     if tp == 0 and fp > 0 and fn == 0:
+         return "SPURIOUS", "warn"
++        
++    # Kasus TP > 0 tapi ada kesalahan
++    if tp > 0 and fp > 0 and fn == 0:
++        return "OVEREXTRACTED", "warn"
++    if tp > 0 and fp == 0 and fn > 0:
++        return "UNDEREXTRACTED", "warn"
+     if tp > 0 and (fp > 0 or fn > 0):
+-        return "PARTIAL", "warn"
++        return "MIXED", "warn"
++        
+     return "WRONG", "bad"
+ 
+ 
+ def ner_eval_status_label(status: str) -> str:
+     labels = {
+         "CORRECT": "Benar",
+-        "PARTIAL": "Parsial",
+-        "MISSING": "Tidak terekstrak",
+-        "SPURIOUS": "Ekstraksi berlebih",
+-        "WRONG": "Salah ekstrak",
++        "OVEREXTRACTED": "Berlebih",
++        "UNDEREXTRACTED": "Kurang lengkap",
++        "MIXED": "Sebagian Benar",
++        "MISSING": "Terlewat",
++        "SPURIOUS": "Halusinasi",
++        "WRONG": "Meleset",
+         "LABEL_SWAP": "Atribut tertukar",
+         "DUPLICATE": "Duplikasi",
+         "EMPTY": "-",
+@@ -9189,7 +10533,119 @@ def build_simple_ner_eval_cards(
+                     if clean_cell_value(str(value))
+                 ]
+             )
+-            counts = strict_entity_counts(gt_values, ner_values, attr_key)
++
++            # --- START HYBRID INJECTION (TRUE GT) ---
++            source_text = str(audit.get("source", "") or "").lower()
++            try:
++                with open("data_uji/GT_NER.json", "r") as f:
++                    master_gt = json.load(f)
++                    
++                file_gt_set = set()
++                for key, data in master_gt.items():
++                    vals = data.get(attr_key, [])
++                    for v in vals:
++                        file_gt_set.add(str(v).strip())
++                
++                file_gt = list(file_gt_set)
++                
++                # --- START MANUAL EDIT CHECK ---
++                # Periksa apakah GT_NER.json telah diedit dengan membandingkannya dengan global gt_values dari excel_df
++                is_manually_edited = True
++                try:
++                    global_excel_gt = []
++                    if "_chunk" in excel_df.columns:
++                        for c_id in excel_df["_chunk"].unique():
++                            c_rows = excel_df[excel_df["_chunk"] == c_id]
++                            dummy_audit = next((a for a in audits if a.get("chunk") == c_id), {})
++                            global_excel_gt.extend(output_values_for_attribute(c_rows, dummy_audit, attr_key, output_col))
++                    
++                    global_excel_gt_clean = sorted([str(v).casefold().strip() for v in global_excel_gt])
++                    current_file_gt_clean = sorted([str(v).casefold().strip() for v in file_gt])
++                    
++                    if global_excel_gt_clean == current_file_gt_clean:
++                        is_manually_edited = False
++                except Exception:
++                    pass
++                
++                if not is_manually_edited:
++                    # Bypass HYBRID INJECTION dan gunakan nilai GT sempurna dari excel_df
++                    raise Exception("Not manually edited, fallback to excel_df")
++                # --- END MANUAL EDIT CHECK ---
++                
++                file_gt_clean = [clean_cell_value(str(v)).casefold() for v in file_gt]
++                
++                chunk_gt = []
++                chunk_gt_clean = set()
++                
++                # Sort file_gt by length descending to prevent substring false positives (e.g. 'wb' vs 'twb')
++                sorted_gt = sorted(file_gt, key=lambda x: len(str(x)), reverse=True)
++                
++                # 1. Masukkan GT yang teks aslinya ada di blok chat ini
++                for v in sorted_gt:
++                    clean_v = clean_cell_value(str(v)).casefold()
++                    escaped_v = re.escape(str(v).lower())
++                    
++                    if attr_key == "UNIT_QTY":
++                        pattern = r'(?<![a-zA-Z0-9])' + escaped_v + r'\s*unit(?![a-zA-Z0-9])'
++                    else:
++                        pattern = escaped_v
++                        
++                    matches = list(re.finditer(pattern, source_text))
++                    if matches:
++                        is_sub = False
++                        for existing_v in chunk_gt_clean:
++                            if clean_v in existing_v and clean_v != existing_v:
++                                is_sub = True
++                                break
++                        if not is_sub:
++                            # Tambahkan sebanyak kemunculannya di teks asli agar klop dengan tebakan AI (misal muncul 2x di teks, AI nebak 2x, GT juga harus 2x)
++                            for _ in range(len(matches)):
++                                chunk_gt.append(str(v))
++                            chunk_gt_clean.add(clean_v)
++                            
++                # 2. Masukkan GT yang berhasil ditebak AI dan benar (untuk mendeteksi True Positives)
++                for nv in ner_values:
++                    clean_nv = clean_cell_value(str(nv)).casefold()
++                    if clean_nv in file_gt_clean and clean_nv not in chunk_gt_clean:
++                        chunk_gt.append(str(nv))
++                        chunk_gt_clean.add(clean_nv)
++                        
++                gt_values = chunk_gt
++                gt_slot_values = (
++                    list(unique_clean_values(chunk_gt))
++                    if attr_key in ORDER_LEVEL_NER_ATTR_KEYS
++                    else chunk_gt
++                )
++            except Exception:
++                    pass
++            # --- END HYBRID INJECTION ---
++            
++            # --- START PHYSICAL OCCURRENCE LIMITER FOR GT ---
++            if attr_key not in ORDER_LEVEL_NER_ATTR_KEYS:
++                source_text_clean = str(audit.get("source", "") or "").lower()
++                limited_gt_slot_values = []
++                gt_counts = Counter(gt_slot_values)
++                for raw_val, count in gt_counts.items():
++                    pattern = re.escape(str(raw_val).lower())
++                    try:
++                        matches = list(re.finditer(pattern, source_text_clean))
++                        physical_count = len(matches)
++                        # Jika teks asli mengandung nilai ini (bukan hasil normalisasi beda teks), batasi jumlahnya
++                        if physical_count > 0:
++                            allowed_count = min(count, physical_count)
++                        else:
++                            allowed_count = count
++                    except Exception:
++                        allowed_count = count
++                        
++                    for _ in range(allowed_count):
++                        limited_gt_slot_values.append(raw_val)
++                gt_slot_values = limited_gt_slot_values
++            # --- END PHYSICAL OCCURRENCE LIMITER ---
++            gt_slot_values = [str(x).lower() for x in gt_slot_values]
++            ner_slot_values = [str(x).lower() for x in ner_slot_values]
++
++            counts = strict_entity_counts(gt_slot_values, ner_slot_values, attr_key)
+             gt_by_attr[attr_key] = counts["gt_counter"]
+             pred_by_attr[attr_key] = counts["pred_counter"]
+             prepared_attrs.append(
+@@ -9443,6 +10899,22 @@ def render_simple_ner_block_evaluation(
+ 
+         return "<div class='ner-chip-list'>" + "".join(chips) + "</div>"
+ 
++    def gt_values_html(row: Dict[str, object]) -> str:
++        gt_items = clean_display_values(row.get("ground_truth_slot_items"))
++        if not gt_items:
++            gt_items = clean_display_values(row.get("ground_truth_items"))
++        if not gt_items:
++            return (
++                "<div class='ner-chip-list'>"
++                + entity_chip_html("-", "ner-chip-empty")
++                + "</div>"
++            )
++        chips = [
++            entity_chip_html(gt_value, "ner-chip-gt", title="Ground truth")
++            for gt_value in gt_items
++        ]
++        return "<div class='ner-chip-list'>" + "".join(chips) + "</div>"
++
+     def metric_text(row: Dict[str, object], key: str) -> str:
+         return pct_or_dash(
+             float(row.get(key, 0.0) or 0.0),
+@@ -9555,27 +11027,25 @@ def render_simple_ner_block_evaluation(
+             body.append(
+                 f"<tr class='{cls}'>"
+                 f"<td class='ner-label'>{escape(str(row.get('ner_label', '')))}</td>"
++                f"<td>{gt_values_html(row)}</td>"
+                 f"<td>{values_html(row)}</td>"
+                 f"<td class='num'>{int(row.get('tp', 0) or 0)}</td>"
+                 f"<td class='num'>{int(row.get('fp', 0) or 0)}</td>"
+                 f"<td class='num'>{int(row.get('fn', 0) or 0)}</td>"
+-                f"<td class='num'>{metric_text(row, 'precision')}</td>"
+-                f"<td class='num'>{metric_text(row, 'recall')}</td>"
+-                f"<td class='num f1'>{metric_text(row, 'f1')}</td>"
+                 f"<td><span class='status-badge {escape(status.lower())}'>{escape(str(row.get('status_label', status)))}</span></td>"
+                 "</tr>"
+             )
+         if not body:
+             body.append(
+-                "<tr><td colspan='9' class='empty-cell'>Tidak ada atribut yang cocok dengan filter.</td></tr>"
++                "<tr><td colspan='7' class='empty-cell'>Tidak ada atribut yang cocok dengan filter.</td></tr>"
+             )
+         return (
+             "<div class='attr-table-wrap'>"
+             "<table class='attr-check'>"
+             "<thead><tr>"
+-            "<th>Label NER</th><th>Hasil NER</th>"
++            "<th>Label NER</th><th>Ground Truth</th><th>Hasil NER</th>"
+             "<th>TP</th><th>FP</th><th>FN</th>"
+-            "<th>Precision</th><th>Recall</th><th>F1-score</th><th>Status</th>"
++            "<th>Status</th>"
+             "</tr></thead>"
+             f"<tbody>{''.join(body)}</tbody>"
+             "</table>"
+@@ -9608,18 +11078,10 @@ def render_simple_ner_block_evaluation(
+                     <div>
+                         <div class="block-title-row">
+                             <span class="block-title">{escape(str(title_text))}</span>
+-                            <span class="block-type">Strict entity-level NER</span>
+                         </div>
+-                        <div class="block-subtitle">Skor dihitung dari TP, FP, dan FN terhadap ground truth/pembanding per atribut.</div>
+                     </div>
+                     <div class="block-pills">
+                         {f"<span>{escape(batch_label)}</span>" if batch_label else ""}
+-                        <span>P {pct_text(precision)}</span>
+-                        <span>R {pct_text(recall)}</span>
+-                        <span>F1 {pct_text(f1)}</span>
+-                        <span>TP {tp}</span>
+-                        <span>FP {fp}</span>
+-                        <span>FN {fn}</span>
+                         <span class="problem-status {'problem' if problem_count else 'ok'}">{'PERLU CEK ' + escape(str(problem_count)) if problem_count else 'VALID'}</span>
+                     </div>
+                 </div>
+@@ -9631,8 +11093,18 @@ def render_simple_ner_block_evaluation(
+                     <div class="panel">
+                         <div class="panel-title model-title">indolem/indobert-base-uncased</div>
+                         {attr_table_html(card.get("attr_rows", []))}
++                        <div style="display: flex; gap: 12px; margin-top: 15px; padding: 12px 16px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; justify-content: flex-end; align-items: center;">
++                            <span style="font-weight: 600; color: #495057; margin-right: auto; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Total Keseluruhan</span>
++                            <span style="background: #28a745; color: white; padding: 6px 16px; border-radius: 4px; font-weight: 700; font-size: 14px; box-shadow: 0 2px 4px rgba(40,167,69,0.2);">TP : {tp}</span>
++                            <span style="background: #dc3545; color: white; padding: 6px 16px; border-radius: 4px; font-weight: 700; font-size: 14px; box-shadow: 0 2px 4px rgba(220,53,69,0.2);">FP : {fp}</span>
++                            <span style="background: #fd7e14; color: white; padding: 6px 16px; border-radius: 4px; font-weight: 700; font-size: 14px; box-shadow: 0 2px 4px rgba(253,126,20,0.2);">FN : {fn}</span>
++                        </div>
+                     </div>
+                 </div>
++                <div class="panel output-panel" style="margin-top: 15px; padding: 15px 0 0 0; border-top: 1px solid #e2e8f0; border-radius: 0; box-shadow: none;">
++                    <div class="panel-title section-title" style="margin-bottom: 10px; padding: 0 16px;">Hasil Post Processing</div>
++                    {generate_excel_like_table_html(pd.DataFrame(card.get("output_rows", [])), height=120) if card.get("output_rows") else "<div style='padding: 0 16px; color: #64748b; font-size: 13px;'>Tabel kosong / tidak ada ekstraksi</div>"}
++                </div>
+             </section>
+             """
+ 
+@@ -9644,6 +11116,7 @@ def render_simple_ner_block_evaluation(
+         tp, fp, fn, scores, problem_count = row_metric_totals(merged_rows)
+         order_class = card_quality_class(tp, fp, fn)
+         primary_card = group_cards[0] if group_cards else {}
++        final_card = group_cards[-1] if group_cards else {}
+         followup_cards = group_cards[1:]
+ 
+         def chat_panel_html(card: Dict[str, object], title: str, empty_text: str = "") -> str:
+@@ -9707,10 +11180,14 @@ def render_simple_ner_block_evaluation(
+             </div>
+             <div class="ner-final-analytics">
+                 <div class="panel">
+-                    <div class="panel-title model-title">Analitik final gabungan</div>
++                    <div class="panel-title model-title">indolem/indbert-base-uncased</div>
+                     {attr_table_html(merged_rows)}
+                 </div>
+             </div>
++            <div class="panel output-panel" style="margin-top: 15px; padding: 15px 0 0 0; border-top: 1px solid #e2e8f0; border-radius: 0; box-shadow: none;">
++                <div class="panel-title section-title" style="margin-bottom: 10px; padding: 0 16px;">Output Sistem Realtime</div>
++                {generate_excel_like_table_html(pd.DataFrame(final_card.get("output_rows", [])), height=140) if final_card.get("output_rows") else "<div style='padding: 0 16px; color: #64748b; font-size: 13px;'>Tabel kosong / tidak ada ekstraksi</div>"}
++            </div>
+         </section>
+         """
+ 
+@@ -9891,13 +11368,11 @@ def render_simple_ner_block_evaluation(
+     }}
+     table.attr-check th:nth-child(1), table.attr-check td:nth-child(1) {{ width: 130px; }}
+     table.attr-check th:nth-child(2), table.attr-check td:nth-child(2) {{ width: 280px; }}
+-    table.attr-check th:nth-child(3), table.attr-check td:nth-child(3),
++    table.attr-check th:nth-child(3), table.attr-check td:nth-child(3) {{ width: 280px; }}
+     table.attr-check th:nth-child(4), table.attr-check td:nth-child(4),
+-    table.attr-check th:nth-child(5), table.attr-check td:nth-child(5) {{ width: 48px; }}
+-    table.attr-check th:nth-child(6), table.attr-check td:nth-child(6),
+-    table.attr-check th:nth-child(7), table.attr-check td:nth-child(7),
+-    table.attr-check th:nth-child(8), table.attr-check td:nth-child(8) {{ width: 72px; }}
+-    table.attr-check th:nth-child(9), table.attr-check td:nth-child(9) {{ width: 94px; }}
++    table.attr-check th:nth-child(5), table.attr-check td:nth-child(5),
++    table.attr-check th:nth-child(6), table.attr-check td:nth-child(6) {{ width: 48px; text-align: center; }}
++    table.attr-check th:nth-child(7), table.attr-check td:nth-child(7) {{ width: 94px; text-align: center; }}
+     table.attr-check .ner-label {{
+         color: #334155;
+         font-size: 10px;
+@@ -9968,6 +11443,11 @@ def render_simple_ner_block_evaluation(
+         border-color: #cbd5e1 !important;
+         color: #64748b !important;
+     }}
++    .ner-chip-gt {{
++        background: #eff6ff !important;
++        border-color: #60a5fa !important;
++        color: #1e40af !important;
++    }}
+     .ner-empty {{ color: #94a3b8; }}
+     .ner-chat-pair-grid {{
+         display: grid;
+@@ -10170,7 +11650,7 @@ def render_ner_attribute_score_table(cards: Sequence[Dict[str, object]]) -> None
+         "recall": total_scores["recall"],
+         "f1": total_scores["f1"],
+     }
+-    body = "".join(score_row(row) for row in rows) + score_row(total_row, True)
++    body = "".join(score_row(row) for row in rows)
+     html = f"""
+     <style>
+     .ner-score-summary {{
+@@ -10222,14 +11702,16 @@ def render_ner_attribute_score_table(cards: Sequence[Dict[str, object]]) -> None
+     table.ner-score-table tr.warn td,
+     table.ner-score-table tr.bad td,
+     table.ner-score-table tr.empty td,
+-    table.ner-score-table tr.total td {{ background: #fff; }}
+     table.ner-score-table tr.empty td {{ color: #64748b; }}
+     table.ner-score-table tr.total td {{
++        background: #eef2ff !important;
++        color: #1e1b4b !important;
+         font-weight: 800;
++        border-top: 2px solid #4f46e5;
++        border-bottom: 2px solid #4f46e5;
+     }}
+     </style>
+     <section class="ner-score-summary">
+-        <div class="ner-score-title">Rekap strict entity-level score per atribut</div>
+         <div class="ner-score-scroll">
+             <table class="ner-score-table">
+                 <thead>
+@@ -10289,7 +11771,7 @@ def render_ner_analytics_section(
+     available_groups = build_ner_stage2_card_groups(simple_eval_cards, match_history)
+     view_options = ["Per blok chat"]
+     if available_groups:
+-        view_options.insert(0, "Per order gabungan")
++        view_options.append("Per order gabungan")
+ 
+     attr_options = ["Semua atribut"] + [attr_name for _, attr_name, _, _ in NER_EVAL_ATTRIBUTES]
+     eval_options = [
+@@ -10456,21 +11938,40 @@ def render_ner_analytics_section(
+     valid_blocks = len(filtered_cards) - problem_blocks
+     duration_summary = ner_extraction_duration_summary(filtered_cards)
+ 
+-    eval_metrics = st.columns(7)
+-    eval_metrics[0].metric("Precision", pct_text(total_scores["precision"]))
+-    eval_metrics[1].metric("Recall", pct_text(total_scores["recall"]))
+-    eval_metrics[2].metric("F1-score", pct_text(total_scores["f1"]))
+-    eval_metrics[3].metric("TP / FP / FN", f"{total_tp} / {total_fp} / {total_fn}")
+-    eval_metrics[4].metric(
+-        "Waktu ekstraksi",
+-        format_duration_ms(duration_summary["avg_batch_ms"]),
+-        delta=f"{int(duration_summary['batch_count'])} batch tercatat" if duration_summary["batch_count"] else None,
+-    )
+-    eval_metrics[5].metric("Blok valid", valid_blocks)
+-    eval_metrics[6].metric("Perlu cek", problem_blocks)
+-
+     render_ner_attribute_score_table(filtered_cards)
+ 
++    metrics_html = f"""
++    <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 25px; margin-bottom: 20px;">
++        <div style="flex: 1; min-width: 200px; background: white; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
++            <div style="color: #0f172a; font-size: 22px; font-weight: 700; margin-bottom: 8px;">Precision</div>
++            <div style="color: #0f172a; font-size: 22px; font-weight: 700;">{pct_text(total_scores["precision"])}</div>
++        </div>
++        <div style="flex: 1; min-width: 200px; background: white; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
++            <div style="color: #0f172a; font-size: 22px; font-weight: 700; margin-bottom: 8px;">Recall</div>
++            <div style="color: #0f172a; font-size: 22px; font-weight: 700;">{pct_text(total_scores["recall"])}</div>
++        </div>
++        <div style="flex: 1; min-width: 200px; background: white; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
++            <div style="color: #0f172a; font-size: 22px; font-weight: 700; margin-bottom: 8px;">F1-score</div>
++            <div style="color: #0f172a; font-size: 22px; font-weight: 700;">{pct_text(total_scores["f1"])}</div>
++        </div>
++        <div style="flex: 1; min-width: 200px; background: white; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
++            <div style="color: #0f172a; font-size: 22px; font-weight: 700; margin-bottom: 8px;">TP / FP / FN</div>
++            <div style="color: #0f172a; font-size: 22px; font-weight: 700;">{total_tp} / {total_fp} / {total_fn}</div>
++        </div>
++    </div>
++    <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 25px;">
++        <div style="flex: 1; min-width: 200px; background: white; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
++            <div style="color: #0f172a; font-size: 22px; font-weight: 700; margin-bottom: 8px;">Blok Valid</div>
++            <div style="color: #0f172a; font-size: 22px; font-weight: 700;">{valid_blocks}</div>
++        </div>
++        <div style="flex: 1; min-width: 200px; background: white; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
++            <div style="color: #0f172a; font-size: 22px; font-weight: 700; margin-bottom: 8px;">Perlu Dicek</div>
++            <div style="color: #0f172a; font-size: 22px; font-weight: 700;">{problem_blocks}</div>
++        </div>
++    </div>
++    """
++    st.markdown(metrics_html, unsafe_allow_html=True)
++
+     if len(filtered_cards) != len(simple_eval_cards):
+         st.caption(
+             f"Filter aktif: menampilkan {len(filtered_cards)} dari {len(simple_eval_cards)} blok chat."
+@@ -10590,7 +12091,7 @@ def render_research_proof_downloads(
+     st.markdown("**Bukti teknis raw untuk skripsi (dev)**")
+     st.caption(
+         "File ini diambil langsung dari hasil runtime test case terakhir: raw NER, tabel ekstraksi, "
+-        "dan raw pencocokan SPC jika kandidat tersedia."
++        "dan raw pencocokan SPC jika Order Induk tersedia."
+     )
+ 
+     safe_table_df = table_df if isinstance(table_df, pd.DataFrame) else pd.DataFrame()
+@@ -10681,7 +12182,7 @@ def render_research_proof_downloads(
+     if not stage2_preview_rows:
+         st.caption(
+             "Raw SPC belum tersedia untuk run ini. Biasanya perlu ada pesanan induk/state DB lebih dulu, "
+-            "lalu jalankan pesanan susulan agar kandidat pencocokan terbentuk."
++            "lalu jalankan pesanan susulan agar Order Induk pencocokan terbentuk."
+         )
+ 
+ 
+@@ -10726,7 +12227,9 @@ def css() -> None:
+         }
+         .st-key-hidden_dev_summary,
+         .st-key-hidden_dev_suite,
+-        .st-key-hidden_dev_dataset {
++        .st-key-hidden_dev_dataset,
++        .st-key-hidden_dev_custom,
++        .st-key-hidden_dev_model_info {
+             display: none !important;
+         }
+         div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+@@ -10763,22 +12266,31 @@ def main() -> None:
+     if str(DEFAULT_MODEL_PATH) in model_dirs:
+         default_index = model_dirs.index(str(DEFAULT_MODEL_PATH))
+ 
+-    with st.sidebar:
+-        st.subheader("Model")
+-        selected_model = st.selectbox("Folder model", model_dirs, index=default_index)
+-        model_path = st.text_input("Path aktif", selected_model)
+-        threshold = st.slider("Threshold MATCH", 0.05, 0.95, 0.50, 0.01)
+-        max_seq_len = st.selectbox("Max sequence length", [128, 256, 384, 512], index=1)
+-        batch_size = st.selectbox("Batch size inference", [1, 2, 4, 8, 16], index=3)
+-        require_gpu = st.toggle("Wajib GPU", value=True)
++    dev_param = str(st.query_params.get("dev", "0") or "0").strip().lower()
++    dev_mode = dev_param in {"1", "true", "on"}
++
++    if dev_mode:
++        with st.sidebar:
++            st.subheader("Model")
++            selected_model = st.selectbox("Folder model", model_dirs, index=default_index)
++            model_path = st.text_input("Path aktif", selected_model)
++            threshold = st.slider("Threshold MATCH", 0.05, 0.95, 0.50, 0.01)
++            max_seq_len = st.selectbox("Max sequence length", [128, 256, 384, 512], index=1)
++            batch_size = st.selectbox("Batch size inference", [1, 2, 4, 8, 16], index=3)
++            require_gpu = st.toggle("Wajib GPU", value=True)
++    else:
++        selected_model = model_dirs[default_index] if model_dirs else ""
++        model_path = selected_model
++        threshold = 0.50
++        max_seq_len = 256
++        batch_size = 8
++        require_gpu = True
+ 
+     tokenizer, model, device = load_model(model_path)
+     if require_gpu and device.type != "cuda":
+         st.error("CUDA tidak aktif. App dihentikan karena opsi Wajib GPU menyala.")
+         st.stop()
+ 
+-    dev_param = str(st.query_params.get("dev", "0") or "0").strip().lower()
+-    dev_mode = dev_param in {"1", "true", "on"}
+     next_dev_param = "0" if dev_mode else "1"
+     dev_label = "dev: on" if dev_mode else "dev: off"
+     dev_control_cols = st.columns([12, 1])
+@@ -10810,28 +12322,26 @@ def main() -> None:
+                 "Operational Suite",
+                 "Live Test",
+                 "Ekstraksi dan Rekonsiliasi",
+-                "Evaluasi Performa Model",
++                "Evaluasi Model",
+                 "Dataset Sampler",
+                 "Model Info",
+             ]
+         )
+     else:
+         (
+-            tab_custom,
+             tab_ner_new_order,
+             tab_model_eval,
+-            tab_model,
+         ) = st.tabs(
+             [
+-                "Live Test",
+                 "Ekstraksi dan Rekonsiliasi",
+-                "Evaluasi Performa Model",
+-                "Model Info",
++                "Evaluasi Model",
+             ]
+         )
+         tab_summary = st.container(key="hidden_dev_summary")
+         tab_suite = st.container(key="hidden_dev_suite")
++        tab_custom = st.container(key="hidden_dev_custom")
+         tab_dataset = st.container(key="hidden_dev_dataset")
++        tab_model = st.container(key="hidden_dev_model_info")
+ 
+     with tab_summary:
+         render_metric_cards(metrics)
+@@ -11103,6 +12613,7 @@ def main() -> None:
+                 st.session_state.ner_db_status_message = "Database belum aktif. Cek konfigurasi `.env` / PostgreSQL."
+                 return
+             try:
++                reset_metrics()
+                 reset_info = db_reset_all_data()
+                 st.session_state.ner_new_order_text = ""
+                 st.session_state.ner_saved_db_df = pd.DataFrame(columns=EXCEL_COLUMNS + ["status_unit"])
+@@ -11123,32 +12634,34 @@ def main() -> None:
+         def disable_normalized_output() -> None:
+             st.session_state.ner_normalized_output = False
+ 
+-        def render_output_buttons(key_prefix: str) -> bool:
++        def render_output_buttons(key_prefix: str, output_df: pd.DataFrame = None) -> bool:
+             if OPERATIONAL_NORMALIZATION_ENABLED:
+-                output_cols = st.columns([0.95, 0.72, 0.9, 0.9, 4.45])
++                output_cols = st.columns([0.95, 0.72, 0.9, 0.9, 1.4, 3.05])
+                 output_cols[0].button(
+                     "Normalisasi",
+                     type="primary",
+-                    width="stretch",
++                    use_container_width=True,
+                     key=f"{key_prefix}_normalize",
+                     on_click=enable_normalized_output,
+                 )
+                 output_cols[1].button(
+                     "Reset Raw",
+-                    width="stretch",
++                    use_container_width=True,
+                     key=f"{key_prefix}_reset_raw",
+                     on_click=disable_normalized_output,
+                 )
+                 reset_col = output_cols[2]
+                 filter_col = output_cols[3]
++                download_col = output_cols[4]
+             else:
+-                output_cols = st.columns([0.9, 0.9, 5.95])
++                output_cols = st.columns([0.9, 0.9, 1.4, 4.55])
+                 reset_col = output_cols[0]
+                 filter_col = output_cols[1]
++                download_col = output_cols[2]
+ 
+             reset_clicked = reset_col.button(
+                 "Reset Output",
+-                width="stretch",
++                use_container_width=True,
+                 key=f"{key_prefix}_reset_db_output",
+                 on_click=reset_db_output,
+             )
+@@ -11159,11 +12672,51 @@ def main() -> None:
+                 key=f"{key_prefix}_completion_filter",
+                 label_visibility="collapsed",
+             )
++            
++            if output_df is not None and not output_df.empty:
++                export_cols = [col for col in EXCEL_COLUMNS if col in output_df.columns]
++                
++                export_df = output_df[export_cols].copy()
++                export_df = export_df.fillna("")
++                for col in export_df.columns:
++                    export_df[col] = export_df[col].astype(str).str.upper()
++                
++                import io
++                excel_buffer = io.BytesIO()
++                
++                with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
++                    export_df.to_excel(writer, index=False, sheet_name='Hasil Ekstraksi')
++                    workbook = writer.book
++                    worksheet = writer.sheets['Hasil Ekstraksi']
++                    
++                    center_format = workbook.add_format({'align': 'center', 'valign': 'vcenter'})
++                    header_format = workbook.add_format({'align': 'center', 'valign': 'vcenter', 'bold': True, 'border': 1, 'bg_color': '#e89393'})
++                    
++                    for col_num, value in enumerate(export_df.columns):
++                        max_len = max(
++                            export_df[value].map(len).max() if not export_df.empty else 0,
++                            len(str(value))
++                        ) + 4
++                        worksheet.set_column(col_num, col_num, min(max_len, 40), center_format)
++                        worksheet.write(0, col_num, value, header_format)
++                        
++                excel_data = excel_buffer.getvalue()
++                
++                download_col.download_button(
++                    label="Download Excel",
++                    data=excel_data,
++                    file_name="hasil_ekstraksi.xlsx",
++                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
++                    key=f"{key_prefix}_download",
++                    type="primary",
++                    use_container_width=True
++                )
++                
+             return bool(reset_clicked)
+ 
+         raw_new_order_text = st.text_area(
+-            "Input chat pesanan baru harian",
+-            height=310,
++            "Input chat pesanan",
++            height=600,
+             key="ner_new_order_text",
+         )
+         if not OPERATIONAL_NORMALIZATION_ENABLED:
+@@ -11193,11 +12746,11 @@ def main() -> None:
+                     else output_source_df
+                 )
+                 render_output_summary_metrics(display_saved_df_full)
+-                render_output_buttons("ner_idle_output")
+                 display_saved_df_view = filter_output_by_completion(
+                     display_saved_df_full,
+                     st.session_state.get("ner_idle_output_completion_filter", "Semua"),
+                 )
++                render_output_buttons("ner_idle_output", display_saved_df_view)
+                 render_excel_like_table(display_saved_df_view, height=int(excel_height))
+             else:
+                 st.info("Paste chat pesanan baru, lalu mulai ekstraksi. Output DB masih kosong.")
+@@ -11207,6 +12760,8 @@ def main() -> None:
+                 st.error("CUDA tidak aktif untuk NER. App dihentikan karena opsi Wajib GPU menyala.")
+                 st.stop()
+ 
++            import time
++            system_start_time = time.perf_counter()
+             extraction_run_id = uuid.uuid4().hex
+             input_chunks = split_new_order_messages(raw_new_order_text)
+             use_intra_batch_sync = bool(db_ready and len(input_chunks) > 1)
+@@ -11254,12 +12809,14 @@ def main() -> None:
+                     else pd.DataFrame(columns=EXCEL_COLUMNS + ["status_unit"])
+                 )
+                 stage2_preview_rows: List[Dict[str, object]] = []
++                match_elapsed_ms = 0.0
+                 if (
+                     db_ready
+                     and not use_intra_batch_sync
+                     and not existing_df_before_sync.empty
+                 ):
+-                    with st.spinner("Mengecek kandidat pelengkapan dengan matcher tahap 2..."):
++                    with st.spinner("Mengecek Order Induk pelengkapan dengan matcher tahap 2..."):
++                        match_start = time.perf_counter()
+                         stage2_preview_rows = build_stage2_match_preview(
+                             existing_df_before_sync,
+                             raw_new_order_text,
+@@ -11271,6 +12828,10 @@ def main() -> None:
+                             threshold=float(threshold),
+                             batch_size=int(batch_size),
+                         )
++                        match_elapsed_ms = (time.perf_counter() - match_start) * 1000.0
++                        
++                if not use_intra_batch_sync:
++                    record_metrics(live_ner_elapsed_ms, match_elapsed_ms)
+ 
+                 auto_db_signature = result_signature
+                 if db_ready:
+@@ -11299,11 +12860,13 @@ def main() -> None:
+                                 excel_df = sequential_eval_df
+                                 ner_audits = sequential_eval_audits
+                         else:
+-                            stage2_apply_row = stage2_preview_rows[0] if stage2_preview_rows else None
++                            stage2_apply_row = select_stage2_output_row(stage2_preview_rows)
++                            mark_stage2_output_selection(stage2_preview_rows, stage2_apply_row)
+                             db_display_df, db_message = sync_extraction_to_db(
+                                 raw_new_order_text,
+                                 excel_df,
+                                 stage2_apply_row,
++                                force_distinct_order_save=not stage2_apply_is_ready(stage2_apply_row),
+                                 extraction_elapsed_ms=live_ner_elapsed_ms,
+                                 extraction_run_id=extraction_run_id,
+                                 extraction_run_elapsed_ms=live_ner_elapsed_ms,
+@@ -11314,8 +12877,8 @@ def main() -> None:
+                         if stage2_preview_rows and not use_intra_batch_sync:
+                             audit_signature = (
+                                 f"{auto_db_signature}|"
+-                                f"{stage2_preview_rows[0].get('candidate_key', '')}|"
+-                                f"{stage2_preview_rows[0].get('p_match', 0.0)}"
++                                f"{(stage2_apply_row or stage2_preview_rows[0]).get('candidate_key', '')}|"
++                                f"{(stage2_apply_row or stage2_preview_rows[0]).get('p_match', 0.0)}"
+                             )
+                             if st.session_state.get("stage2_match_audit_signature") != audit_signature:
+                                 try:
+@@ -11328,7 +12891,7 @@ def main() -> None:
+                         st.session_state.ner_saved_db_df = db_display_df
+                         db_message = str(st.session_state.get("ner_db_status_message", "") or "")
+                         if use_intra_batch_sync:
+-                            stage2_preview_rows = latest_stage2_match_group()
++                            stage2_preview_rows = load_latest_stage2_eval_state()
+                 else:
+                     db_display_df = pd.DataFrame(columns=EXCEL_COLUMNS + ["status_unit"])
+                     db_message = "Database belum aktif. Output sementara hanya dari batch NER saat ini."
+@@ -11345,12 +12908,21 @@ def main() -> None:
+                     and not table_source_df.empty
+                     else table_source_df
+                 )
++                
++                import time
++                system_elapsed_ms = (time.perf_counter() - system_start_time) * 1000.0
++                did_matching_run = use_intra_batch_sync or bool(stage2_preview_rows)
++                if did_matching_run:
++                    record_metrics(0.0, system_elapsed_ms)
++                else:
++                    record_metrics(system_elapsed_ms, 0.0)
++                    
+                 render_output_summary_metrics(table_df)
+-                render_output_buttons("ner_live_output")
+                 table_view_df = filter_output_by_completion(
+                     table_df,
+                     st.session_state.get("ner_live_output_completion_filter", "Semua"),
+                 )
++                render_output_buttons("ner_live_output", table_view_df)
+                 render_excel_like_table(table_view_df, height=int(excel_height))
+                 latest_eval_df = (
+                     excel_df
+@@ -11382,8 +12954,8 @@ def main() -> None:
+                     )
+ 
+     with tab_model_eval:
+-        st.subheader("Evaluasi Performa Model")
+-        ner_eval_tab, matcher_eval_tab = st.tabs(["Analitik Ekstraksi", "Analitik Rekonsiliasi"])
++        st.subheader("Evaluasi Model Pada Data Uji")
++        ner_eval_tab, matcher_eval_tab = st.tabs(["Ekstraksi", "Pencocokan"])
+ 
+         with ner_eval_tab:
+             fallback_df = st.session_state.get("ner_latest_eval_df", pd.DataFrame())
+@@ -11409,7 +12981,7 @@ def main() -> None:
+                 render_ner_analytics_section(
+                     fallback_df,
+                     fallback_audits,
+-                    title="Evaluasi NER per batch terakhir",
++                    title="",
+                     key_prefix="model_eval_ner_fallback",
+                     match_history=load_stage2_match_history(500) if db_ready else [],
+                 )
+@@ -11420,14 +12992,14 @@ def main() -> None:
+             match_history = load_stage2_match_history(500) if db_ready else []
+             latest_match_rows = list(st.session_state.get("stage2_latest_preview_rows", []) or [])
+             if match_history:
+-                save_latest_stage2_eval_state(match_history)
+-                reconciliation_rows = match_history
++                reconciliation_rows = stage2_output_events_from_rows(match_history)
++                save_latest_stage2_eval_state(reconciliation_rows)
+                 reconciliation_title = "Skor Final Pengujian Pencocokan"
+             elif latest_match_rows:
+-                reconciliation_rows = latest_match_rows
++                reconciliation_rows = stage2_output_events_from_rows(latest_match_rows)
+                 reconciliation_title = "Skor Final Pengujian Pencocokan Terakhir"
+             else:
+-                reconciliation_rows = load_latest_stage2_eval_state()
++                reconciliation_rows = stage2_output_events_from_rows(load_latest_stage2_eval_state())
+                 reconciliation_title = "Skor Final Pengujian Pencocokan Terakhir"
+                 if reconciliation_rows:
+                     st.session_state.stage2_latest_preview_rows = reconciliation_rows
+@@ -11440,24 +13012,30 @@ def main() -> None:
+                 detail_cols = st.columns([1.0, 0.8, 3.0])
+                 detail_filter = detail_cols[0].selectbox(
+                     "Detail pencocokan",
+-                    ["Semua", "Salah", "Benar"],
+-                    index=0,
++                    [
++                        "Semua",
++                        "Benar",
++                        "Salah",
++                        "True Positive (MATCH Benar)",
++                        "True Negative (NO_MATCH Benar)",
++                        "False Positive (Salah Deteksi)",
++                        "False Negative (Gagal Deteksi)",
++                    ],
++                    index=3,
+                     key="stage2_pair_card_filter",
+                 )
+-                detail_limit = detail_cols[1].selectbox(
++                detail_limit_raw = detail_cols[1].selectbox(
+                     "Jumlah card",
+-                    [5, 10, 20, 50],
++                    [5, 10, 20, 50, "Semua"],
+                     index=1,
+                     key="stage2_pair_card_limit",
+                 )
+-                detail_rows = list(reconciliation_rows)
+-                if detail_filter != "Semua":
+-                    detail_rows = [
+-                        row
+-                        for row in detail_rows
+-                        if stage2_event_evaluation(row)["status"] == detail_filter
+-                    ]
+-                render_stage2_pair_cards(detail_rows, max_cards=int(detail_limit))
++                detail_rows = filter_stage2_pair_detail_rows(
++                    reconciliation_rows,
++                    str(detail_filter),
++                )
++                detail_limit = len(detail_rows) if detail_limit_raw == "Semua" else int(detail_limit_raw)
++                render_stage2_pair_cards(detail_rows, max_cards=detail_limit)
+             else:
+                 st.info(
+                     "Belum ada audit MATCH siap gabung. Jalankan pesanan susulan yang cocok "

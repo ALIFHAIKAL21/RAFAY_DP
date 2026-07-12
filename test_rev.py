@@ -1,4 +1,4 @@
-﻿import streamlit as st
+import streamlit as st
 import pandas as pd
 from io import BytesIO
 import os
@@ -2763,7 +2763,7 @@ def main():
     st.markdown(f"<span class='muted-preview'>Preview: <code>{preview_format}</code></span>", unsafe_allow_html=True)
 
     chat_input = st.text_area(
-        "Input", height=260, label_visibility="collapsed",
+        "Input", height=600, label_visibility="collapsed",
         placeholder="Paste data chat WhatsApp atau dokumen logistik di sini..."
     )
 

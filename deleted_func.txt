@@ -1,0 +1,164 @@
+def build_simple_ner_eval_cards(
+    excel_df: pd.DataFrame,
+    audits: Sequence[Dict[str, object]],
+) -> List[Dict[str, object]]:
+    if excel_df is None:
+        excel_df = pd.DataFrame()
+
+    cards: List[Dict[str, object]] = []
+    for audit in audits:
+        chunk_id = int(audit.get("chunk", 0) or 0)
+        spans = audit.get("spans", [])
+        if not isinstance(spans, list):
+            spans = []
+
+        block_rows = (
+            excel_df[excel_df["_chunk"] == chunk_id].copy()
+            if "_chunk" in excel_df.columns
+            else pd.DataFrame()
+        )
+        visible_rows = (
+            block_rows[[col for col in EXCEL_COLUMNS if col in block_rows.columns]]
+            .fillna("")
+            .to_dict("records")
+            if not block_rows.empty
+            else []
+        )
+
+        attr_rows = []
+        captured_count = 0
+        ok_count = 0
+        needs_check_count = 0
+        low_f1_count = 0  # Ganti dari low_confidence_count
+        low_f1_attrs = []  # Ganti dari low_confidence_attrs
+        red_output_columns = set()
+        red_output_cells = set()
+        problem_attrs = set()
+        f1_scores = []  # Ganti dari confidence_values
+        grouped_loading_values = loading_values_from_spans(spans)
+        output_attr_map = {
+            output_col: attr_name
+            for _, attr_name, _, output_col in NER_EVAL_ATTRIBUTES
+            if output_col
+        }
+        for attr_key, attr_name, labels, output_col in NER_EVAL_ATTRIBUTES:
+            raw_ner_values = (
+                grouped_loading_values
+                if attr_key == "LOAD_DATE"
+                else span_values_for_labels(spans, labels)
+            )
+            ner_values = unique_clean_values(raw_ner_values)
+            output_values = output_values_for_attribute(block_rows, audit, attr_key, output_col)
+            
+            captured = bool(ner_values)
+            has_output = bool(output_values)
+            
+            # Hitung F1 Score: perbandingan murni ground truth vs extraction
+            f1_score = calculate_attribute_f1_score(
+                ground_truth_values=output_values,  # Output values sebagai ground truth
+                extracted_values=ner_values,
+                attr_key=attr_key
+            )
+            
+            low_f1 = captured and f1_score < NER_F1_SCORE_AUDIT_THRESHOLD
+
+            if captured:
+                captured_count += 1
+                f1_scores.append(f1_score)
+
+            needs_check = False
+            if captured and has_output:
+                if f1_score >= 0.90:
+                    status = "PERFECT"
+                    status_class = "ok"
+                elif f1_score >= 0.70:
+                    status = "GOOD"
+                    status_class = "ok"
+                elif f1_score >= 0.50:
+                    status = "PARTIAL"
+                    status_class = "warn"
+                    needs_check = True
+                else:
+                    status = "POOR"
+                    status_class = "warn"
+                    needs_check = True
+                ok_count += 1 if f1_score >= 0.70 else 0
+            elif captured and not has_output:
+                status = "NER ADA, OUTPUT KOSONG"
+                status_class = "warn"
+                needs_check = True
+            elif not captured and has_output:
+                status = "OUTPUT ADA, CEK NER"
+                status_class = "warn"
+                needs_check = True
+            else:
+                status = "BELUM TERBACA"
+                status_class = "miss"
+                needs_check = True
+
+            if output_col and needs_check and not has_output:
+                missing_cells = red_output_cell_keys_for_missing_attribute(visible_rows, output_col)
+                if missing_cells:
+                    red_output_cells.update(missing_cells)
+                elif output_col not in {"Driver", "No. Plat", "Kontak Driver", "Tgl Muat"}:
+                    red_output_columns.add(output_col)
+
+            if low_f1:
+                low_f1_count += 1
+                low_f1_attrs.append(attr_name)
+            if needs_check:
+                needs_check_count += 1
+                problem_attrs.add(attr_name)
+            if any(attr_value_needs_red_border(attr_name, value) for value in ner_values):
+                problem_attrs.add(attr_name)
+
+            attr_rows.append(
+                {
+                    "attribute": attr_name,
+                    "ner_value_items": ner_values,
+                    "ner_values": " | ".join(ner_values) if ner_values else "-",
+                    "output_values": " | ".join(output_values) if output_values else "-",
+                    "f1_score": f1_score,  # Ganti dari confidence
+                    "f1_bucket": f1_score_bucket(f1_score, captured),  # Ganti dari confidence_bucket
+                    "status": status,
+                    "status_class": status_class,
+                }
+            )
+
+        for row in visible_rows:
+            for col in EXCEL_COLUMNS:
+                if cell_needs_red_border(row, col):
+                    problem_attrs.add(output_attr_map.get(col, col))
+        for col in red_output_columns:
+            problem_attrs.add(output_attr_map.get(col, col))
+        for cell_key in red_output_cells:
+            _, col = cell_key.split("::", 1)
+            problem_attrs.add(output_attr_map.get(col, col))
+
+        total_attrs = len(NER_EVAL_ATTRIBUTES)
+        avg_f1 = sum(f1_scores) / len(f1_scores) if f1_scores else 0.0  # Ganti dari avg_confidence
+        complete_units, total_units, order_status = block_unit_completion(block_rows)
+        cards.append(
+            {
+                "chunk": chunk_id,
+                "batch_index": int(audit.get("batch_index", 0) or 0),
+                "batch_label": str(audit.get("batch_label", "") or ""),
+                "batch_created_at": str(audit.get("batch_created_at", "") or ""),
+                "batch_id": str(audit.get("batch_id", "") or ""),
+                "batch_elapsed_ms": float(audit.get("batch_elapsed_ms", 0.0) or 0.0),
+                "extraction_run_id": str(audit.get("extraction_run_id", "") or ""),
+                "extraction_run_elapsed_ms": float(audit.get("extraction_run_elapsed_ms", 0.0) or 0.0),
+                "source": str(audit.get("source", "") or ""),
+                "ner_input": str(audit.get("ner_input", "") or ""),
+                "rows_count": len(block_rows),
+                "output_rows": visible_rows,
+                "complete_units": complete_units,
+                "total_units": total_units,
+                "order_status": order_status,
+                "captured_count": captured_count,
+                "ok_count": ok_count,
+                "total_attrs": total_attrs,
+                "avg_f1_score": avg_f1,  # Ganti dari avg_confidence
+                "needs_check": needs_check_count,
+                "low_f1_count": low_f1_count,  # Ganti dari low_confidence_count
+                "low_f1_attrs": low_f1_attrs,  # Ganti dari low_confidence_attrs
