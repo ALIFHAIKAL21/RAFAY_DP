@@ -1,11 +1,9 @@
-﻿import hashlib
+import hashlib
 import json
 import re
 import uuid
 from typing import Dict, Iterable, List, Optional, Tuple
-
 from sqlalchemy.exc import SQLAlchemyError
-
 from db.database import SessionLocal
 from models.order_dataset import OrderDataset
 from models.raw_chat import RawChat

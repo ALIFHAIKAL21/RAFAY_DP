@@ -117,7 +117,7 @@ REQUEST ORDER ULANG ONCALL 06 FEB 2026
 
 pak update dari pool argopantes
 
-6 UNIT WB 50 CBM
+4 UNIT WB 50 CBM
 Lokasi : ARGOPANTES
 Waktu loading : 07:00 07-02-2026
 Rute/tujuan : CGK-SUB
@@ -143,18 +143,6 @@ Driver : Purnomo
 Nopol : L 8903 AH
 No hp : 081234510004
 
-Waktu loading : 18:00 07-02-2026
-Rute/tujuan : CGK-SUB
-Driver : Wahyu
-Nopol : L 8904 AH
-No hp : 081234510005
-
-noted unit paling akhir ikut jadwal 20:00
-Waktu loading : 20:00 07-02-2026
-Rute/tujuan : CGK-SUB
-Driver : Joko
-Nopol : L 8905 AH
-No hp : 081234510006
 
 REQUEST ORDER ULANG ONCALL 06 FEB 2026
 
