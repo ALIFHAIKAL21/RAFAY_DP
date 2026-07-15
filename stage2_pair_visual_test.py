@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import re
@@ -14,6 +14,15 @@ from typing import Dict, Iterable, List, Sequence
 
 import pandas as pd
 import streamlit as st
+
+def get_st_fragment():
+    if hasattr(st, "fragment"):
+        return st.fragment
+    if hasattr(st, "experimental_fragment"):
+        return st.experimental_fragment
+    return lambda f: f
+
+st_fragment = get_st_fragment()
 
 
 ROOT_DIR = Path(__file__).resolve().parent
@@ -6922,6 +6931,7 @@ def stage2_combine_candidate_match_events(
     )
 
 
+@st.cache_data(show_spinner=False, max_entries=10)
 def stage2_output_events_from_rows(rows: Sequence[Dict[str, object]]) -> List[Dict[str, object]]:
     return stage2_combine_candidate_match_events(stage2_top_events_from_history(rows))
 
@@ -6937,6 +6947,7 @@ def stage2_event_display_key(event: Dict[str, object]) -> str:
     return stage2_audit_event_key(event)
 
 
+@st.cache_data(show_spinner=False, max_entries=10)
 def stage2_model_error_rows(rows: Sequence[Dict[str, object]]) -> List[Dict[str, object]]:
     errors: List[Dict[str, object]] = []
     for row in rows or []:
@@ -6947,6 +6958,7 @@ def stage2_model_error_rows(rows: Sequence[Dict[str, object]]) -> List[Dict[str,
     return errors
 
 
+@st.cache_data(show_spinner=False, max_entries=10)
 def stage2_output_events_with_model_errors(
     output_rows: Sequence[Dict[str, object]],
     raw_rows: Sequence[Dict[str, object]],
@@ -7371,6 +7383,7 @@ def stage2_match_evaluation_dataframe(rows: Sequence[Dict[str, object]]) -> pd.D
     return pd.DataFrame(records)
 
 
+@st.cache_data(show_spinner=False, max_entries=10)
 def stage2_match_official_metrics(rows: Sequence[Dict[str, object]]) -> Dict[str, float | int]:
     records = []
     for row in rows or []:
@@ -9502,6 +9515,7 @@ def red_output_cell_keys_for_missing_attribute(
     return keys
 
 
+@st.cache_data(show_spinner=False, max_entries=10)
 def build_simple_ner_eval_cards(
     excel_df: pd.DataFrame,
     audits: Sequence[Dict[str, object]],
@@ -9677,6 +9691,7 @@ def ner_eval_card_identity(card: Dict[str, object]) -> str:
     )
 
 
+@st.cache_data(show_spinner=False, max_entries=10)
 def build_ner_stage2_card_groups(
     cards: Sequence[Dict[str, object]],
     match_history: Sequence[Dict[str, object]] | None,
@@ -10307,6 +10322,7 @@ def render_simple_ner_block_evaluation(
     st.html(html)
 
 
+@st_fragment
 def render_ner_analytics_section(
     excel_df: pd.DataFrame,
     ner_audits: Sequence[Dict[str, object]],
@@ -10736,6 +10752,7 @@ def pct_or_dash(value: float, evaluated: bool = True) -> str:
     if not evaluated:
         return "-"
     return pct_text(float(value or 0.0))
+@st.cache_data(show_spinner=False, max_entries=10)
 def build_simple_ner_eval_cards(
     excel_df: pd.DataFrame,
     audits: Sequence[Dict[str, object]],
@@ -11994,6 +12011,7 @@ def render_ner_attribute_score_table(cards: Sequence[Dict[str, object]]) -> None
     st.html(html)
 
 
+@st_fragment
 def render_ner_analytics_section(
     excel_df: pd.DataFrame,
     ner_audits: Sequence[Dict[str, object]],
@@ -12143,6 +12161,8 @@ def render_ner_analytics_section(
             card for card in filtered_cards if card_batch_label(card) == selected_batch
         ]
 
+    base_metrics_cards = list(filtered_cards)
+
     filtered_with_rows = []
     for card in filtered_cards:
         matched_rows = [
@@ -12194,17 +12214,17 @@ def render_ner_analytics_section(
         1 for card in filtered_cards if ner_eval_card_identity(card) not in grouped_card_ids
     )
 
-    total_tp = sum(int(card.get("tp", 0) or 0) for card in filtered_cards)
-    total_fp = sum(int(card.get("fp", 0) or 0) for card in filtered_cards)
-    total_fn = sum(int(card.get("fn", 0) or 0) for card in filtered_cards)
+    total_tp = sum(int(card.get("tp", 0) or 0) for card in base_metrics_cards)
+    total_fp = sum(int(card.get("fp", 0) or 0) for card in base_metrics_cards)
+    total_fn = sum(int(card.get("fn", 0) or 0) for card in base_metrics_cards)
     total_scores = metric_scores_from_counts(total_tp, total_fp, total_fn)
     problem_blocks = sum(
-        1 for card in filtered_cards if int(card.get("problem_count", 0) or 0) > 0
+        1 for card in base_metrics_cards if int(card.get("problem_count", 0) or 0) > 0
     )
-    valid_blocks = len(filtered_cards) - problem_blocks
-    duration_summary = ner_extraction_duration_summary(filtered_cards)
+    valid_blocks = len(base_metrics_cards) - problem_blocks
+    duration_summary = ner_extraction_duration_summary(base_metrics_cards)
 
-    render_ner_attribute_score_table(filtered_cards)
+    render_ner_attribute_score_table(base_metrics_cards)
 
     metrics_html = f"""
     <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 25px; margin-bottom: 20px;">
@@ -13359,34 +13379,39 @@ def main() -> None:
                     metric_rows,
                     title=reconciliation_title,
                 )
-                detail_cols = st.columns([1.0, 0.8, 3.0])
-                detail_filter = detail_cols[0].selectbox(
-                    "Detail pencocokan",
-                    [
-                        "MATCH benar + Semua Kesalahan",
-                        "Semua",
-                        "Benar",
-                        "Salah",
-                        "True Positive (MATCH Benar)",
-                        "True Negative (NO_MATCH Benar)",
-                        "False Positive (Salah Deteksi)",
-                        "False Negative (Gagal Deteksi)",
-                    ],
-                    index=0,
-                    key="stage2_pair_card_filter",
-                )
-                detail_limit_raw = detail_cols[1].selectbox(
-                    "Jumlah card",
-                    [5, 10, 20, 50, "Semua"],
-                    index=1,
-                    key="stage2_pair_card_limit",
-                )
-                detail_rows = filter_stage2_pair_detail_rows(
-                    reconciliation_rows,
-                    str(detail_filter),
-                )
-                detail_limit = len(detail_rows) if detail_limit_raw == "Semua" else int(detail_limit_raw)
-                render_stage2_pair_cards(detail_rows, max_cards=detail_limit)
+                
+                @st_fragment
+                def render_interactive_pair_cards(metric_rows_data):
+                    detail_cols = st.columns([1.0, 0.8, 3.0])
+                    detail_filter = detail_cols[0].selectbox(
+                        "Detail pencocokan",
+                        [
+                            "MATCH benar + Semua Kesalahan",
+                            "Semua",
+                            "Benar",
+                            "Salah",
+                            "True Positive (MATCH Benar)",
+                            "True Negative (NO_MATCH Benar)",
+                            "False Positive (Salah Deteksi)",
+                            "False Negative (Gagal Deteksi)",
+                        ],
+                        index=0,
+                        key="stage2_pair_card_filter",
+                    )
+                    detail_limit_raw = detail_cols[1].selectbox(
+                        "Jumlah card",
+                        [5, 10, 20, 50, "Semua"],
+                        index=1,
+                        key="stage2_pair_card_limit",
+                    )
+                    detail_rows = filter_stage2_pair_detail_rows(
+                        metric_rows_data,
+                        str(detail_filter),
+                    )
+                    detail_limit = len(detail_rows) if detail_limit_raw == "Semua" else int(detail_limit_raw)
+                    render_stage2_pair_cards(detail_rows, max_cards=detail_limit)
+                
+                render_interactive_pair_cards(reconciliation_rows)
             else:
                 st.info(
                     "Belum ada audit MATCH siap gabung. Jalankan pesanan susulan yang cocok "

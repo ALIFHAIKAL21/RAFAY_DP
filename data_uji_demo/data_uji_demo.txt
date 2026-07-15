@@ -272,14 +272,6 @@ Rute/tujuan : SRG - BTG
 Driver : Nur
 Nopol : B 9718 UEW
 No hp : 085882623507
-
-
-
-//====== PESANAN SUSULAN ==========//
-
-
-
-
 REQUEST ORDER ULANG ONCALL 01 APRIL 2026
 fyi pak ini dari pool, mohon dibantu monitor
 5 UNIT CDDL 24 /CBM
