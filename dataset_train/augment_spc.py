@@ -1,8 +1,8 @@
 import json
 import random
-import re
 import argparse
 import os
+import re
 
 MONTHS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 REPLACEMENT_MONTHS = ["Januari", "Februari", "Maret", "Jan", "Feb", "Mar"]
@@ -88,10 +88,67 @@ def augment_spc_pair(text_a, text_b):
         
     return text_a, text_b
 
-def generate_spc_dataset(input_file, output_file, target_count):
-    with open(input_file, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+def parse_txt_to_spc_data(txt_path):
+    with open(txt_path, 'r', encoding='utf-8') as f:
+        content = f.read()
         
+    # Pisahkan berdasarkan REQUEST ORDER
+    blocks = re.split(r'\n(?=REQ)', '\n' + content)
+    blocks = [b.strip() for b in blocks if b.strip()]
+    
+    half = len(blocks) // 2
+    induk_blocks = blocks[:half]
+    susulan_blocks = blocks[half:]
+    
+    data = []
+    for a, b in zip(induk_blocks, susulan_blocks):
+        # Ekstrak informasi dari Induk (a) untuk membuat text_a bergaya spc_train.json
+        # 1. Tanggal
+        date_match = re.search(r'(?i)ON\s*CALL\s+(.*)', a)
+        ro_date = date_match.group(1).strip() if date_match else "UNKNOWN DATE"
+        
+        # 2. Target Qty & Truck
+        unit_match = re.search(r'(?i)(\d+)[ \t]+UNIT[ \t]+(.*?)(?=\n|$)', a)
+        target_qty = int(unit_match.group(1)) if unit_match else 0
+        truck_type = unit_match.group(2).strip() if unit_match else "UNKNOWN TRUCK"
+        
+        # 3. Pickup
+        pickup_match = re.search(r'(?i)Lok.*?:\s*(.*?)(?=\n|$)', a)
+        pickup = pickup_match.group(1).strip() if pickup_match else "UNKNOWN LOKASI"
+        
+        # 4. Route
+        route_match = re.search(r'(?i)Rute.*?:\s*(.*?)(?=\n|$)', a)
+        route = route_match.group(1).strip() if route_match else "UNKNOWN RUTE"
+        
+        # 5. Extract existing drivers from Induk
+        # Cari blok waktu, nama, nopol, hp
+        drivers = []
+        driver_blocks = re.findall(r'(?i)(?:Waktu|Jam|lOADING).*?:\s*(.*?)\n.*?(?:NAMA|DRIVER|Driverr).*?:\s*(.*?)\n.*?Nopol.*?:\s*(.*?)\n.*?No\s*(?:HP|tLP|tELPON).*?:\s*(.*?)(?=\n|$)', a)
+        for db in driver_blocks:
+            waktu, nama, nopol, hp = [x.strip() for x in db]
+            drivers.append(f"{waktu} {nama} {nopol} {hp}")
+            
+        complete = len(drivers)
+        empty = target_qty - complete
+        existing_drivers_str = " | ".join(drivers) if drivers else "None"
+        
+        # Use ORDER_STATE format for all
+        text_a = f"ORDER_STATE | RO={ro_date}; target={target_qty}; complete={complete}; empty={empty}; truck={truck_type}; pickup={pickup}; route={route}; existing_driver={existing_drivers_str}"
+            
+        data.append({
+            "text_a": text_a,
+            "text_b": b.replace('\n', ' '), # text_b in spc_train.json is usually single-line
+            "label": "MATCH"
+        })
+    return data
+
+def generate_spc_dataset(input_file, output_file, target_count):
+    if input_file.lower().endswith('.txt'):
+        data = parse_txt_to_spc_data(input_file)
+    else:
+        with open(input_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            
     print(f"Membaca {len(data)} pasang data asli dari {input_file} sebagai template")
     
     augmented_data = []
@@ -119,7 +176,7 @@ def generate_spc_dataset(input_file, output_file, target_count):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Script Procedural Augmentation SPC Dataset (Berbasis Template Input)")
-    parser.add_argument('--input', type=str, required=True, help="Path ke file input mentah SPC (.json)")
+    parser.add_argument('--input', type=str, required=True, help="Path ke file input mentah SPC (.json atau .txt)")
     parser.add_argument('--output', type=str, required=True, help="Path ke file output hasil augmentasi (.json)")
     parser.add_argument('--count', type=int, default=15000, help="Jumlah data yang ingin digenerate (default: 15000)")
     args = parser.parse_args()

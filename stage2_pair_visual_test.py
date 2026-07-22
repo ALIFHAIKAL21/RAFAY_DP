@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import re
@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Sequence
 
 import pandas as pd
-import streamlit as st
+import streamlit as st  # pyrefly: ignore
 
 def get_st_fragment():
     if hasattr(st, "fragment"):
@@ -104,8 +104,8 @@ EXCEL_COLUMNS = [
 
 @lru_cache(maxsize=1)
 def load_ml_modules():
-    import torch
-    from transformers import (
+    import torch  # pyrefly: ignore
+    from transformers import (  # pyrefly: ignore
         AutoModelForSequenceClassification,
         AutoModelForTokenClassification,
         AutoTokenizer,
@@ -2221,95 +2221,155 @@ def render_metric_cards(metrics: Dict[str, float | int]) -> None:
 
 def render_stage2_official_metric_summary(
     rows: Sequence[Dict[str, object]],
-    title: str = "Rekap resmi pencocokan",
+    title: str = "Tabel IV. 11\nHasil Pengujian Model Sequence-Pair Classification.",
 ) -> None:
     if not rows:
         return
     metrics = stage2_match_official_metrics(rows)
+    
+    tp_match = metrics.get('tp', 0)
+    fp_match = metrics.get('fp', 0)
+    fn_match = metrics.get('fn', 0)
+    
+    tp_nomatch = metrics.get('tn', 0)
+    fp_nomatch = metrics.get('fn', 0)
+    fn_nomatch = metrics.get('fp', 0)
+    
+    macro_tp = tp_match + tp_nomatch
+    macro_fp = fp_match + fp_nomatch
+    macro_fn = fn_match + fn_nomatch
+    
+    p_match = float(metrics.get('precision_match', 0.0))
+    r_match = float(metrics.get('recall_match', 0.0))
+    f1_m = float(metrics.get('f1_match', 0.0))
+    
+    p_nomatch = float(metrics.get('precision_no_match', 0.0))
+    r_nomatch = float(metrics.get('recall_no_match', 0.0))
+    f1_nomatch = float(metrics.get('f1_no_match', 0.0))
+    
+    macro_p = (p_match + p_nomatch) / 2
+    macro_r = (r_match + r_nomatch) / 2
+    macro_f1 = float(metrics.get('f1_macro', 0.0))
+
     html = f"""
     <style>
     .spc-final-score {{
-        border: 1px solid #d6dee8;
-        border-radius: 8px;
+        border: 2px solid #e2e8f0;
+        border-radius: 14px;
         background: #ffffff;
-        padding: 22px 24px;
-        margin-bottom: 14px;
-        font-family: Arial, Helvetica, sans-serif;
-    }}
-    .spc-final-head {{
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
+        padding: 29px 38px;
+        margin-bottom: 29px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     }}
     .spc-final-title {{
         font-size: 22px;
-        font-weight: 900;
-        color: #0f172a;
-    }}
-    .spc-final-metrics {{
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 15px;
-        flex-wrap: wrap;
-        border-top: 1px solid #e2e8f0;
-        padding-top: 20px;
-    }}
-    .spc-final-main {{
-        flex: 1;
-        min-width: 130px;
-        text-align: center;
-        border-right: 1px solid #e2e8f0;
-    }}
-    .spc-final-main:last-child {{
-        border-right: none;
-    }}
-    .spc-final-main span {{
-        display: block;
-        color: #64748b;
-        font-size: 12px;
         font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 8px;
-    }}
-    .spc-final-main strong {{
-        display: block;
         color: #0f172a;
-        font-size: 32px;
-        font-weight: 900;
-        line-height: 1;
+        margin-bottom: 29px;
+        text-align: center;
+        white-space: pre-wrap;
+        line-height: 1.5;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 19px;
     }}
-    @media (max-width: 980px) {{
-        .spc-final-main {{ border-right: none; text-align: left; margin-bottom: 10px; }}
+    .spc-thesis-table {{
+        width: 100%;
+        border-collapse: collapse;
+        text-align: center;
+        color: #334155;
+        font-size: 17px;
+        font-family: inherit;
+    }}
+    .spc-thesis-table th, .spc-thesis-table td {{
+        padding: 19px 14px;
+        border-bottom: 2px solid #f1f5f9;
+    }}
+    .spc-thesis-table thead th {{
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        font-size: 14px;
+        letter-spacing: 0.6px;
+        background-color: #f8fafc;
+        border-bottom: 3px solid #e2e8f0;
+    }}
+    .spc-thesis-table tbody tr:hover {{
+        background-color: #f8fafc;
+    }}
+    .spc-thesis-table tbody tr:first-child td {{
+        padding-top: 24px;
+    }}
+    .spc-thesis-table tbody tr:nth-child(2) td {{
+        border-bottom: 3px solid #e2e8f0;
+        padding-bottom: 24px;
+    }}
+    .spc-thesis-table tbody tr.macro-row td {{
+        font-weight: 800;
+        color: #0f172a;
+        padding-top: 24px;
+        background-color: #f8fafc;
+    }}
+    .badge-match {{
+        background-color: #dcfce7;
+        color: #166534;
+        padding: 5px 12px;
+        border-radius: 9999px;
+        font-weight: 700;
+        font-size: 14px;
+    }}
+    .badge-nomatch {{
+        background-color: #fee2e2;
+        color: #991b1b;
+        padding: 5px 12px;
+        border-radius: 9999px;
+        font-weight: 700;
+        font-size: 14px;
     }}
     </style>
     <section class="spc-final-score">
-        <div class="spc-final-head">
-            <div class="spc-final-title">{escape(title)}</div>
-            <div class="spc-final-metrics">
-                <div class="spc-final-main">
-                    <span>Accuracy</span>
-                    <strong>{pct_text(float(metrics.get('accuracy', 0.0)))}</strong>
-                </div>
-                <div class="spc-final-main">
-                    <span>Precision MATCH</span>
-                    <strong>{pct_text(float(metrics.get('precision_match', 0.0)))}</strong>
-                </div>
-                <div class="spc-final-main">
-                    <span>Recall MATCH</span>
-                    <strong>{pct_text(float(metrics.get('recall_match', 0.0)))}</strong>
-                </div>
-                <div class="spc-final-main">
-                    <span>F1 MATCH</span>
-                    <strong>{pct_text(float(metrics.get('f1_match', 0.0)))}</strong>
-                </div>
-                <div class="spc-final-main">
-                    <span>F1 Macro</span>
-                    <strong>{pct_text(float(metrics.get('f1_macro', 0.0)))}</strong>
-                </div>
-            </div>
-        </div>
+        <div class="spc-final-title">{escape(title).replace("Tabel IV. 11\\n", "Tabel IV.11 - ")}</div>
+        <table class="spc-thesis-table">
+            <thead>
+                <tr>
+                    <th>Kelas/Label</th>
+                    <th>TP</th>
+                    <th>FP</th>
+                    <th>FN</th>
+                    <th>PRECISION</th>
+                    <th>RECALL</th>
+                    <th>F1-SCORE</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="badge-match">MATCH</span></td>
+                    <td>{tp_match}</td>
+                    <td>{fp_match}</td>
+                    <td>{fn_match}</td>
+                    <td style="font-weight: 600;">{pct_text(p_match).replace('.0%', '%')}</td>
+                    <td style="font-weight: 600;">{pct_text(r_match).replace('.0%', '%')}</td>
+                    <td style="font-weight: 600;">{pct_text(f1_m).replace('.0%', '%')}</td>
+                </tr>
+                <tr>
+                    <td><span class="badge-nomatch">NO_MATCH</span></td>
+                    <td>{tp_nomatch}</td>
+                    <td>{fp_nomatch}</td>
+                    <td>{fn_nomatch}</td>
+                    <td style="font-weight: 600;">{pct_text(p_nomatch).replace('.0%', '%')}</td>
+                    <td style="font-weight: 600;">{pct_text(r_nomatch).replace('.0%', '%')}</td>
+                    <td style="font-weight: 600;">{pct_text(f1_nomatch).replace('.0%', '%')}</td>
+                </tr>
+                <tr class="macro-row">
+                    <td>RATA-RATA MAKRO</td>
+                    <td>{macro_tp}</td>
+                    <td>{macro_fp}</td>
+                    <td>{macro_fn}</td>
+                    <td>{pct_text(macro_p).replace('.0%', '%')}</td>
+                    <td>{pct_text(macro_r).replace('.0%', '%')}</td>
+                    <td>{pct_text(macro_f1).replace('.0%', '%')}</td>
+                </tr>
+            </tbody>
+        </table>
     </section>
     """
     st.html(html)
@@ -3188,7 +3248,7 @@ def render_stage2_pair_cards(
                 </div>
                 <div class="spc-pair-grid">
                     <div><span>Ground Truth</span><strong>{escape(evaluation['ground_truth'])}</strong></div>
-                    <div><span>Prediksi indobenchmark/indober-base-p2</span><strong>{escape(evaluation['predicted'])}</strong></div>
+                    <div><span class="bold">Prediksi indobenchmark/indobert-base-p2</span><strong>{escape(evaluation['predicted'])}</strong></div>
                     <div><span>Status</span><strong>{escape(evaluation['status'])}</strong></div>
                 </div>
                 {chat_section}
@@ -7199,7 +7259,7 @@ def stage2_ground_truth_components(event: Dict[str, object]) -> List[Dict[str, o
 def load_spc_ground_truth():
     import json
     try:
-        with open("data_uji/ground_truth_pencocokan.json", "r", encoding="utf-8") as f:
+        with open("data_uji/ground_truth_pencocokan.json", "r", encoding="utf-8-sig") as f:
             return json.load(f)
     except Exception:
         return []
@@ -9897,7 +9957,7 @@ def render_simple_ner_block_evaluation(
                         <pre class="chat-original">{escape(source_text)}</pre>
                     </div>
                     <div class="panel">
-                        <div class="panel-title model-title">indolem/indobert-base-uncased</div>
+                        <div class="panel-title model-title">INDOLEM/INDOBERT-BASE-UNCASED</div>
                         {attr_table_html(card.get("attr_rows", []))}
                     </div>
                 </div>
@@ -11186,6 +11246,22 @@ def render_simple_ner_block_evaluation(
         gt_items = clean_display_values(row.get("ground_truth_slot_items"))
         if not gt_items:
             gt_items = clean_display_values(row.get("ground_truth_items"))
+        
+        # Sort GT items to match the order of predicted items for visual consistency
+        pred_items = clean_display_values(row.get("ner_slot_items"))
+        if not pred_items:
+            pred_items = clean_display_values(row.get("ner_value_items"))
+            
+        if gt_items and pred_items:
+            sorted_gt = []
+            gt_pool = list(gt_items)
+            for p in pred_items:
+                if p in gt_pool:
+                    sorted_gt.append(p)
+                    gt_pool.remove(p)
+            sorted_gt.extend(gt_pool)
+            gt_items = sorted_gt
+
         if not gt_items:
             return (
                 "<div class='ner-chip-list'>"
@@ -13359,7 +13435,7 @@ def main() -> None:
                 reconciliation_rows = stage2_output_events_with_model_errors(output_rows, match_history)
                 metric_rows = reconciliation_rows
                 save_latest_stage2_eval_state(reconciliation_rows)
-                reconciliation_title = "Skor Final Pengujian Pencocokan"
+                reconciliation_title = "INDOBENCHMARK/INDOBERT-BASE-P2"
             elif latest_match_rows:
                 output_rows = stage2_output_events_from_rows(latest_match_rows)
                 reconciliation_rows = stage2_output_events_with_model_errors(output_rows, latest_match_rows)

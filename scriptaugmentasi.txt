@@ -1,0 +1,11 @@
+AUGMENTASI DATA NER =
+python augment_ner.py --input "..\DATASET JAN-MAR\DATASET_MENTAH.TXT" --output "hasil_ner_augmentasi.json" --count 1000
+
+AUGMENTASI DATA SEQUENCE_PAIR_CLLASIFICATION =
+python augment_spc.py --input "..\DATASET JAN-MAR\DATASET_MENTAH.TXT" --output "hasil_spc_augmentasi.json" --count 15000
+
+AKSES LABEL_STUDIO:
+label-studio start
+
+
+
